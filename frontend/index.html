@@ -1,0 +1,1176 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>SEARCH_Goods</title>
+  <style>
+    :root{ --bg:#f5f7fb; --card:#ffffff; --text:#1f2937; --sub:#64748b; --muted:#94a3b8; --border:#e2e8f0; --accent:#2563eb; --accent-soft:#dbeafe; --shadow:0 18px 45px rgba(15,23,42,0.08); --safe-bottom: env(safe-area-inset-bottom);}    
+    *{box-sizing:border-box;}
+    html,body{height:100%;}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:"Inter","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.5;}
+    .container{max-width:1200px;margin:0 auto;padding:24px;}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:24px;}
+    .version-info{font-size:12px;color:var(--sub);white-space:nowrap;}
+    .brand-identity{display:flex;align-items:center;gap:16px;}
+    .brand-area{height:72px;max-width:280px;overflow:hidden;display:flex;align-items:center;}
+    .brand-area img{max-height:72px;width:auto;object-fit:contain;display:none;}
+    .brand-placeholder{font-size:12px;color:var(--accent);text-align:left;padding:0 6px;}
+    .top-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .api-control{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .api-control input{width:260px;border:1px solid var(--border);border-radius:10px;padding:8px 12px;background:#f8fafc;color:var(--text);font-size:13px;}
+    .workspace{margin-top:24px;display:grid;grid-template-columns:360px 1fr;gap:24px;align-items:start;}
+    .sidebar{display:flex;flex-direction:column;gap:20px;}
+    .panel-card{border-radius:18px;padding:20px 0;box-shadow:none;}
+    .panel-header{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;}
+    .panel-card h2{margin:0;font-size:18px;font-weight:600;color:var(--text);}
+    .panel-subtitle{font-size:13px;color:var(--sub);}
+    .input-group{display:flex;gap:12px;margin-bottom:16px;}
+    .input{flex:1;border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:15px;color:var(--text);background:#f8fafc;transition:border 0.2s,box-shadow 0.2s;}
+    .input-textarea{min-height:140px;resize:vertical;line-height:1.6;}
+    .input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,0.15);outline:none;background:#fff;}
+    .btn{border:1px solid transparent;border-radius:12px;padding:12px 16px;font-size:14px;font-weight:600;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s,background 0.2s;color:var(--text);background:#e2e8f0;}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 12px 20px rgba(15,23,42,0.12);}
+    .btn:disabled{opacity:0.6;cursor:not-allowed;box-shadow:none;transform:none;}
+    .btn.primary{background:var(--accent);color:#fff;box-shadow:0 10px 20px rgba(37,99,235,0.25);}
+    .btn.primary:hover{background:#1f4fd6;}
+    .btn.ghost{background:#eff6ff;color:var(--accent);border-color:rgba(37,99,235,0.2);box-shadow:none;}
+    .status{font-size:13px;color:var(--sub);background:#f8fafc;border:1px dashed var(--border);border-radius:12px;padding:12px;margin-top:18px;}
+    .action-row{display:flex;gap:12px;flex-wrap:wrap;}
+    .media-panel{display:flex;flex-direction:column;gap:12px;}
+    .media-panel iframe{width:100%;height:220px;border:0;border-radius:14px;background:#000;}
+    .media-panel .placeholder{color:var(--sub);font-size:14px;border:1px dashed var(--border);border-radius:12px;padding:24px;text-align:center;}
+    .results-column{display:flex;flex-direction:column;gap:20px;}
+    .results-header{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+    .results-header h2{margin:0;font-size:22px;font-weight:600;}
+    #resultCount{font-size:14px;color:var(--sub);background:#eef2ff;padding:6px 12px;border-radius:999px;}
+    .results{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;}
+    .chat-box{height:520px;overflow:auto;padding:12px;background:#f7f8fb;border-radius:12px;border:1px solid var(--border);}
+    .bubble{max-width:80%;padding:10px 12px;border-radius:12px;margin:8px 0;line-height:1.5;white-space:pre-wrap;word-break:break-word;}
+    .bubble.user{background:#dbeafe;margin-left:auto;}
+    .bubble.assistant{background:#fff;border:1px solid #eef2f7;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;}
+    .card-img{position:relative;background:#f1f5f9;padding-top:100%;overflow:hidden;}
+    .card-img img,
+    .card-img .card-placeholder{position:absolute;top:0;left:0;width:100%;height:100%;}
+    .card-img img{object-fit:cover;}
+    .card-placeholder{color:var(--muted);font-size:13px;}
+    .card-badge{position:absolute;top:14px;left:14px;background:rgba(15,23,42,0.82);color:#fff;font-size:12px;padding:4px 10px;border-radius:999px;}
+    .card-body{padding:18px 18px 20px;display:flex;flex-direction:column;gap:10px;}
+    .card-title{margin:0;font-size:17px;font-weight:600;color:var(--text);}
+    .card-desc{font-size:13px;color:var(--sub);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+    .price-row{display:flex;gap:12px;align-items:center;font-size:15px;}
+    .price{font-weight:600;color:var(--accent);}
+    .price.is-cut{text-decoration:line-through;color:var(--muted);}
+    .sale{font-weight:700;color:#dc2626;}
+    .card-actions{margin-top:auto;display:flex;justify-content:flex-end;}
+    .link-btn{flex:1;text-align:center;background:var(--accent);color:#fff;border-radius:10px;padding:10px 12px;font-weight:600;text-decoration:none;box-shadow:0 10px 18px rgba(37,99,235,0.2);transition:transform 0.2s;}
+    .link-btn:hover{transform:translateY(-2px);}
+    .mobile-bar{display:none;}
+    .recording{animation:pulse 1s infinite;}
+    .back-to-chat{position:fixed;bottom:80px;right:20px;background-color:#2563eb;color:#fff;border:none;border-radius:999px;padding:10px 16px;box-shadow:0 2px 6px rgba(15,23,42,0.2);cursor:pointer;display:none;z-index:1000;font-weight:600;}
+    .back-to-chat:hover{background-color:#1f4fd6;}
+    .search-mode .back-to-chat{display:block;}
+    .chat-mode .back-to-chat{display:none;}
+    .suggest-actions{display:flex;gap:8px;margin-top:6px;}
+    .suggest-actions button{border:1px solid var(--border);padding:6px 10px;border-radius:10px;cursor:pointer;background:#f8fafc;color:var(--accent);font-weight:600;transition:background 0.2s,border 0.2s;}
+    .suggest-actions button:hover{background:#dbeafe;border-color:#bfdbfe;}
+    .search-mode .suggest-actions{display:none;}
+    .ai-recommend-label{background:#f1f5f9;border-radius:8px;padding:6px 10px;font-size:13px;margin-top:4px;color:#334155;}
+    .plan-card-container{margin-top:12px;border-left:3px solid var(--accent);padding-left:12px;}
+    .plan-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:8px;}
+    .bundle-summary{background:#e8f5e9;color:#1b5e20;padding:6px 10px;border-radius:8px;font-size:13px;font-weight:600;}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(37,99,235,.35)}70%{box-shadow:0 0 0 14px rgba(37,99,235,0)}100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}}
+    @media (max-width:1024px){
+      .workspace{grid-template-columns:1fr;gap:20px;}
+      .results{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}
+    }
+    @media (max-width:720px){
+      .container{padding:16px;}
+      .topbar{flex-direction:column;align-items:flex-start;gap:16px;}
+      .top-actions{width:100%;justify-content:flex-start;}
+      .workspace{margin-top:16px;}
+      .sidebar{display:none;}
+      .results-header{padding-bottom:56px;}
+      .mobile-bar{display:grid;grid-template-columns:1fr 60px 72px 120px;gap:8px;position:fixed;left:0;right:0;bottom:0;padding:12px 14px calc(12px + var(--safe-bottom));background:var(--card);border-top:1px solid var(--border);box-shadow:0 -10px 30px rgba(15,23,42,0.1);}
+      .mobile-bar input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:#f8fafc;color:var(--text);}
+      .mobile-bar .btn{padding:12px 0;}
+    }
+    .floating-panel{position:fixed;right:18px;top:88px;width:360px;z-index:80;display:none;background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:18px;color:var(--text);}
+    .floating-panel .panel-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+    .floating-panel h3{margin:0;font-size:16px;font-weight:600;}
+    .floating-panel .info{font-size:13px;color:var(--sub);margin-bottom:12px;}
+    .floating-panel .field{display:flex;gap:10px;margin-bottom:12px;align-items:center;}
+    .floating-panel .field label{width:70px;font-size:13px;color:var(--sub);}
+    .floating-panel input{flex:1;background:#f8fafc;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;}
+    .floating-panel textarea{flex:1;background:#f8fafc;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-height:80px;resize:vertical;}
+    .floating-panel .actions{display:flex;gap:10px;justify-content:flex-end;}
+    .floating-panel .msg{color:var(--sub);font-size:13px;margin-top:4px;min-height:18px;}
+    .floating-panel .stack{margin-bottom:12px;}
+    .floating-panel .stack input[type="file"]{width:100%;color:var(--sub);}
+    .floating-panel .stack div{font-size:13px;color:var(--sub);margin-bottom:4px;word-break:break-all;}
+    .close-btn{border:none;background:transparent;color:var(--muted);font-size:18px;font-weight:600;cursor:pointer;padding:4px;line-height:1;}
+    .close-btn:hover{color:var(--text);}
+    .mono{font-family:"Menlo","Monaco","Fira Code","Courier New",monospace;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div class="brand-identity">
+        <div class="brand-area">
+          <img id="brandLogo" alt="品牌 logo">
+          <div class="brand-placeholder" id="brandPlaceholder">尚未設定品牌 Logo</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="paramToggle" class="btn ghost">參數設定</button>
+        <button id="adminToggle" class="btn ghost">管理面板</button>
+        <div id="versionInfo" class="version-info">版本讀取中…</div>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <section class="panel-card search-panel" aria-label="商品查詢對話區">
+          <div class="panel-header">
+            <h2>自然語言查詢</h2>
+            <span class="panel-subtitle">告訴我您的需求，我會為您找出最合適的商品。</span>
+          </div>
+          <div class="input-group">
+            <textarea id="q" class="input input-textarea" placeholder="例如：慈心認證 180~200 有機米" aria-label="查詢輸入" rows="4"></textarea>
+            <button id="sendBtn" class="btn primary" aria-label="送出 (Enter)">送出</button>
+          </div>
+          <div class="action-row">
+            <button id="voiceBtn" class="btn ghost" aria-label="語音輸入 (Ctrl/Cmd+Shift+S)">🎙️ 語音輸入</button>
+            <button id="resetBtn" class="btn ghost" aria-label="重新對話 (Ctrl/Cmd+K)">重新對話</button>
+            <button id="gotoSearchBtn" class="btn ghost" aria-label="商品查詢">商品查詢</button>
+          </div>
+          <div id="status" class="status">小提醒：Shift+Enter 送出、Enter 斷行、Ctrl/Cmd+K 重置、Ctrl/Cmd+Shift+S 語音。</div>
+        </section>
+
+        <section class="panel-card media-panel" id="mediaPanel">
+          <div class="panel-header">
+            <h2>品牌影音</h2>
+            <span class="panel-subtitle">設定的 YouTube 影片將顯示在這裡。</span>
+          </div>
+          <iframe id="youtubeFrame" title="品牌影片" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <div class="placeholder" id="youtubePlaceholder">尚未設定 YouTube 影片連結</div>
+        </section>
+      </aside>
+
+      <section class="results-column">
+        <div class="results-header">
+          <h2>搜尋結果</h2>
+          <span id="resultCount">0 筆結果</span>
+        </div>
+        <div id="chat-panel" style="display:none;">
+          <div id="chat-messages" class="chat-box" aria-live="polite"></div>
+          <div class="suggest-actions">
+            <button data-sg="1">1 原建議</button>
+            <button data-sg="2">2 特價關聯</button>
+            <button data-sg="3">3 智慧搭配</button>
+          </div>
+        </div>
+        <div id="search-panel" style="display:none;">
+          <div id="results" class="results" aria-live="polite"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Admin panel (hidden by default) -->
+  <div id="adminPanel" class="floating-panel admin-panel">
+    <div class="panel-heading">
+      <h3>管理面板</h3>
+      <button id="adminPanelClose" class="close-btn" aria-label="關閉管理面板">✕</button>
+    </div>
+    <div class="info">請填入 `ADMIN_TOKEN` 以呼叫受保護的管理 API。</div>
+    <div class="field">
+      <label for="adminToken">Token</label>
+      <input id="adminToken" placeholder="ADMIN_TOKEN">
+      <button id="saveToken" class="btn ghost">儲存</button>
+    </div>
+    <div class="field">
+      <label for="uploadFile">CSV</label>
+      <input id="uploadFile" type="file" accept=".csv">
+    </div>
+    <div class="actions">
+      <button id="uploadBtn" class="btn primary">上傳並覆寫 CSV</button>
+      <button id="clearCacheBtn" class="btn ghost">清除快取</button>
+    </div>
+    <div class="stack">
+      <div>上傳 URL：<span id="adminUrlUpload"></span></div>
+      <div>清除快取 URL：<span id="adminUrlClear"></span></div>
+      <div>已儲存 token：<span id="adminTokenMasked" class="mono"></span></div>
+    </div>
+    <div id="adminMsg" class="msg">狀態：未操作</div>
+  </div>
+
+  <div class="mobile-bar" role="region" aria-label="手機查詢操作列">
+    <input id="mq" type="text" placeholder="請輸入您的需求…" aria-label="查詢輸入（手機）">
+    <button id="mVoiceBtn" class="btn ghost" aria-label="語音輸入">🎙️</button>
+    <button id="mSendBtn" class="btn primary" aria-label="送出">送出</button>
+    <button id="mResetBtn" class="btn ghost" aria-label="重新對話">重新對話</button>
+  </div>
+
+  <div id="paramPanel" class="floating-panel param-panel">
+    <div class="panel-heading">
+      <h3>參數設定</h3>
+      <button id="paramPanelClose" class="close-btn" aria-label="關閉參數設定">✕</button>
+    </div>
+    <div class="info">為品牌 Logo、影片與自然語言提示詞設定網路連結或內容（保存於服務端）。</div>
+    <div class="field">
+      <label for="logoUrlInput">Logo</label>
+      <input id="logoUrlInput" type="url" placeholder="https://example.com/logo.png">
+    </div>
+    <div class="field">
+      <label for="youtubeUrlInput">YouTube</label>
+      <input id="youtubeUrlInput" type="url" placeholder="https://youtu.be/...">
+    </div>
+    <div class="field">
+      <label for="promptInput">提示詞</label>
+      <textarea id="promptInput" placeholder="請輸入解析自然語言查詢的提示詞"></textarea>
+    </div>
+    <div class="actions">
+      <button id="clearParamsBtn" class="btn ghost">清除</button>
+      <button id="saveParamsBtn" class="btn primary">儲存</button>
+    </div>
+    <div id="paramMsg" class="msg"></div>
+  </div>
+
+  <button id="backToChat" class="back-to-chat">💬 回到聊天</button>
+
+  <script>
+  const DEFAULT_API = "https://search-goods-api.onrender.com/api/search";
+  const sessionId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('session_' + Math.random().toString(36).slice(2));
+  const SUGGEST_TYPES = {1:'原建議商品',2:'特價關聯商品',3:'智慧搭配商品'};
+  function getStoredApiEndpoint(){
+    const stored = localStorage.getItem('SEARCH_GOODS_API_ENDPOINT');
+    return (stored && stored.trim()) ? stored.trim() : DEFAULT_API;
+  }
+  function getBackendBaseUrl(){
+    const endpoint = getStoredApiEndpoint();
+    try{
+      const resolved = new URL(endpoint, window.location.origin);
+      const base = new URL('.', resolved);
+      return base.toString();
+    }catch(err){
+      const origin = window.location.origin.replace(/\/$/, '');
+      return origin + '/api/';
+    }
+  }
+  function buildBackendUrl(pathSegment){
+    if(!pathSegment){ pathSegment = ''; }
+    if(/^https?:\/\//i.test(pathSegment)){ return pathSegment; }
+    const normalized = pathSegment.startsWith('/') ? pathSegment.slice(1) : pathSegment;
+    try{
+      const base = getBackendBaseUrl();
+      return new URL(normalized, base).toString();
+    }catch(err){
+      const origin = window.location.origin.replace(/\/$/, '');
+      return origin + '/' + normalized;
+    }
+  }
+  async function fetchVersionFrom(baseUrl){
+    const url = baseUrl.endsWith('/') ? baseUrl + 'version' : baseUrl + '/version';
+    const res = await fetch(url, { cache: 'no-store', mode: 'cors' });
+    if(!res.ok){ throw new Error('http ' + res.status); }
+    return res.json();
+  }
+
+  async function loadVersionInfo(){
+    const el = document.getElementById('versionInfo');
+    if(!el){ return; }
+    const primaryBase = buildBackendUrl('').replace(/\/$/, '');
+    const defaultBase = new URL('.', DEFAULT_API).toString().replace(/\/$/, '');
+    const tried = new Set();
+    const candidates = [primaryBase];
+    if(primaryBase !== defaultBase){ candidates.push(defaultBase); }
+    for(const base of candidates){
+      if(tried.has(base)){ continue; }
+      tried.add(base);
+      try{
+        const info = await fetchVersionFrom(base);
+        const shortCommit = (info.short_commit || info.commit || 'unknown').toString().slice(0,7);
+        const branch = info.branch || 'unknown';
+        const builtAt = info.built_at || '';
+        el.textContent = `版本：${branch}@${shortCommit}`;
+        el.title = builtAt ? `Commit: ${info.commit || shortCommit}\nBuilt: ${builtAt}` : `Commit: ${info.commit || shortCommit}`;
+        return;
+      }catch(err){
+        continue;
+      }
+    }
+    el.textContent = '版本資訊無法取得';
+    el.title = '';
+  }
+    // read saved endpoint from localStorage
+    let API_ENDPOINT = getStoredApiEndpoint();
+    // add a small endpoint setter in the header
+    (function(){
+      try{
+        const host = document.querySelector('.top-actions') || document.querySelector('.topbar');
+        if(!host){ return; }
+        const wrap = document.createElement('div');
+        wrap.className = 'api-control';
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.value = API_ENDPOINT;
+        inp.placeholder = 'API Endpoint';
+        inp.setAttribute('aria-label','API Endpoint');
+        const btn = document.createElement('button');
+        btn.className = 'btn ghost';
+        btn.textContent = '設為 API';
+        btn.onclick = ()=>{
+          const next = inp.value.trim() || DEFAULT_API;
+          localStorage.setItem('SEARCH_GOODS_API_ENDPOINT', next);
+          API_ENDPOINT = next;
+          setStatus('已更新 API_ENDPOINT');
+          refreshAdminInfo();
+          loadBranding();
+          loadVersionInfo();
+        };
+        const testBtn = document.createElement('button');
+        testBtn.className = 'btn ghost';
+        testBtn.textContent = '測試連線';
+        testBtn.onclick = async ()=>{
+          setStatus('測試中...');
+          try{
+            const ep = inp.value.trim() || DEFAULT_API;
+            const r = await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:'_health_check_', topn:1})});
+            if(!r.ok){ setStatus('連線失敗: '+r.status); return; }
+            const t = await r.text();
+            try{
+              const j = JSON.parse(t);
+              setStatus('連線成功: '+(j.message ? j.message : '收到 JSON'));
+            }catch(e){
+              setStatus('成功但非 JSON 回應');
+            }
+          }catch(e){
+            setStatus('連線錯誤: '+e.message);
+          }
+        };
+        wrap.appendChild(inp);
+        wrap.appendChild(btn);
+        wrap.appendChild(testBtn);
+        host.appendChild(wrap);
+      }catch(e){/* ignore */}
+    })();
+    loadVersionInfo();
+    document.body.classList.add('chat-mode');
+    const resultsEl = document.getElementById("results");
+    const statusEl = document.getElementById("status");
+    const chatPanel = document.getElementById("chat-panel");
+    const searchPanel = document.getElementById("search-panel");
+    const chatMessagesEl = document.getElementById("chat-messages");
+    const gotoSearchBtn = document.getElementById("gotoSearchBtn");
+    const backToChatBtn = document.getElementById('backToChat');
+    const suggestButtons = document.querySelectorAll('.suggest-actions [data-sg]');
+    const quickSuggestTypes = new Set(['1','2','3']);
+    let latestSuggestCache = {};
+    let currentMode = "chat";
+    let mode = currentMode;
+    let chatHistory = [];
+    let welcomed = false;
+    function h(s){ return (s||"").replace(/[&<>\"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+    function a(s){ return h(s); }
+  function setStatus(msg){ if(statusEl){ statusEl.textContent = msg; } }
+  function clearResults(){ resultsEl.innerHTML = ""; const c = document.getElementById('resultCount'); if(c && mode === "search") c.textContent = '0 筆結果'; }
+  function setLoading(on){ if(on){ setStatus('載入中…'); } }
+  function getActiveInput(){ const isMobile = window.matchMedia("(max-width:600px)").matches; return (isMobile && typeof mq !== "undefined" && mq) ? mq : q; }
+  function appendChatBubble(role, text){
+    if(!chatMessagesEl){ return; }
+    const el = document.createElement('div');
+    el.className = role === 'user' ? 'bubble user' : 'bubble assistant';
+    el.textContent = text;
+    chatMessagesEl.appendChild(el);
+    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+  }
+  function renderWelcome(){
+    if(welcomed){ return; }
+    appendChatBubble('assistant', '您好～我是哈通客服小哈，可以告訴我想找什麼商品嗎？');
+    welcomed = true;
+  }
+
+  function setMode(newMode){
+    currentMode = newMode;
+    mode = newMode;
+    if(newMode === 'chat'){
+      document.body.classList.add('chat-mode');
+      document.body.classList.remove('search-mode');
+    }else{
+      document.body.classList.add('search-mode');
+      document.body.classList.remove('chat-mode');
+    }
+  }
+
+  function switchToChat(){
+    setMode('chat');
+    if(chatPanel){ chatPanel.style.display = 'block'; }
+    if(searchPanel){ searchPanel.style.display = 'none'; }
+    const c = document.getElementById('resultCount');
+    if(c){ c.textContent = '聊天模式'; }
+    updatePaginationVisibility();
+    renderWelcome();
+  }
+
+  function switchToSearch(queryText, itemIds, prefetchedItems){
+    const usingIds = Array.isArray(itemIds) && itemIds.length > 0;
+    setMode('search');
+    if(chatPanel){ chatPanel.style.display = 'none'; }
+    if(searchPanel){ searchPanel.style.display = 'block'; }
+    const c = document.getElementById('resultCount');
+    if(c){ c.textContent = '搜尋中…'; }
+    updatePaginationVisibility();
+    const query = (queryText || "").trim();
+    const activeInput = getActiveInput();
+    if(query && !usingIds){
+      if(activeInput && activeInput.value.trim() !== query){ activeInput.value = query; }
+      if(q && q !== activeInput){ q.value = query; }
+      if(typeof mq !== "undefined" && mq && mq !== activeInput){ mq.value = query; }
+    }
+    if(Array.isArray(prefetchedItems) && prefetchedItems.length){
+      lastQuery = `suggestion-${Date.now()}`;
+      currentPage = 1;
+      lastPage = 1;
+      hasNextPage = false;
+      clearResults();
+      prefetchedItems.forEach(it=>resultsEl.appendChild(card(it)));
+      setStatus('已載入建議商品');
+      const countEl = document.getElementById('resultCount'); if(countEl) countEl.textContent = `${prefetchedItems.length} 筆結果`;
+      updatePaginationControls({has_next:false, page:1, last_page:1});
+      return;
+    }
+    if(usingIds){
+      doSearchByIds(itemIds);
+    }else if(query){
+      doSearchWithPagination(query, 1);
+    }else{
+      setStatus("請先輸入查詢關鍵字");
+      activeInput?.focus();
+    }
+  }
+
+  async function sendChat(){
+    if(mode !== "chat"){
+      switchToChat();
+    }
+    const inputEl = getActiveInput();
+    const rawText = inputEl?.value || "";
+    const trimmed = rawText.trim();
+    if(!trimmed){ return; }
+    if(quickSuggestTypes.has(trimmed)){
+      if(inputEl){ inputEl.value = ''; }
+      if(q && q !== inputEl){ q.value = ''; }
+      if(typeof mq !== "undefined" && mq && mq !== inputEl){ mq.value = ''; }
+      handleSuggestTrigger(Number(trimmed));
+      return;
+    }
+    const msg = rawText;
+    appendChatBubble('user', msg);
+    setStatus('已送出訊息，請稍候…');
+    if(inputEl){ inputEl.value = ''; }
+    if(q && q !== inputEl){ q.value = ''; }
+    if(typeof mq !== "undefined" && mq && mq !== inputEl){ mq.value = ''; }
+    const payloadHistory = chatHistory.slice(-10);
+    const body = { message: msg, history: payloadHistory, topn: 8, session_id: sessionId };
+    const chatEndpoint = buildBackendUrl('chat');
+    let assistantReplyText = '';
+    if(typeof sendBtn !== "undefined" && sendBtn){ sendBtn.disabled = true; }
+    if(typeof mSendBtn !== "undefined" && mSendBtn){ mSendBtn.disabled = true; }
+    try{
+      const resp = await fetch(chatEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if(!resp.ok){ throw new Error(`HTTP ${resp.status}`); }
+      const data = await resp.json();
+      assistantReplyText = (typeof data.reply === 'string' && data.reply) ? data.reply : '目前暫時沒有合適的推薦喔。';
+      appendChatBubble('assistant', assistantReplyText);
+      chatHistory.push({role:'user', content: msg});
+      chatHistory.push({
+        role:'assistant',
+        content: assistantReplyText,
+        alignment: data.alignment || null
+      });
+      if(chatHistory.length > 40){ chatHistory = chatHistory.slice(-40); }
+      if(data.auto_suggest && Array.isArray(data.auto_suggest.items) && data.auto_suggest.items.length){
+        const cacheKey = data.auto_suggest.type || 1;
+        latestSuggestCache[cacheKey] = {
+          ids: data.auto_suggest.ids || [],
+          items: data.auto_suggest.items,
+          meta: data.auto_suggest.meta || data.meta || null
+        };
+        showSuggestPrompt(cacheKey, data.auto_suggest.label || SUGGEST_TYPES[cacheKey]);
+      }
+      if(Array.isArray(data.items) && data.items.length){
+        const planIds = data.items.map(it => (it['商品編號'] || it['GoodIden'] || '').toString().trim()).filter(Boolean);
+        latestSuggestCache[1] = {
+          ids: planIds,
+          items: data.items,
+          meta: data.meta || null
+        };
+        showSuggestPrompt(1, SUGGEST_TYPES[1]);
+      }
+      setStatus('聊天已回覆，還想了解其他商品嗎？');
+    }catch(err){
+      assistantReplyText = '抱歉，目前聊天服務暫時無法回應，稍後再試。';
+      appendChatBubble('assistant', assistantReplyText);
+      chatHistory.push({role:'user', content: msg});
+      chatHistory.push({role:'assistant', content: assistantReplyText});
+      if(chatHistory.length > 40){ chatHistory = chatHistory.slice(-40); }
+      setStatus(`聊天失敗：${err && err.message ? err.message : err}`);
+    }finally{
+      if(typeof sendBtn !== "undefined" && sendBtn){ sendBtn.disabled = false; }
+      if(typeof mSendBtn !== "undefined" && mSendBtn){ mSendBtn.disabled = false; }
+    }
+  }
+
+  function resetChatConversation(){
+    chatHistory = [];
+    welcomed = false;
+    if(chatMessagesEl){ chatMessagesEl.innerHTML = ''; }
+  }
+
+  function scrollChatToBottom(){
+    if(chatMessagesEl){
+      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+
+  function renderPlanResults(items, meta){
+    if(!Array.isArray(items) || !items.length){ return; }
+    const container = document.createElement('div');
+    container.className = 'plan-card-container';
+    if(meta && (typeof meta.subtotal !== 'undefined')){
+      const summary = document.createElement('div');
+      summary.className = 'bundle-summary';
+      const budgetText = (meta.budget ? `預算 ${meta.budget} 元，剩餘 ${typeof meta.remain === 'number' ? meta.remain : meta.budget - meta.subtotal} 元` : '');
+      summary.textContent = `預估金額：${meta.subtotal} 元${budgetText ? `，${budgetText}` : ''}`;
+      container.appendChild(summary);
+    }
+    chatMessagesEl.appendChild(container);
+    scrollChatToBottom();
+  }
+
+  function showSuggestPrompt(type, label){
+    const prompt = document.createElement('div');
+    prompt.className = 'ai-recommend-label';
+    const textLabel = label || SUGGEST_TYPES[type] || '推薦商品';
+    prompt.innerHTML = `🛍 想看 <b>${textLabel}</b> 卡片嗎？輸入 ${type} 或點下方按鈕。`;
+    chatMessagesEl.appendChild(prompt);
+    scrollChatToBottom();
+  }
+
+  async function triggerSuggest(type){
+    try{
+      setStatus('正在為您準備推薦…');
+      const resp = await fetch(buildBackendUrl('suggest'), {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ session_id: sessionId, type })
+      });
+      if(!resp.ok){ throw new Error(`HTTP ${resp.status}`); }
+      const data = await resp.json();
+      if(Array.isArray(data.items) && data.items.length){
+        latestSuggestCache[type] = {
+          ids: data.ids || [],
+          items: data.items,
+          meta: data.meta || null
+        };
+        switchToSearch('', data.ids || [], data.items);
+        setStatus(data.message || '已載入推薦商品');
+      }else{
+        setStatus('目前沒有合適的推薦，請告訴我更多需求。');
+        switchToChat();
+      }
+    }catch(err){
+      setStatus(`推薦失敗：${err && err.message ? err.message : err}`);
+    }
+  }
+
+  function onClickSearchButton(){
+    const input = getActiveInput();
+    const value = (input?.value || "").trim();
+    triggerSearchFromInputs(value);
+  }
+
+  function onClickResetChat(){
+    doReset();
+  }
+    function card(item){
+      const el = document.createElement("div"); el.className = "card";
+      const name = item["商品名稱"] || "未命名商品";
+      const id = item["商品編號"] || "";
+      const desc = item["商品描述"] || "";
+      const price = item["商品價格"] || "";
+      const sale = item["商品特價"] || "";
+      const link = item["商品購物網址"] || "#";
+      const image = item["商品圖片網址"] || "";
+      const badge = id ? `<span class="card-badge">#${h(id)}</span>` : "";
+      const imgHtml = image ? `<img src="${a(image)}" alt="${a(name)}">` : `<div class="card-placeholder">圖片準備中</div>`;
+      const descHtml = desc ? h(desc).replace(/\n/g,"<br>") : "—";
+      let priceHtml = "";
+      if(price || sale){
+        const base = price ? `<span class="price${sale ? " is-cut" : ""}">${h(price)}</span>` : "";
+        const saleMarkup = sale ? `<span class="sale">特價 ${h(sale)}</span>` : "";
+        priceHtml = `<div class="price-row">${base}${saleMarkup}</div>`;
+      }
+      el.innerHTML = `
+        <div class="card-img">
+          ${imgHtml}
+          ${badge}
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">${h(name)}</h3>
+          <p class="card-desc">${descHtml}</p>
+          ${priceHtml}
+          <div class="card-actions">
+            <a class="link-btn" href="${a(link)}" target="_blank" rel="noopener">前往購買</a>
+          </div>
+        </div>
+      `;
+      return el;
+    }
+
+    const q = document.getElementById("q"), sendBtn = document.getElementById("sendBtn"), resetBtn = document.getElementById("resetBtn"), voiceBtn = document.getElementById("voiceBtn");
+    const mq = document.getElementById("mq"), mSendBtn = document.getElementById("mSendBtn"), mResetBtn = document.getElementById("mResetBtn"), mVoiceBtn = document.getElementById("mVoiceBtn");
+
+    sendBtn?.addEventListener("click", sendChat);
+    resetBtn?.addEventListener("click", onClickResetChat);
+    gotoSearchBtn?.addEventListener("click", onClickSearchButton);
+    backToChatBtn?.addEventListener('click', ()=>{
+      switchToChat();
+      const input = getActiveInput();
+      if(input){ input.focus(); }
+      scrollChatToBottom();
+      console.log('🟢 手動切換至聊天模式');
+    });
+
+    function handleSuggestTrigger(type){
+      const cached = latestSuggestCache[type];
+      if(cached && Array.isArray(cached.items) && cached.items.length){
+        setStatus('為您載入推薦商品...');
+        switchToSearch('', cached.ids || [], cached.items);
+        setTimeout(()=>setStatus('已載入推薦商品'), 200);
+        if(cached.meta){
+          renderPlanResults([], cached.meta);
+        }
+        console.log('🛍 使用快取推薦', type, cached.items.length, 'items');
+      }else{
+        triggerSuggest(type);
+      }
+    }
+
+    suggestButtons.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const t = Number(btn.dataset.sg || '1');
+        handleSuggestTrigger(t);
+      });
+    });
+    mSendBtn?.addEventListener("click", ()=>{
+      if(mode === "chat"){
+        sendChat();
+      }else{
+        triggerSearchFromInputs(mq.value);
+      }
+    });
+    mResetBtn?.addEventListener("click", onClickResetChat);
+
+    let recognizing = false; let rec;
+    function initVoice(btn){
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if(!SR){ setStatus("此瀏覽器未支援語音輸入，請改用文字輸入。"); if(btn) btn.disabled=true; if(mVoiceBtn) mVoiceBtn.disabled=true; return; }
+      rec = new SR(); rec.lang="zh-TW"; rec.interimResults=false; rec.continuous=false;
+      rec.onstart=()=>{ recognizing=true; btn?.classList.add("recording"); mVoiceBtn?.classList.add("recording"); setStatus("🎙️ 正在聆聽… 再按一次可停止"); };
+      rec.onend=()=>{ recognizing=false; btn?.classList.remove("recording"); mVoiceBtn?.classList.remove("recording"); setStatus("語音結束。可按送出。"); };
+      rec.onerror=(e)=>{ recognizing=false; btn?.classList.remove("recording"); mVoiceBtn?.classList.remove("recording"); setStatus("語音錯誤："+(e.error||"未知")); };
+      rec.onresult=(e)=>{ const t=e.results[0][0].transcript; if(window.matchMedia("(max-width:600px)").matches){ mq.value=t; } else { q.value=t; } setStatus('已辨識：「'+t+'」'); };
+    }
+    // Build admin endpoint from the configured API endpoint or origin
+    function buildAdminEndpoint(action){
+      return buildBackendUrl(`admin/${action}`);
+    }
+    function toggleVoice(){ if(!rec) return; recognizing? rec.stop(): rec.start(); }
+
+    function doReset(){
+      lastQuery = "";
+      currentPage = 1;
+      lastPage = 1;
+      hasNextPage = false;
+      if(q) q.value="";
+      if(mq) mq.value="";
+      clearResults();
+      resetChatConversation();
+      switchToChat();
+      setStatus("已重新開始。請輸入您的需求。");
+      const active = getActiveInput();
+      active?.focus();
+      updatePaginationControls({has_next:false, page:1, last_page:1});
+    }
+
+    initVoice(voiceBtn);
+    voiceBtn?.addEventListener("click", toggleVoice);
+    mVoiceBtn?.addEventListener("click", toggleVoice);
+    const PAGE_SIZE = 30;
+    let currentPage = 1;
+    let lastPage = 1;
+    let hasNextPage = false;
+    let lastQuery = "";
+    const paginationEl = document.createElement('div');
+    paginationEl.style.display = 'flex';
+    paginationEl.style.justifyContent = 'center';
+    paginationEl.style.alignItems = 'center';
+    paginationEl.style.gap = '12px';
+    paginationEl.style.marginTop = '16px';
+    const firstBtn = document.createElement('button');
+    firstBtn.textContent = '首頁';
+    firstBtn.className = 'btn ghost';
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '上一頁';
+    prevBtn.className = 'btn ghost';
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = '下一頁';
+    nextBtn.className = 'btn ghost';
+    const lastBtn = document.createElement('button');
+    lastBtn.textContent = '尾頁';
+    lastBtn.className = 'btn ghost';
+    const pageInfo = document.createElement('span');
+    pageInfo.style.fontSize = '14px';
+    pageInfo.style.color = 'var(--sub)';
+    paginationEl.appendChild(firstBtn);
+    paginationEl.appendChild(prevBtn);
+    paginationEl.appendChild(pageInfo);
+    paginationEl.appendChild(nextBtn);
+    paginationEl.appendChild(lastBtn);
+    const resultsSection = document.querySelector('.results-column');
+    if(resultsSection){
+      resultsSection.appendChild(paginationEl);
+    }
+    updatePaginationControls({has_next:false, page:1, last_page:1});
+    function updatePaginationVisibility(){
+      if(paginationEl){
+        paginationEl.style.display = mode === "search" ? 'flex' : 'none';
+      }
+    }
+    updatePaginationVisibility();
+
+    function updatePaginationControls(meta){
+      const hasQuery = !!lastQuery;
+      const metaPage = (meta && typeof meta.page === 'number') ? meta.page : currentPage;
+      const metaLast = (meta && typeof meta.last_page === 'number') ? meta.last_page : lastPage;
+      hasNextPage = !!(meta && meta.has_next);
+      currentPage = Math.max(1, metaPage || 1);
+      lastPage = Math.max(currentPage, metaLast || lastPage || 1);
+      const hasPrev = currentPage > 1;
+      firstBtn.disabled = !hasQuery || !hasPrev;
+      prevBtn.disabled = !hasQuery || !hasPrev;
+      nextBtn.disabled = !hasQuery || !hasNextPage;
+      lastBtn.disabled = !hasQuery || currentPage >= lastPage || (!hasNextPage && currentPage === lastPage);
+      pageInfo.textContent = `第 ${currentPage} 頁 / 共 ${lastPage} 頁`;
+    }
+
+    async function doSearchWithPagination(query, page=1){
+      currentPage = page;
+      lastQuery = query;
+      const payload = { query, topn: PAGE_SIZE, page, page_size: PAGE_SIZE };
+      setLoading(true); sendBtn && (sendBtn.disabled=true); mSendBtn && (mSendBtn.disabled=true);
+      try{
+        const res=await fetch(API_ENDPOINT,{method:"POST",headers:{ "Content-Type":"application/json"},body:JSON.stringify(payload)});
+        const data=await res.json();
+        clearResults();
+        if(Array.isArray(data.items)&&data.items.length){
+          data.items.forEach(it=>resultsEl.appendChild(card(it)));
+          setStatus(data.message||"查詢完成");
+          const c = document.getElementById('resultCount'); if(c) c.textContent = `${data.items.length} 筆結果`;
+          updatePaginationControls({has_next: !!data.has_next, page: data.page, last_page: data.last_page});
+        }else{
+          const msg=data.message||`很抱歉，目前沒有找到符合您需求的商品喔 🙏\n您可以嘗試其他關鍵字，或告訴我品牌、型號或預算範圍，我再幫您推薦合適的商品 💡\n（目前查詢關鍵字：${query}）`;
+          const empty=document.createElement("div");
+          empty.className="card";
+          empty.innerHTML=`
+            <div class="card-img">
+              <div class="card-placeholder">找不到結果</div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">暫時沒有符合的商品</h3>
+              <p class="card-desc">${h(msg).replace(/\\n/g,"<br>")}</p>
+            </div>`;
+          resultsEl.appendChild(empty);
+          const c = document.getElementById('resultCount'); if(c) c.textContent = `0 筆結果`;
+          setStatus("已回覆查無資料訊息");
+          updatePaginationControls({has_next: false, page: data.page ?? page, last_page: data.last_page ?? currentPage});
+        }
+      }catch(err){
+        clearResults();
+        const errorCard=document.createElement("div");
+        errorCard.className="card";
+        errorCard.innerHTML=`
+          <div class="card-img">
+            <div class="card-placeholder">系統忙碌</div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">抱歉，系統忙碌或網路異常</h3>
+            <p class="card-desc">請稍後再試，或檢查網路連線後重新發送。</p>
+          </div>`;
+        resultsEl.appendChild(errorCard);
+        setStatus("查詢失敗："+err);
+        updatePaginationControls({has_next: false, page: currentPage, last_page: lastPage});
+      }finally{ sendBtn&&(sendBtn.disabled=false); mSendBtn&&(mSendBtn.disabled=false); }
+    }
+
+    firstBtn.addEventListener('click', ()=>{ if(!lastQuery || currentPage<=1) return; doSearchWithPagination(lastQuery, 1); });
+    prevBtn.addEventListener('click', ()=>{ if(!lastQuery || currentPage<=1) return; doSearchWithPagination(lastQuery, currentPage-1); });
+    nextBtn.addEventListener('click', ()=>{ if(!lastQuery || (!hasNextPage && currentPage >= lastPage)) return; doSearchWithPagination(lastQuery, currentPage+1); });
+    lastBtn.addEventListener('click', ()=>{ if(!lastQuery || currentPage >= lastPage) return; doSearchWithPagination(lastQuery, lastPage); });
+
+    function triggerSearchFromInputs(value){
+      const query = (value || "").trim();
+      if(!query){
+        setStatus("請先輸入查詢關鍵字");
+        const active = getActiveInput();
+        active?.focus();
+        return;
+      }
+      switchToSearch(query);
+    }
+
+    q?.addEventListener("keydown",(e)=>{
+      if((e.metaKey || e.ctrlKey) && e.key==="Enter"){
+        e.preventDefault();
+        if(mode === "chat"){
+          sendChat();
+        }else{
+          triggerSearchFromInputs(q.value);
+        }
+      }
+    });
+    mq?.addEventListener("keydown",(e)=>{
+      if((e.metaKey || e.ctrlKey) && e.key==="Enter"){
+        e.preventDefault();
+        if(mode === "chat"){
+          if(q){ q.value = mq.value; }
+          sendChat();
+        }else{
+          triggerSearchFromInputs(mq.value);
+        }
+      }
+    });
+    q?.addEventListener('focus', ()=>{
+      if(currentMode === 'search'){
+        switchToChat();
+        console.log('🟢 自動切換至聊天模式');
+        scrollChatToBottom();
+      }
+    });
+    mq?.addEventListener('focus', ()=>{
+      if(currentMode === 'search'){
+        switchToChat();
+        console.log('🟢 自動切換至聊天模式');
+        scrollChatToBottom();
+      }
+    });
+    switchToChat();
+    document.addEventListener("keydown",(e)=>{ const mod=e.metaKey||e.ctrlKey; if(mod&&e.key.toLowerCase()==="k"){ e.preventDefault(); onClickResetChat(); } if(mod&&e.shiftKey&&(e.key.toLowerCase()==="s")){ e.preventDefault(); toggleVoice(); } });
+
+    // --- Admin panel logic
+    const adminToggle = document.getElementById('adminToggle');
+    const adminPanel = document.getElementById('adminPanel');
+    const adminPanelClose = document.getElementById('adminPanelClose');
+    const adminTokenInput = document.getElementById('adminToken');
+    const saveTokenBtn = document.getElementById('saveToken');
+    const uploadFileInput = document.getElementById('uploadFile');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const clearCacheBtn = document.getElementById('clearCacheBtn');
+    const adminMsg = document.getElementById('adminMsg');
+  const adminUrlUpload = document.getElementById('adminUrlUpload');
+  const adminUrlClear = document.getElementById('adminUrlClear');
+  const adminTokenMasked = document.getElementById('adminTokenMasked');
+
+    function showAdminMsg(m){ adminMsg.textContent = '狀態：'+m; }
+
+    function maskToken(t){ if(!t) return '(none)'; if(t.length<=8) return t.replace(/.(?=.{2})/g,'*'); const start=t.slice(0,4); const end=t.slice(-4); return start+'…'+end; }
+
+    function refreshAdminInfo(){
+      const u = buildAdminEndpoint('upload-csv');
+      const c = buildAdminEndpoint('clear-cache');
+      adminUrlUpload.textContent = u;
+      adminUrlClear.textContent = c;
+      const saved = localStorage.getItem('SEARCH_GOODS_ADMIN_TOKEN') || '';
+      adminTokenMasked.textContent = maskToken(saved);
+    }
+
+    adminToggle?.addEventListener('click', ()=>{
+      if(!adminPanel){ return; }
+      const currentlyHidden = adminPanel.style.display === 'none' || getComputedStyle(adminPanel).display === 'none';
+      if(currentlyHidden){
+        adminPanel.style.display = 'block';
+        refreshAdminInfo();
+      }else{
+        adminPanel.style.display = 'none';
+      }
+    });
+    adminPanelClose?.addEventListener('click', ()=>{
+      if(adminPanel){ adminPanel.style.display = 'none'; }
+    });
+  // store token in localStorage (developer convenience)
+  saveTokenBtn?.addEventListener('click', ()=>{ localStorage.setItem('SEARCH_GOODS_ADMIN_TOKEN', adminTokenInput.value || ''); showAdminMsg('已儲存 token'); refreshAdminInfo(); });
+  // load saved token
+  const savedAdminToken = localStorage.getItem('SEARCH_GOODS_ADMIN_TOKEN'); if(savedAdminToken) adminTokenInput.value = savedAdminToken;
+  // refresh display initially
+  refreshAdminInfo();
+
+    async function adminUpload(){
+      const token = adminTokenInput.value || '';
+      const file = uploadFileInput.files && uploadFileInput.files[0];
+      if(!file){ showAdminMsg('請先選擇 CSV 檔案'); return; }
+      uploadBtn.disabled = true; showAdminMsg('上傳中...');
+      try{
+          const form = new FormData(); form.append('file', file, file.name);
+          const ep = buildAdminEndpoint('upload-csv'); refreshAdminInfo();
+        const res = await fetch(ep, { method:'POST', headers: { 'x-admin-token': token }, body: form });
+        if(!res.ok){ showAdminMsg('上傳失敗: '+res.status); return; }
+        const j = await res.json(); showAdminMsg('上傳成功: '+(j.message||'ok'));
+      }catch(e){ showAdminMsg('上傳錯誤: '+e.message); }
+      finally{ uploadBtn.disabled=false; }
+    }
+
+    async function adminClearCache(){
+      const token = adminTokenInput.value || '';
+      clearCacheBtn.disabled = true; showAdminMsg('清除中...');
+      try{
+  const ep = buildAdminEndpoint('clear-cache'); refreshAdminInfo();
+        const res = await fetch(ep, { method:'POST', headers: { 'x-admin-token': token } });
+        if(!res.ok){ showAdminMsg('清除失敗: '+res.status); return; }
+        const j = await res.json(); showAdminMsg('清除成功: '+(j.message||'ok'));
+      }catch(e){ showAdminMsg('清除錯誤: '+e.message); }
+      finally{ clearCacheBtn.disabled=false; }
+    }
+
+    uploadBtn?.addEventListener('click', adminUpload);
+    clearCacheBtn?.addEventListener('click', adminClearCache);
+
+    const paramToggle = document.getElementById('paramToggle');
+    const paramPanel = document.getElementById('paramPanel');
+    const paramPanelClose = document.getElementById('paramPanelClose');
+    const logoInput = document.getElementById('logoUrlInput');
+    const youtubeInput = document.getElementById('youtubeUrlInput');
+    const promptInput = document.getElementById('promptInput');
+    const saveParamsBtn = document.getElementById('saveParamsBtn');
+    const clearParamsBtn = document.getElementById('clearParamsBtn');
+    const paramMsg = document.getElementById('paramMsg');
+    const brandLogo = document.getElementById('brandLogo');
+    const brandPlaceholder = document.getElementById('brandPlaceholder');
+    const mediaPanel = document.getElementById('mediaPanel');
+    const youtubeFrame = document.getElementById('youtubeFrame');
+    const youtubePlaceholder = document.getElementById('youtubePlaceholder');
+
+    function showParamMsg(msg){
+      if(paramMsg){ paramMsg.textContent = msg ? `狀態：${msg}` : ''; }
+    }
+
+    function refreshParamInputs(){
+      if(logoInput){ logoInput.value = _branding.logo_url || ''; }
+      if(youtubeInput){ youtubeInput.value = _branding.youtube_url || ''; }
+      if(promptInput){ promptInput.value = _branding.nl_prompt || ''; }
+    }
+
+    function applyLogo(url){
+      if(!brandLogo || !brandPlaceholder){ return; }
+      const clean = (url || '').trim();
+      if(!clean){
+        brandLogo.src = '';
+        brandLogo.style.display = 'none';
+        brandPlaceholder.style.display = '';
+        return;
+      }
+      brandLogo.onload = ()=>{ brandLogo.style.display = 'block'; brandPlaceholder.style.display = 'none'; };
+      brandLogo.onerror = ()=>{ brandLogo.style.display = 'none'; brandPlaceholder.style.display = ''; showParamMsg('Logo 連結無法載入'); };
+      brandLogo.src = clean;
+    }
+
+    function extractYouTubeId(url){
+      if(!url){ return ''; }
+      const patterns = [
+        /youtube\.com\/watch\?v=([^&]+)/i,
+        /youtu\.be\/([^?]+)/i,
+        /youtube\.com\/embed\/([^?]+)/i,
+        /youtube\.com\/shorts\/([^?]+)/i
+      ];
+      for(const pat of patterns){
+        const match = url.match(pat);
+        if(match && match[1]){ return match[1]; }
+      }
+      return '';
+    }
+
+    function applyYoutube(url){
+      if(!mediaPanel || !youtubeFrame || !youtubePlaceholder){ return; }
+      const clean = (url || '').trim();
+      mediaPanel.style.display = 'flex';
+      if(!clean){
+        youtubeFrame.src = '';
+        youtubeFrame.style.display = 'none';
+        youtubePlaceholder.textContent = '尚未設定 YouTube 影片連結';
+        youtubePlaceholder.style.display = 'block';
+        return;
+      }
+      const vid = extractYouTubeId(clean);
+      if(!vid){
+        youtubeFrame.src = '';
+        youtubeFrame.style.display = 'none';
+        youtubePlaceholder.textContent = '無法辨識的 YouTube 連結';
+        youtubePlaceholder.style.display = 'block';
+        return;
+      }
+      youtubePlaceholder.style.display = 'none';
+      youtubeFrame.style.display = 'block';
+      // loop requires playlist param repeating the same video id
+      youtubeFrame.src = `https://www.youtube.com/embed/${vid}?rel=0&autoplay=1&mute=1&loop=1&playlist=${vid}`;
+    }
+
+    let _branding = { logo_url: '', youtube_url: '', nl_prompt: '' };
+
+    async function loadBranding(){
+      try{
+        const brandingEndpoint = buildBackendUrl('branding');
+        const res = await fetch(brandingEndpoint);
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if(data && typeof data === 'object'){
+          _branding = {
+            logo_url: data.logo_url || '',
+            youtube_url: data.youtube_url || '',
+            nl_prompt: data.nl_prompt || ''
+          };
+          applyLogo(_branding.logo_url);
+          applyYoutube(_branding.youtube_url);
+          refreshParamInputs();
+        }
+      }catch(err){
+        showParamMsg(`無法載入設定：${err.message}`);
+      }
+    }
+
+    async function doSearchByIds(ids){
+      currentPage = 1;
+      lastPage = 1;
+      hasNextPage = false;
+      lastQuery = ids.join(', ');
+      const payload = { ids };
+      setLoading(true); sendBtn && (sendBtn.disabled=true); mSendBtn && (mSendBtn.disabled=true);
+      try{
+        const res = await fetch(API_ENDPOINT,{method:"POST",headers:{ "Content-Type":"application/json"},body:JSON.stringify(payload)});
+        const data = await res.json();
+        clearResults();
+        if(Array.isArray(data.items) && data.items.length){
+          data.items.forEach(it=>resultsEl.appendChild(card(it)));
+          setStatus(data.message || "查詢完成");
+          const c = document.getElementById('resultCount'); if(c) c.textContent = `${data.items.length} 筆結果`;
+        }else{
+          setStatus('目前無法顯示這些商品，請再試一次或更換條件。');
+          const c = document.getElementById('resultCount'); if(c) c.textContent = `0 筆結果`;
+        }
+      }catch(err){
+        clearResults();
+        const errorCard=document.createElement("div");
+        errorCard.className="card";
+        errorCard.innerHTML=`
+          <div class="card-img">
+            <div class="card-placeholder">系統忙碌</div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">抱歉，系統忙碌或網路異常</h3>
+            <p class="card-desc">請稍後再試，或檢查網路連線後重新發送。</p>
+          </div>`;
+        resultsEl.appendChild(errorCard);
+        setStatus("查詢失敗："+err);
+      }finally{
+        sendBtn&&(sendBtn.disabled=false); mSendBtn&&(mSendBtn.disabled=false);
+        updatePaginationControls({has_next:false, page:1, last_page:1});
+      }
+    }
+
+    paramToggle?.addEventListener('click', ()=>{
+      if(!paramPanel){ return; }
+      const currentlyHidden = paramPanel.style.display === 'none' || getComputedStyle(paramPanel).display === 'none';
+      if(currentlyHidden){
+        paramPanel.style.display = 'block';
+        showParamMsg('');
+        refreshParamInputs();
+        loadBranding();
+      }else{
+        paramPanel.style.display = 'none';
+        showParamMsg('');
+      }
+    });
+    paramPanelClose?.addEventListener('click', ()=>{
+      if(paramPanel){
+        paramPanel.style.display = 'none';
+        showParamMsg('');
+      }
+    });
+
+    saveParamsBtn?.addEventListener('click', ()=>{
+      const logoVal = (logoInput?.value || '').trim();
+      const ytVal = (youtubeInput?.value || '').trim();
+      const promptVal = (promptInput?.value || '').trim();
+      const brandingEndpoint = buildBackendUrl('branding');
+      fetch(brandingEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logo_url: logoVal, youtube_url: ytVal, nl_prompt: promptVal })
+      }).then(async res=>{
+        if(!res.ok){
+          const msg = await res.text();
+          throw new Error(msg || `HTTP ${res.status}`);
+        }
+        return res.json();
+      }).then(data=>{
+        if(data && data.data){
+          _branding = {
+            logo_url: data.data.logo_url || '',
+            youtube_url: data.data.youtube_url || '',
+            nl_prompt: data.data.nl_prompt || ''
+          };
+          applyLogo(_branding.logo_url);
+          applyYoutube(_branding.youtube_url);
+          refreshParamInputs();
+        }
+        showParamMsg('已儲存設定');
+      }).catch(err=>{
+        showParamMsg(`儲存失敗：${err.message}`);
+      });
+    });
+
+    clearParamsBtn?.addEventListener('click', ()=>{
+      if(logoInput){ logoInput.value = ''; }
+      if(youtubeInput){ youtubeInput.value = ''; }
+      if(promptInput){ promptInput.value = ''; }
+      const brandingEndpoint = buildBackendUrl('branding');
+      fetch(brandingEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logo_url: '', youtube_url: '', nl_prompt: '' })
+      }).then(res=>{
+        if(!res.ok){ throw new Error(`HTTP ${res.status}`); }
+        return res.json();
+      }).then(data=>{
+        _branding = data.data || { logo_url: '', youtube_url: '', nl_prompt: '' };
+        applyLogo('');
+        applyYoutube('');
+        refreshParamInputs();
+        showParamMsg('已清除設定');
+      }).catch(err=>{
+        showParamMsg(`清除失敗：${err.message}`);
+      });
+    });
+
+    // Initialize from backend config
+    loadBranding();
+  </script>
+</body>
+</html>
