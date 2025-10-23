@@ -1,6 +1,6 @@
 # SEARCH_Goods
 
-輕量商品查詢客服系統 MVP 範例。
+輕量商品查詢客服系統 MVP 範例Ａ。
 
 快速啟動參考請見 `backend/README.md`。
 
