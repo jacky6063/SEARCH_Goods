@@ -751,7 +751,3 @@ async def spa_fallback(request: Request, call_next):
 # ---- Hotfix K1+K2: chat router integration completed in main app ----
 # The enhanced chat functionality from chat_router_k1_k2 has been integrated
 # into the main chat_endpoint function above
-
-# ---- Mount promo40 router (40字宣傳文) ----
-from .promo_router_40 import router as promo_router_40
-app.include_router(promo_router_40)
