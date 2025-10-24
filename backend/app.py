@@ -755,3 +755,7 @@ async def spa_fallback(request: Request, call_next):
 # ---- Mount promo40 router (40字宣傳文) ----
 from promo_router_40 import router as promo_router_40
 app.include_router(promo_router_40)
+
+# ---- goods_1024001: attach search router with promo ----
+from search_router_goods_1024001 import router as search_router_goods_1024001
+app.include_router(search_router_goods_1024001)
