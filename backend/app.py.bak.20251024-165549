@@ -753,5 +753,5 @@ async def spa_fallback(request: Request, call_next):
 # into the main chat_endpoint function above
 
 # ---- Mount promo40 router (40字宣傳文) ----
-from promo_router_40 import router as promo_router_40
+from .promo_router_40 import router as promo_router_40
 app.include_router(promo_router_40)
