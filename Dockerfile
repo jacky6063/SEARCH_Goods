@@ -1,9 +1,11 @@
 FROM python:3.10-slim AS builder
 WORKDIR /app
 COPY backend/requirements.txt /app/requirements.txt
+COPY requirements_hotfix.txt /app/requirements_hotfix.txt
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential curl \
 	&& python -m pip install --upgrade pip setuptools wheel \
 	&& pip install --no-cache-dir -r /app/requirements.txt \
+	&& pip install --no-cache-dir -r /app/requirements_hotfix.txt \
 	&& pip install --no-cache-dir gunicorn==23.0.0 \
 	&& rm -rf /var/lib/apt/lists/*
 
