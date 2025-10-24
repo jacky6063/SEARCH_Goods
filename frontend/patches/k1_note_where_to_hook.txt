@@ -1,6 +1,0 @@
-
-Place this where you handle chat responses:
-if (resp.action && resp.action.type === 'switch_to_search') {
-  import('/patches/k1_render_all_groups.js')
-    .then(m => m.handleSwitchToSearchAllItems(resp.action));
-}
