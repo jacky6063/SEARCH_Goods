@@ -1,0 +1,27 @@
+{
+  "name": "search-goods",
+  "version": "1.0.0",
+  "description": "SEARCH_Goods - A lightweight product search system with natural language support",
+  "scripts": {
+    "deploy": "./scripts/auto_deploy.sh",
+    "deploy:force": "./scripts/auto_deploy.sh --force",
+    "deploy:watch": "./scripts/watch_deploy.sh",
+    "setup": "./scripts/setup.sh",
+    "test": "cd backend && python -m pytest",
+    "start:backend": "cd backend && uvicorn app:app --reload --host 0.0.0.0 --port 8000",
+    "start:frontend": "cd frontend && python -m http.server 5173",
+    "docker:dev": "docker compose -f docker-compose.dev.yml up --build",
+    "docker:prod": "docker compose up --build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jacky6063/SEARCH_Goods.git"
+  },
+  "keywords": ["search", "goods", "nlp", "fastapi", "docker"],
+  "author": "jacky6063",
+  "license": "MIT",
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
