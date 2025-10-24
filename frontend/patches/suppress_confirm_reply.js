@@ -5,24 +5,15 @@
     /^已為您顯示商品。?$/i,
     /^即將顯示推薦商品。?$/i
   ];
-  const isConfirmText = (txt) => patterns.some(re => re.test(txt.trim()));
-
+  const isConfirmText = (t) => patterns.some(re => re.test((t||'').trim()));
   function sweep(root=document) {
     const nodes = root.querySelectorAll('.assistant-message, .msg-assistant, .chat-ai, .bot, p, div');
     nodes.forEach(n => {
-      const t = (n.textContent||'').trim();
-      if (t && isConfirmText(t)) {
-        n.remove();
-      }
+      const txt = (n.textContent||'').trim();
+      if (txt && isConfirmText(txt)) n.remove();
     });
   }
-
-  // 1) 初始清理
   sweep();
-
-  // 2) 監聽 DOM 新增，自動清理
-  const mo = new MutationObserver((muts) => {
-    muts.forEach(m => m.addedNodes && m.addedNodes.forEach(n => n.nodeType===1 && sweep(n)));
-  });
+  const mo = new MutationObserver(muts => muts.forEach(m => m.addedNodes && m.addedNodes.forEach(n => n.nodeType===1 && sweep(n))));
   mo.observe(document.body, {childList:true, subtree:true});
 })();
