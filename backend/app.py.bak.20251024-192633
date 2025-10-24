@@ -763,7 +763,3 @@ app.include_router(search_router_goods_1024001)
 # ---- goods_1024001: override /api/chat and strengthen search ----
 from chat_router_goods_1024001 import router as chat_router_goods_1024001
 app.include_router(chat_router_goods_1024001)
-
-# ---- goods_action: 覆蓋 /api/chat，含 switch_to_search ----
-from chat_router_goods_action import router as chat_router_goods_action
-app.include_router(chat_router_goods_action)
