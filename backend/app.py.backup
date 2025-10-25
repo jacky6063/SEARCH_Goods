@@ -403,7 +403,213 @@ class ChatResp(BaseModel):
     meta: Optional[Dict[str, Any]] = None
 
 
-# 舊的 chat 端點已移除，功能已移至 chat_router_goods_action.py 以避免路由衝突
+# 舊的 chat 端點已完全移除，功能已移至 chat_router_goods_action.py
+
+
+@app.post("/api/suggest")
+def suggest_endpoint(req: SuggestReq):
+        ids, rows = _build_suggestion(session_id, int(message), df)
+        if rows:
+            items_payload = [{
+                "id": str(row.get("GoodIden") or "").strip(),
+                "name": str(row.get("Name") or row.get("商品名稱") or "").strip(),
+            } for row in rows if str(row.get("GoodIden") or "").strip()]
+            action = {"type": "switch_to_search", "items": items_payload, "reason": "suggestion"}
+            return ChatResp(reply="好的，為您準備推薦商品。", action=action, alignment=None)
+        return ChatResp(reply="目前沒有可顯示的建議，告訴我偏好我再試看看。", action={"type": "none"})
+
+    if _contains_affirmation(message):
+        cached = SESSION_ALIGN_CACHE.get(session_id)
+        ids = cached.get("ids") if cached else []
+        if ids:
+            rows = get_items_by_ids(df, ids)
+            if rows:
+                sanitized_items = [{"id": str(row.get("GoodIden") or "").strip(), "name": str(row.get("Name") or row.get("商品名稱") or "").strip()} for row in rows if str(row.get("GoodIden") or "").strip()]
+                if sanitized_items:
+                    action = {"type": "switch_to_search", "items": sanitized_items, "reason": "cached alignment"}
+                    alignment = {"intent": "product_align", "items": sanitized_items, "need_confirm_show_details": False}
+                    return ChatResp(reply="好的，為您顯示這些商品。", action=action, alignment=alignment)
+        return ChatResp(reply="我沒有上一輪的商品清單，可以再告訴我品牌、款式或預算嗎？", action={"type": "none"})
+
+    # 自由規劃方案
+    try:
+        catalog_snapshot = get_catalog_snapshot(limit=600)
+        catalog_lines = []
+        for item in catalog_snapshot:
+            if not item:
+                continue
+            line = "{id} {name} 類別:{cat} 價格:{price} 特價:{special}".format(
+                id=item.get("good_id", ""),
+                name=item.get("name", ""),
+                cat=item.get("category", ""),
+                price=item.get("price", ""),
+                special=item.get("special", ""),
+            )
+            catalog_lines.append(line)
+        plan_result = llm_generate_plan(message, "\n".join(catalog_lines))
+    except Exception:
+        plan_result = {"reply_text": "", "plan": {"items": []}}
+
+    plan = plan_result.get("plan") or {}
+    plan_items = plan.get("items") or []
+    validated = []
+    missing = []
+    rows_for_cards: List[Dict[str, Any]] = []
+    for entry in plan_items:
+        if not isinstance(entry, dict):
+            continue
+        raw_id = str(entry.get("id") or "").strip()
+        raw_name = str(entry.get("name") or "").strip()
+        quantity = entry.get("quantity")
+        try:
+            qty = int(quantity)
+        except Exception:
+            qty = 1
+        if qty <= 0:
+            qty = 1
+        note = str(entry.get("note") or "").strip()
+        matched_rows = []
+        if raw_id:
+            matched_rows = get_items_by_ids(df, [raw_id])
+        if not matched_rows and raw_name:
+            matched_rows = find_product_by_name(df, raw_name, limit=1)
+        if matched_rows:
+            row = matched_rows[0]
+            unit_price = _parse_price(row)
+            subtotal = qty * unit_price
+            validated.append({
+                "id": str(row.get("GoodIden") or "").strip(),
+                "row": row,
+                "quantity": qty,
+                "note": note,
+                "unit_price": unit_price,
+                "subtotal": subtotal,
+            })
+            rows_for_cards.append(row)
+        else:
+            if raw_name or raw_id:
+                missing.append(raw_name or raw_id)
+
+    if validated:
+        formatted_items = format_for_chat([item["row"] for item in validated])
+        total_subtotal = 0.0
+        for fmt, info in zip(formatted_items, validated):
+            qty = info["quantity"]
+            subtotal = info["subtotal"]
+            total_subtotal += subtotal
+            note_parts = []
+            base_desc = str(fmt.get("商品描述") or "")
+            if base_desc:
+                note_parts.append(base_desc)
+            note_parts.append(f"建議數量：{qty}")
+            note_parts.append(f"預估小計：{int(round(subtotal))} 元")
+            if info.get("note"):
+                note_parts.append(f"推薦理由：{info['note']}")
+            fmt["商品描述"] = " / ".join(note_parts)
+        budget_value = None
+        try:
+            budget_value = float(plan.get("budget") or 0)
+        except Exception:
+            budget_value = None
+        meta = {
+            "subtotal": int(round(total_subtotal)),
+        }
+        if budget_value:
+            meta["budget"] = int(round(budget_value))
+            meta["remain"] = int(round(budget_value - total_subtotal))
+        plan_reply = plan_result.get("reply_text") or ""
+        if missing:
+            plan_reply += "\n未能在商品清單找到以下項目，已略過：" + ", ".join(missing)
+        if budget_value:
+            plan_reply += f"\n預估金額約 {int(round(total_subtotal))} 元，預算 {int(round(budget_value))} 元，剩餘 {int(round(budget_value - total_subtotal))} 元。"
+        else:
+            plan_reply += f"\n預估金額約 {int(round(total_subtotal))} 元。"
+        tokens = re.findall(r"[\u4e00-\u9fa5a-zA-Z0-9]+", message.lower())
+        query_terms = list({token for token in tokens if len(token) > 1})
+        alignment_input = [{"id": info["id"], "name": info["row"].get("Name") or info["row"].get("商品名稱") or ""} for info in validated]
+        _store_alignment(session_id, df, alignment_input, now, query_terms)
+        SUGGEST_CACHE[session_id] = {
+            "align_ids": [info["id"] for info in validated],
+            "align_rows": [info["row"] for info in validated],
+            "query_terms": query_terms,
+            "ts": now,
+        }
+        return ChatResp(
+            reply=plan_reply.strip() or "已為您整理推薦清單。",
+            action={"type": "none"},
+            items=formatted_items,
+            meta=meta,
+        )
+    elif plan_items:
+        plan_reply = plan_result.get("reply_text") or "目前沒有找到合適的商品方案，請提供更精準的需求。"
+        plan_reply += "\n目前無法在商品清單找到對應項目，請提供更精準的商品名稱或類型。"
+        return ChatResp(reply=plan_reply, action={"type": "none"})
+    limit = int(os.getenv("CHAT_SYS_MAX_ITEMS", "200"))
+    catalog = get_catalog_snapshot(limit=limit)
+    result = chat_reply(
+        user_message=message,
+        history=history,
+        catalog=catalog,
+        topn=req.topn,
+    )
+
+    reply_text = result.get("reply") or ""
+    alignment_payload = result.get("alignment")
+    query_terms = result.get("query_terms") or []
+
+    match = ALIGN_JSON_RE.search(reply_text)
+    if match:
+        try:
+            parsed = json.loads(match.group(0))
+            alignment_payload = parsed
+        except Exception:
+            pass
+        reply_text = ALIGN_JSON_RE.sub("", reply_text).rstrip()
+
+    sanitized_items: List[Dict[str, str]] = []
+    auto_suggest_payload: Optional[Dict[str, Any]] = None
+    if alignment_payload:
+        sanitized_items = _store_alignment(session_id, df, alignment_payload.get("items") or [], now, query_terms)
+        if sanitized_items:
+            alignment_payload = {
+                "intent": "product_align",
+                "items": sanitized_items,
+                "need_confirm_show_details": bool(alignment_payload.get("need_confirm_show_details", True)),
+                "reason": alignment_payload.get("reason") or "",
+            }
+            if USE_LLM_RECOMMEND:
+                recommend_type = classify_recommendation_type(message)
+            else:
+                recommend_type = 1
+            ids, rows = _build_suggestion(session_id, recommend_type, df)
+            if rows:
+                label_map = {1: "原建議商品", 2: "特價關聯商品", 3: "智慧搭配商品"}
+                auto_suggest_payload = {
+                    "type": recommend_type,
+                    "label": label_map.get(recommend_type, "原建議商品"),
+                    "items": format_for_chat(rows),
+                    "ids": ids,
+                }
+        else:
+            alignment_payload = None
+
+    action = result.get("action") or {"type": "none"}
+    if action.get("type") == "switch_to_search":
+        if sanitized_items:
+            action = {
+                "type": "switch_to_search",
+                "items": sanitized_items,
+                "reason": action.get("reason") or "",
+            }
+        else:
+            action = {"type": "none"}
+
+    if not reply_text:
+        reply_text = "我僅能在商品清單範圍內協助～告訴我你想找的品類或預算吧。"
+
+    return ChatResp(reply=reply_text, action=action, alignment=alignment_payload, auto_suggest=auto_suggest_payload)
+    """
+    pass
 
 
 @app.post("/api/suggest")
@@ -551,9 +757,9 @@ app.include_router(promo_router_40)
 from search_router_goods_1024001 import router as search_router_goods_1024001
 app.include_router(search_router_goods_1024001)
 
-# ---- goods_1024001: override /api/chat and strengthen search ----
-from chat_router_goods_1024001 import router as chat_router_goods_1024001
-app.include_router(chat_router_goods_1024001)
+# ---- goods_1024001: 已停用，功能已整合到 chat_router_goods_action ----
+# from chat_router_goods_1024001 import router as chat_router_goods_1024001
+# app.include_router(chat_router_goods_1024001)
 
 # ---- goods_action: 覆蓋 /api/chat，含 switch_to_search ----
 from chat_router_goods_action import router as chat_router_goods_action, get_chat_result_by_session
