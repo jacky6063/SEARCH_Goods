@@ -1,1 +1,35 @@
-(()=>{if(window.__suppressHiddenJsonInstalledV2)return;window.__suppressHiddenJsonInstalledV2=!0;console.log("[suppress_hidden_json] v2 installed");const n=[/（\s*隱藏\s*JSON\s*：[\s\S]*?）/g,/(?:以下是)?\s*隱藏(?:的)?\s*JSON(?:\s*格式)?\s*[:：]\s*[\s\S]*$/gi];const t=(e=document)=>{const s=document.createTreeWalker(e,NodeFilter.SHOW_TEXT,null),o=[];for(;s.nextNode();)o.push(s.currentNode);for(const r of o){let c=r.nodeValue||"",i=!1;for(const a of n)a.test(c)&&(c=c.replace(a,""),i=!0);i&&(r.nodeValue=c)}};t();new MutationObserver(e=>{for(const s of e)s.addedNodes&&s.addedNodes.forEach(o=>o.nodeType===1&&t(o)),s.type==="characterData"&&s.target?.nodeType===3&&(s.target.nodeValue=(s.target.nodeValue||"").replace(n[0],"").replace(n[1],""));}).observe(document.body,{childList:!0,subtree:!0,characterData:!0});})();
+// frontend/public/patches/suppress_hidden_json.js
+(() => {
+  if (window.__suppressHiddenJsonInstalled) return;
+  window.__suppressHiddenJsonInstalled = true;
+  console.log("[suppress_hidden_json] installed");
+
+  const re = /（\s*隱藏\s*JSON\s*：[\s\S]*?）/g; // 全形括號＋內容
+  function stripHiddenJsonIn(el) {
+    if (!el) return;
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(n => {
+      const t = n.nodeValue || '';
+      if (re.test(t)) n.nodeValue = t.replace(re, '');
+    });
+  }
+
+  // 初始化清理
+  stripHiddenJsonIn(document.body);
+
+  // 動態新增時清理
+  const mo = new MutationObserver(muts => {
+    muts.forEach(m => {
+      m.addedNodes && m.addedNodes.forEach(n => {
+        if (n.nodeType === 1) stripHiddenJsonIn(n);
+      });
+      if (m.type === 'characterData' && m.target?.nodeType === 3) {
+        const t = m.target.nodeValue || '';
+        if (re.test(t)) m.target.nodeValue = t.replace(re, '');
+      }
+    });
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+})();

@@ -1,4 +1,4 @@
-from backend.fallback.multi_category_party import run_fallback
+from fallback.multi_category_party import run_fallback
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
