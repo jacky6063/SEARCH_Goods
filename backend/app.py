@@ -765,5 +765,15 @@ from chat_router_goods_1024001 import router as chat_router_goods_1024001
 app.include_router(chat_router_goods_1024001)
 
 # ---- goods_action: 覆蓋 /api/chat，含 switch_to_search ----
-from chat_router_goods_action import router as chat_router_goods_action
+from chat_router_goods_action import router as chat_router_goods_action, get_chat_result_by_session
 app.include_router(chat_router_goods_action)
+
+# ---- 新增會話結果檢索 endpoint ----
+@app.get("/api/chat-session/{session_id}")
+def get_chat_session(session_id: str):
+    """根據會話 ID 獲取聊天結果"""
+    result = get_chat_result_by_session(session_id)
+    if result:
+        return JSONResponse({"ok": True, "result": result})
+    else:
+        return JSONResponse({"ok": False, "error": "Session not found or expired"})

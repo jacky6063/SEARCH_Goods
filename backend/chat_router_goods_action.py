@@ -4,8 +4,14 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from search_ext_goods_1024001 import search_products_strict, infer_filters_from_query
 from field_utils import FieldAccessor, create_product_summary
+import uuid
+import time
 
 router = APIRouter()
+
+# 聊天會話結果快取
+CHAT_SESSION_CACHE = {}
+CACHE_TTL = 300  # 5 分鐘 TTL
 
 AGREE_WORDS = {"要","ok","OK","Ok","好","可以","行","確定","沒問題","那就這些","都可以","ＯＫ","Ｏk","ｏｋ"}
 
@@ -18,17 +24,61 @@ def has_budget_intent(text: str) -> bool:
 
 class ChatReq(BaseModel):
     text: str
+    session_id: Optional[str] = None
+
+def _cleanup_session_cache() -> None:
+    """清理過期的聊天會話快取"""
+    current_time = time.time()
+    expired_sessions = [
+        session_id for session_id, (timestamp, _) in CHAT_SESSION_CACHE.items()
+        if current_time - timestamp > CACHE_TTL
+    ]
+    for session_id in expired_sessions:
+        del CHAT_SESSION_CACHE[session_id]
+
+def get_chat_result_by_session(session_id: str) -> Optional[Dict[str, Any]]:
+    """根據會話 ID 獲取聊天結果"""
+    _cleanup_session_cache()
+    if session_id in CHAT_SESSION_CACHE:
+        timestamp, result = CHAT_SESSION_CACHE[session_id]
+        return result
+    return None
+
+def _store_chat_result(result: Dict[str, Any]) -> str:
+    """儲存聊天結果並回傳會話 ID"""
+    if not result.get("category_suggestions") and not result.get("suggestion_ids"):
+        return None
+        
+    session_id = str(uuid.uuid4())
+    CHAT_SESSION_CACHE[session_id] = {
+        "category_suggestions": result.get("category_suggestions"),
+        "suggestion_ids": result.get("suggestion_ids", []),
+        "action": result.get("action"),
+        "meta": result.get("meta", {}),
+        "timestamp": time.time()
+    }
+    return session_id
 
 @router.post("/api/chat")
 def chat_handler(req: ChatReq):
     # === goods_1024002 fallback: 餅乾+飲料＋(預算) → 規則式回覆 ===
     user_text = (req.text or "").strip()
     
+    # 清理過期快取
+    _cleanup_session_cache()
+    
     # 優先嘗試 fallback 系統處理特殊查詢（如生日聚會）
     try:
         _fb = run_fallback(user_text)
         if _fb and _fb.get("ok"):
             print(f"[INFO] Fallback system activated for: {user_text[:50]}...")
+            
+            # 為 fallback 結果加入會話追蹤
+            session_id = _store_chat_result(_fb)
+            if session_id:
+                _fb["chat_session_id"] = session_id
+                _fb["display_mode"] = "grouped" if _fb.get("category_suggestions") else "flat"
+            
             return _fb
     except Exception as _e:
         print(f"[ERROR] Fallback system error: {_e}")
@@ -89,4 +139,11 @@ def chat_handler(req: ChatReq):
             "items": [{"id": sid} for sid in suggestion_ids]
         } if suggestion_ids else None
     }
+    
+    # 儲存聊天結果並加入會話 ID
+    session_id = _store_chat_result(resp)
+    if session_id:
+        resp["chat_session_id"] = session_id
+        resp["display_mode"] = "flat"  # 一般聊天為平面顯示
+    
     return resp

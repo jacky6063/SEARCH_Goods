@@ -447,8 +447,22 @@
     }else if(query){
       doSearchWithPagination(query, 1);
     }else{
-      setStatus("請先輸入查詢關鍵字");
-      activeInput?.focus();
+      // 如果沒有指定查詢，嘗試同步聊天結果
+      window.syncChatToSearch().then(success => {
+        if (!success) {
+          setStatus("請先輸入查詢關鍵字或在聊天模式中獲得推薦");
+          activeInput?.focus();
+        }
+      });
+    }
+  }
+
+  // 新增通用的 switchMode 函數
+  function switchMode(targetMode) {
+    if (targetMode === 'chat') {
+      switchToChat();
+    } else if (targetMode === 'product' || targetMode === 'search') {
+      switchToSearch('', [], []);
     }
   }
 
@@ -474,7 +488,12 @@
     if(q && q !== inputEl){ q.value = ''; }
     if(typeof mq !== "undefined" && mq && mq !== inputEl){ mq.value = ''; }
     const payloadHistory = chatHistory.slice(-10);
-    const body = { message: msg, history: payloadHistory, topn: 8, session_id: sessionId };
+    const body = { 
+      message: msg, 
+      history: payloadHistory, 
+      topn: 8, 
+      session_id: currentChatSession || sessionId 
+    };
     const chatEndpoint = buildBackendUrl('chat');
     let assistantReplyText = '';
     if(typeof sendBtn !== "undefined" && sendBtn){ sendBtn.disabled = true; }
@@ -487,6 +506,12 @@
       });
       if(!resp.ok){ throw new Error(`HTTP ${resp.status}`); }
       const data = await resp.json();
+      
+      // 處理會話追蹤
+      if (data.chat_session_id) {
+        window.setChatSession(data.chat_session_id);
+      }
+      
       assistantReplyText = (typeof data.reply === 'string' && data.reply) ? data.reply : '目前暫時沒有合適的推薦喔。';
       appendChatBubble('assistant', assistantReplyText);
       chatHistory.push({role:'user', content: msg});
@@ -1168,6 +1193,87 @@
         showParamMsg(`清除失敗：${err.message}`);
       });
     });
+
+    // 會話追蹤功能
+    let currentChatSession = null;
+    
+    window.getChatSession = function() {
+      return currentChatSession;
+    };
+    
+    window.setChatSession = function(sessionId) {
+      currentChatSession = sessionId;
+    };
+    
+    window.loadChatSession = async function(sessionId) {
+      if (!sessionId) return null;
+      
+      try {
+        const endpoint = buildBackendUrl(`chat-session/${sessionId}`);
+        const response = await fetch(endpoint);
+        if (!response.ok) return null;
+        
+        const data = await response.json();
+        if (data.ok && data.result) {
+          return data.result;
+        }
+      } catch (error) {
+        console.warn('Failed to load chat session:', error);
+      }
+      
+      return null;
+    };
+    
+    window.syncChatToSearch = async function() {
+      const sessionId = currentChatSession;
+      if (!sessionId) return false;
+      
+      const chatResult = await window.loadChatSession(sessionId);
+      if (!chatResult) return false;
+      
+      // 如果聊天結果有商品建議
+      if (chatResult.action && chatResult.action.type === 'switch_to_search' && chatResult.action.items) {
+        const items = chatResult.action.items;
+        const ids = items.map(item => item.id).filter(Boolean);
+        
+        if (ids.length > 0) {
+          // 切換到商品模式並載入這些商品
+          switchMode('product');
+          
+          try {
+            const searchEndpoint = buildBackendUrl('search');
+            const response = await fetch(searchEndpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                query: '',
+                ids: ids,
+                topn: ids.length,
+                page_size: ids.length
+              })
+            });
+            
+            if (response.ok) {
+              const searchData = await response.json();
+              if (searchData.items && searchData.items.length > 0) {
+                // 使用 renderList 顯示商品，支援分類顯示
+                if (chatResult.groups && Object.keys(chatResult.groups).length > 0) {
+                  window.renderList(searchData.items, chatResult.groups);
+                } else {
+                  window.renderList(searchData.items);
+                }
+                setStatus(`已同步聊天結果 (共 ${searchData.items.length} 個商品)`);
+                return true;
+              }
+            }
+          } catch (error) {
+            console.error('Failed to sync chat to search:', error);
+          }
+        }
+      }
+      
+      return false;
+    };
 
     // 支援分類商品顯示的 renderList 函數
     window.renderList = function(items, categoryGroups = null) {
