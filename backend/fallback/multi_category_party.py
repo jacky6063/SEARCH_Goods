@@ -6,10 +6,14 @@ try:
 except Exception:
     pd = None
 
-# 類別關鍵字（可再擴充）
+# 類別關鍵字（根據實際資料庫內容調整）
 CAT_KEYWORDS = {
-    "餅乾類": ["餅乾", "餅乾類", "蘇打餅", "洋芋片", "餅乾點心", "脆餅", "餅"],
-    "飲料類": ["飲料", "飲料類", "果汁", "茶飲", "烏梅汁", "茶", "飲品", "汽水"],
+    "餅乾類": ["餅乾", "餅乾類", "蘇打餅", "洋芋片", "餅乾點心", "脆餅", "餅", "點心", "零食"],
+    "飲料類": ["飲料", "飲料類", "果汁", "茶飲", "烏梅汁", "茶", "飲品", "汽水", "豆漿", "奶茶"],
+    "米類": ["米", "米類", "糙米", "白米", "香米", "小米", "五穀", "十穀"],
+    "麵條類": ["麵", "麵條", "麵線", "冬粉", "蕎麥麵", "燕麥麵"],
+    "烹調類": ["咖哩", "醬", "調味", "燒烤醬", "燉包"],
+    "穀物類": ["燕麥", "五穀", "玉米", "奇亞籽", "黑豆", "黃豆", "綠豆", "藜麥"],
 }
 
 NUMBER_RE = re.compile(r'(\d{2,6})\s*元?')
@@ -30,12 +34,22 @@ def need_fallback(text: str) -> bool:
     t = (text or "").strip()
     if not t:
         return False
+    # 檢查是否提到生日聚會、派對等活動
+    party_keywords = ["生日", "聚會", "派對", "party", "慶祝", "活動"]
+    has_party = any(k in t for k in party_keywords)
+    
+    # 檢查是否提到餅乾和飲料（即使資料庫沒有，也要處理這類查詢）
     has_cookie = any(k in t for k in CAT_KEYWORDS["餅乾類"])
     has_drink  = any(k in t for k in CAT_KEYWORDS["飲料類"])
-    return bool(has_cookie and has_drink)
+    
+    return bool(has_party or (has_cookie and has_drink))
 
 def _possible_paths() -> List[str]:
     cands = [
+        "data/VIEW_GOODS_enhanced.csv",
+        "backend/data/VIEW_GOODS_enhanced.csv",
+        os.path.join(os.getcwd(), "data/VIEW_GOODS_enhanced.csv"),
+        os.path.join(os.getcwd(), "backend/data/VIEW_GOODS_enhanced.csv"),
         "data/goods.csv",
         "backend/data/goods.csv",
         os.path.join(os.getcwd(), "data/goods.csv"),
@@ -70,8 +84,8 @@ def to_price_int(s: str) -> Optional[int]:
 def select_all_by_keywords(df, keywords: List[str]) -> List[Dict]:
     """取出命中該類別關鍵字的所有商品（含 name/price/id）"""
     name_col = _col(df, "商品名稱", "商品名", "name", "title")
-    price_col = _col(df, "價格", "price", "售價")
-    id_col = _col(df, "GoodIden", "goodiden", "id", "barcode", "條碼", "sku")
+    price_col = _col(df, "售價", "價格", "price", "特價")
+    id_col = _col(df, "商品編號", "GoodIden", "goodiden", "id", "barcode", "條碼", "sku")
     if not (name_col and price_col and id_col):
         return []
     rows: List[Dict] = []
@@ -182,6 +196,106 @@ def compose_reply(cookie_picked: List[Dict], drink_picked: List[Dict],
 
     return ("\n".join(lines), ids)
 
+# ===== 替代建議 =====
+def create_party_alternatives(df, user_text: str, budget: Optional[int]) -> Dict:
+    """當沒有餅乾飲料時，提供健康替代方案"""
+    
+    # 選擇適合聚會的商品類別
+    alternatives = []
+    
+    # 1. 米類商品 - 可做飯糰、壽司
+    rice_items = select_all_by_keywords(df, CAT_KEYWORDS["米類"])
+    if rice_items:
+        alternatives.extend(rice_items[:3])
+    
+    # 2. 麵條類 - 可做涼麵、湯麵
+    noodle_items = select_all_by_keywords(df, CAT_KEYWORDS["麵條類"])  
+    if noodle_items:
+        alternatives.extend(noodle_items[:3])
+        
+    # 3. 穀物類 - 健康零食替代
+    grain_items = select_all_by_keywords(df, CAT_KEYWORDS["穀物類"])
+    if grain_items:
+        alternatives.extend(grain_items[:3])
+        
+    # 4. 烹調類 - 調味用品
+    seasoning_items = select_all_by_keywords(df, CAT_KEYWORDS["烹調類"])
+    if seasoning_items:
+        alternatives.extend(seasoning_items[:2])
+    
+    # 依預算篩選
+    if budget:
+        picked_items, total = pack_under_budget(alternatives, budget, max_items=8)
+    else:
+        picked_items = alternatives[:10]
+        total = sum(item.get("price", 0) for item in picked_items)
+    
+    # 生成回覆
+    reply_lines = [
+        "抱歉，目前資料庫中沒有餅乾類和飲料類商品 😅",
+        "不過我為您的生日聚會推薦一些健康美味的替代方案：",
+        "",
+        "🍚 **主食類商品**（可製作飯糰、壽司等聚會小點）："
+    ]
+    
+    rice_count = 0
+    noodle_count = 0
+    for item in picked_items:
+        name = item.get("name", "")
+        price = item.get("price", 0)
+        price_str = f"{price}元" if price else "價格洽詢"
+        
+        if any(k in name for k in ["米", "糙米", "白米"]) and rice_count < 2:
+            reply_lines.append(f"   • {name} - {price_str}")
+            rice_count += 1
+        elif any(k in name for k in ["麵", "麵線"]) and noodle_count < 2:
+            reply_lines.append(f"   • {name} - {price_str}")
+            noodle_count += 1
+    
+    reply_lines.extend([
+        "",
+        "🌾 **健康穀物**（可當零食或製作能量球）："
+    ])
+    
+    grain_count = 0
+    for item in picked_items:
+        name = item.get("name", "")
+        price = item.get("price", 0)
+        price_str = f"{price}元" if price else "價格洽詢"
+        
+        if any(k in name for k in ["燕麥", "奇亞", "豆"]) and grain_count < 3:
+            reply_lines.append(f"   • {name} - {price_str}")
+            grain_count += 1
+    
+    if budget:
+        reply_lines.extend([
+            "",
+            f"💰 預估總金額約 {total}元（預算 {budget}元內）",
+            "",
+            "💡 **聚會小提示**：",
+            "• 可用有機米製作精美飯糰或壽司",
+            "• 燕麥和穀物可製作健康能量球",
+            "• 搭配新鮮水果和自製果汁更棒！"
+        ])
+    else:
+        reply_lines.extend([
+            "",
+            f"💰 預估總金額約 {total}元",
+            "",
+            "💡 建議您也可考慮到其他通路採購餅乾和飲料，",
+            "搭配這些健康主食，讓聚會更豐富！"
+        ])
+    
+    ids = [item["id"] for item in picked_items]
+    
+    return {
+        "ok": True,
+        "reply": "\n".join(reply_lines),
+        "suggestion_ids": ids,
+        "action": {"type": "switch_to_search", "items": [{"id": i} for i in ids]},
+        "meta": {"source": "fallback_party_alternatives", "budget": budget},
+    }
+
 # ===== 主入口 =====
 def run_fallback(user_text: str) -> Optional[Dict]:
     if not need_fallback(user_text):
@@ -191,13 +305,15 @@ def run_fallback(user_text: str) -> Optional[Dict]:
     if df is None:
         return None
 
-    # 全量候選
+    budget = parse_budget(user_text)
+
+    # 檢查是否有餅乾和飲料類商品
     cookie_all = select_all_by_keywords(df, CAT_KEYWORDS["餅乾類"])
     drink_all  = select_all_by_keywords(df, CAT_KEYWORDS["飲料類"])
+    
+    # 如果沒有餅乾飲料，提供替代建議
     if not cookie_all and not drink_all:
-        return None
-
-    budget = parse_budget(user_text)
+        return create_party_alternatives(df, user_text, budget)
 
     # --- 沒提供預算：沿用舊邏輯（各取多筆） ---
     if budget is None:
