@@ -551,9 +551,7 @@ app.include_router(promo_router_40)
 from search_router_goods_1024001 import router as search_router_goods_1024001
 app.include_router(search_router_goods_1024001)
 
-# ---- goods_1024001: override /api/chat and strengthen search ----
-from chat_router_goods_1024001 import router as chat_router_goods_1024001
-app.include_router(chat_router_goods_1024001)
+# ---- goods_1024001: 舊的 chat 路由器已移除以避免與 chat_router_goods_action 衝突 ----
 
 # ---- goods_action: 覆蓋 /api/chat，含 switch_to_search ----
 from chat_router_goods_action import router as chat_router_goods_action, get_chat_result_by_session
