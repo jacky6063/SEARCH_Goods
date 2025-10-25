@@ -1,4 +1,3 @@
-from fallback.multi_category_party import run_fallback
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -20,20 +19,6 @@ class ChatReq(BaseModel):
 
 @router.post("/api/chat")
 def chat_handler(req: ChatReq):
-    # === goods_1024002 fallback: 餅乾+飲料＋(預算) → 規則式回覆 ===
-    try:
-        _body_text = (payload.get("text") if isinstance(payload, dict) else None) if "payload" in locals() else None
-    except Exception:
-        _body_text = None
-    if not _body_text:
-        try: _body_text = body.get("text") if isinstance(body, dict) else None
-        except Exception: _body_text = None
-    try:
-        _fb = run_fallback(_body_text or "")
-    except Exception as _e:
-        _fb = None
-    if _fb:
-        return _fb
     text = (req.text or "").strip()
     items = search_products_strict(query=text, limit=10)
     suggestion_ids = [str(x.get("GoodIden") or x.get("id")) for x in items if (x.get("GoodIden") or x.get("id"))]
