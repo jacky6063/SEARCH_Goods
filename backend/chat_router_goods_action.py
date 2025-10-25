@@ -69,7 +69,7 @@ def chat_handler(req: ChatReq):
     
     # 正常搜索有結果的回覆
     if items:
-        samples = "、".join((str(items[i].get("name") or items[i].get("商品名稱")) for i in range(min(3, len(items)))))
+        samples = "、".join((str(items[i].get("Name") or items[i].get("name") or items[i].get("商品名稱")) for i in range(min(3, len(items)))))
         reply = f"我找到 {len(items)} 款商品，例如 {samples}。需要我顯示詳細介紹與圖片嗎？也可輸入 1=原建議、2=特價關聯、3=智慧搭配。"
     elif not suggestion_ids:  # 沒有商品也沒有備用建議
         if infer_filters_from_query(user_text):

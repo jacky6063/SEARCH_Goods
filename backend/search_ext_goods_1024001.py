@@ -29,7 +29,17 @@ def search_products_strict(query: Optional[str]=None,
                            ids: Optional[List[str]]=None,
                            limit: int=40) -> List[Dict[str, Any]]:
     # 先用原本的搜尋拿候選，再做強化過濾
-    candidates = base_search(query=query, ids=ids, limit=limit*3 if query else limit)
+    if query:
+        # 需要載入 DataFrame 來調用 base_search
+        from app import get_df
+        df = get_df()
+        if df is not None:
+            products, _ = base_search(df=df, query=query, topn=limit*3)
+            candidates = products
+        else:
+            candidates = []
+    else:
+        candidates = []
     if query and not ids:
         f = infer_filters_from_query(query)
         candidates = filter_items(candidates, f.get("category_filter"), f.get("must_have_keywords"))
