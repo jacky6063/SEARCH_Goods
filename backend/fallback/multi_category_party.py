@@ -47,9 +47,12 @@ def need_fallback(text: str) -> bool:
 def _possible_paths() -> List[str]:
     cands = [
         "data/VIEW_GOODS_enhanced.csv",
+        "../data/VIEW_GOODS_enhanced.csv",
         "backend/data/VIEW_GOODS_enhanced.csv",
+        "/Users/huangchangchi/Documents/SEARCH_Goods/data/VIEW_GOODS_enhanced.csv",
         os.path.join(os.getcwd(), "data/VIEW_GOODS_enhanced.csv"),
-        os.path.join(os.getcwd(), "backend/data/VIEW_GOODS_enhanced.csv"),
+        os.path.join(os.getcwd(), "../data/VIEW_GOODS_enhanced.csv"),
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/VIEW_GOODS_enhanced.csv"),
         "data/goods.csv",
         "backend/data/goods.csv",
         os.path.join(os.getcwd(), "data/goods.csv"),

@@ -22,14 +22,7 @@ class ChatReq(BaseModel):
 def chat_handler(req: ChatReq):
     # === goods_1024002 fallback: 餅乾+飲料＋(預算) → 規則式回覆 ===
     try:
-        _body_text = (payload.get("text") if isinstance(payload, dict) else None) if "payload" in locals() else None
-    except Exception:
-        _body_text = None
-    if not _body_text:
-        try: _body_text = body.get("text") if isinstance(body, dict) else None
-        except Exception: _body_text = None
-    try:
-        _fb = run_fallback(_body_text or "")
+        _fb = run_fallback(req.text or "")
     except Exception as _e:
         _fb = None
     if _fb:
