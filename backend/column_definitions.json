@@ -1,13 +1,15 @@
 {
-  "GoodIden": ["商品編號"],
-  "Name": ["商品名稱"],
-  "CateName": ["分類名稱"],
-  "Size": ["規格"],
-  "Price": ["售價"],
-  "SpecialOffer": ["特價"],
-  "BRAND_Name": ["品牌"],
-  "DESCRIPTION": ["描述"],
-  "Goods_Link1": ["購物網址"],
-  "Goodspic_Link1": ["商品圖片網址", "商品圖片網址1"],
-  "REMARK": ["備註"]
+  "GoodIden": ["商品編號", "id", "goodiden", "barcode", "條碼", "sku"],
+  "Name": ["商品名稱", "name", "title", "商品名"],
+  "CateName": ["分類名稱", "category", "catename"],
+  "Size": ["規格", "size", "specification"],
+  "Price": ["售價", "price", "價格"],
+  "SpecialOffer": ["特價", "specialoffer", "special_price"],
+  "BRAND_Name": ["品牌", "brand", "Brand"],
+  "DESCRIPTION": ["描述", "description", "Description", "desc"],
+  "Goods_Link1": ["購物網址", "shop_url", "link"],
+  "Goodspic_Link1": ["商品圖片網址", "商品圖片網址1", "image_url", "pic_url"],
+  "REMARK": ["備註", "remark", "note"],
+  "stock": ["庫存量", "inventory"],
+  "youtube": ["Youtube 影片介紹", "video_url"]
 }

@@ -1,5 +1,6 @@
 from typing import List, Dict, Any, Optional
 from goods_search_service import search_products as base_search
+from field_utils import FieldAccessor
 
 SHOE_SYNS = ["慢跑鞋","跑鞋","運動鞋","球鞋","鞋"]
 
@@ -17,12 +18,11 @@ def filter_items(items: List[Dict[str, Any]],
                  must_have_keywords: Optional[List[str]]=None) -> List[Dict[str, Any]]:
     out = items
     if category_filter:
-        out = [x for x in out if category_filter in str(x.get("分類名稱",""))]
+        out = [x for x in out if category_filter in FieldAccessor.get_category(x)]
     if must_have_keywords:
-        name_get = lambda x: str(x.get("name") or x.get("商品名稱") or "").lower()
         for kw in must_have_keywords:
             k = str(kw).lower()
-            out = [x for x in out if k in name_get(x)]
+            out = [x for x in out if k in FieldAccessor.get_name(x).lower()]
     return out
 
 def search_products_strict(query: Optional[str]=None,

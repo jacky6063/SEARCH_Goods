@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
 from search_ext_goods_1024001 import search_products_strict, infer_filters_from_query
+from field_utils import FieldAccessor, create_product_summary
 
 router = APIRouter()
 
@@ -35,7 +36,7 @@ def chat_handler(req: ChatReq):
         
     # 執行正常商品搜尋
     items = search_products_strict(query=user_text, limit=10)
-    suggestion_ids = [str(x.get("GoodIden") or x.get("id")) for x in items if (x.get("GoodIden") or x.get("id"))]
+    suggestion_ids = [FieldAccessor.get_product_id(x) for x in items if FieldAccessor.get_product_id(x)]
 
     # 如果正常搜索沒結果且包含特殊場景關鍵字，提供更好的回覆
     if not items:
@@ -56,20 +57,20 @@ def chat_handler(req: ChatReq):
                     cookie_items = select_all_by_keywords(df, CAT_KEYWORDS["餅乾類"])
                     drink_items = select_all_by_keywords(df, CAT_KEYWORDS["飲料類"])
                     if cookie_items or drink_items:
-                        # 提取一些 ID 作為建議
+                        # 提取一些 ID 作為建議，使用統一的 ID 存取方式
                         backup_ids = []
                         if cookie_items:
-                            backup_ids.extend([item["id"] for item in cookie_items[:5]])
+                            backup_ids.extend([item.get("id", "") for item in cookie_items[:5] if item.get("id")])
                         if drink_items:
-                            backup_ids.extend([item["id"] for item in drink_items[:5]])
-                        suggestion_ids = backup_ids[:10]  # 限制在 10 個
+                            backup_ids.extend([item.get("id", "") for item in drink_items[:5] if item.get("id")])
+                        suggestion_ids = [id for id in backup_ids[:10] if id]  # 限制在 10 個且過濾空值
                         reply = f"我找到了適合生日聚會的商品！包含 {len(cookie_items)} 款餅乾和 {len(drink_items)} 款飲料。"
             except Exception as e:
                 print(f"[ERROR] Backup fallback failed: {e}")
     
     # 正常搜索有結果的回覆
     if items:
-        samples = "、".join((str(items[i].get("Name") or items[i].get("name") or items[i].get("商品名稱")) for i in range(min(3, len(items)))))
+        samples = create_product_summary(items, max_items=3)
         reply = f"我找到 {len(items)} 款商品，例如 {samples}。需要我顯示詳細介紹與圖片嗎？也可輸入 1=原建議、2=特價關聯、3=智慧搭配。"
     elif not suggestion_ids:  # 沒有商品也沒有備用建議
         if infer_filters_from_query(user_text):

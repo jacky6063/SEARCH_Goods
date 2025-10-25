@@ -1,10 +1,48 @@
 import os, re
 from typing import List, Dict, Optional, Tuple
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 try:
     import pandas as pd
 except Exception:
     pd = None
+
+try:
+    from field_utils import FieldAccessor
+except ImportError:
+    # 如果無法導入，提供基本的欄位存取功能
+    class FieldAccessor:
+        @classmethod
+        def get_field(cls, item, field_type, default=None):
+            field_maps = {
+                "product_id": ["商品編號", "GoodIden", "id"],
+                "name": ["商品名稱", "Name", "name"],
+                "price": ["售價", "Price", "price"]
+            }
+            if field_type in field_maps:
+                for field in field_maps[field_type]:
+                    if field in item:
+                        return item[field]
+            return default
+        
+        @classmethod
+        def get_product_id(cls, item):
+            return str(cls.get_field(item, "product_id", ""))
+        
+        @classmethod
+        def get_name(cls, item):
+            return str(cls.get_field(item, "name", ""))
+        
+        @classmethod
+        def get_price(cls, item):
+            price_str = cls.get_field(item, "price", "0")
+            try:
+                import re
+                numbers = re.findall(r'\d+', str(price_str))
+                return int(numbers[0]) if numbers else None
+            except:
+                return None
 
 # 類別關鍵字（根據實際資料庫內容調整）
 CAT_KEYWORDS = {
@@ -108,13 +146,25 @@ def select_all_by_keywords(df, keywords: List[str]) -> List[Dict]:
         return []
     rows: List[Dict] = []
     for _, row in df.iterrows():
-        name = str(row.get(name_col, "")).strip()
-        price = to_price_int(row.get(price_col))
-        gid = str(row.get(id_col, "")).strip()
-        if not gid or not name:
+        # 轉換為標準字典格式以便使用 FieldAccessor
+        row_dict = row.to_dict()
+        
+        name = FieldAccessor.get_name(row_dict)
+        price = FieldAccessor.get_price(row_dict) 
+        product_id = FieldAccessor.get_product_id(row_dict)
+        
+        if not product_id or not name or name == "未知商品":
             continue
+            
         if any(w in name for w in keywords):
-            rows.append({"id": gid, "name": name, "price": price})
+            rows.append({
+                "id": product_id, 
+                "name": name, 
+                "price": price,
+                # 保留原始欄位名稱以相容現有程式碼
+                "商品名稱": name,
+                "售價": price
+            })
     return rows
 
 def avg_price(items: List[Dict]) -> Optional[float]:

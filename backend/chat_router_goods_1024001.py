@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
 from search_ext_goods_1024001 import search_products_strict, infer_filters_from_query
+from field_utils import FieldAccessor, create_product_summary
 
 router = APIRouter()
 
@@ -22,11 +23,11 @@ class ChatReq(BaseModel):
 def chat_handler(req: ChatReq):
     # 用強化搜尋拿 10 支（會依需求自動套類別/必含詞）
     items = search_products_strict(query=req.text, limit=10)
-    suggestion_ids = [str(x.get("GoodIden") or x.get("id")) for x in items if (x.get("GoodIden") or x.get("id"))]
+    suggestion_ids = [FieldAccessor.get_product_id(x) for x in items if FieldAccessor.get_product_id(x)]
 
     # 基本文案（不含預算）
     if items:
-        samples = "、".join((str(items[i].get("name") or items[i].get("商品名稱")) for i in range(min(3,len(items)))))
+        samples = create_product_summary(items, max_items=3)
         reply = f"我找到 {len(items)} 款商品，例如 {samples}。需要我顯示詳細介紹與圖片嗎？也可輸入 1=原建議、2=特價關聯、3=智慧搭配。"
     else:
         # 若套了鞋類過濾仍為 0，就明確回覆「此類無結果」，避免回不相干商品

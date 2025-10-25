@@ -1,6 +1,7 @@
 import os, re
 from functools import lru_cache
 from typing import Optional, Dict, Any
+from field_utils import FieldAccessor
 
 def _clamp_zh(s: str, n: int = 40) -> str:
     s = re.sub(r"\s+", "", s or "")
@@ -40,10 +41,11 @@ def _try_llm(name: str, description: Optional[str], brand: Optional[str], spec: 
         return None
 
 def _item_texts(item: Dict[str, Any]):
-    name = item.get("name") or item.get("商品名稱") or ""
-    desc = item.get("描述") or item.get("description") or ""
-    spec = item.get("規格") or item.get("spec") or ""
-    brand = item.get("品牌") or item.get("brand") or ""
+    """使用統一的欄位存取器獲取商品資訊"""
+    name = FieldAccessor.get_name(item)
+    desc = FieldAccessor.get_description(item)
+    spec = FieldAccessor.get_size(item)
+    brand = FieldAccessor.get_brand(item)
     return name, desc, brand, spec
 
 @lru_cache(maxsize=8192)
@@ -55,5 +57,5 @@ def get_promo_text_cache(key: str, name: str, desc: str, brand: str, spec: str) 
 
 def get_promo_text(item: Dict[str, Any]) -> str:
     name, desc, brand, spec = _item_texts(item)
-    key = str(item.get("GoodIden") or item.get("id") or name)[:128]
-    return get_promo_text_cache(key, name, desc, brand, spec)
+    key = FieldAccessor.get_product_id(item) or name
+    return get_promo_text_cache(str(key)[:128], name, desc, brand, spec)
