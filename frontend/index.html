@@ -415,7 +415,7 @@
     renderWelcome();
   }
 
-  function switchToSearch(queryText, itemIds, prefetchedItems){
+  function switchToSearch(queryText, itemIds, prefetchedItems, categoryGroups){
     const usingIds = Array.isArray(itemIds) && itemIds.length > 0;
     setMode('search');
     if(chatPanel){ chatPanel.style.display = 'none'; }
@@ -436,9 +436,25 @@
       lastPage = 1;
       hasNextPage = false;
       clearResults();
-      prefetchedItems.forEach(it=>resultsEl.appendChild(card(it)));
+      
+      // 如果有分類資訊，使用分類顯示
+      if(categoryGroups && typeof categoryGroups === 'object'){
+        window.renderList(prefetchedItems, categoryGroups);
+      } else {
+        // 傳統顯示方式
+        prefetchedItems.forEach(it=>resultsEl.appendChild(card(it)));
+      }
+      
       setStatus('已載入建議商品');
-      const countEl = document.getElementById('resultCount'); if(countEl) countEl.textContent = `${prefetchedItems.length} 筆結果`;
+      const countEl = document.getElementById('resultCount'); 
+      if(countEl) {
+        if(categoryGroups){
+          const categoryCount = Object.keys(categoryGroups).length;
+          countEl.textContent = `${prefetchedItems.length} 筆結果 (${categoryCount} 個分類)`;
+        } else {
+          countEl.textContent = `${prefetchedItems.length} 筆結果`;
+        }
+      }
       updatePaginationControls({has_next:false, page:1, last_page:1});
       return;
     }
@@ -530,7 +546,30 @@
         };
         showSuggestPrompt(cacheKey, data.auto_suggest.label || SUGGEST_TYPES[cacheKey]);
       }
-      if(Array.isArray(data.items) && data.items.length){
+      // 處理分類商品建議 (優先處理)
+      if(data.category_suggestions && typeof data.category_suggestions === 'object'){
+        const allItems = [];
+        const allIds = [];
+        Object.values(data.category_suggestions).forEach(categoryItems => {
+          if(Array.isArray(categoryItems)){
+            allItems.push(...categoryItems);
+            categoryItems.forEach(item => {
+              const id = (item['商品編號'] || item['GoodIden'] || item.id || '').toString().trim();
+              if(id) allIds.push(id);
+            });
+          }
+        });
+        
+        latestSuggestCache[1] = {
+          ids: allIds,
+          items: allItems,
+          categoryGroups: data.category_suggestions,
+          meta: data.meta || null
+        };
+        showSuggestPrompt(1, SUGGEST_TYPES[1]);
+      }
+      // 處理一般商品列表 (如果沒有分類建議)
+      else if(Array.isArray(data.items) && data.items.length){
         const planIds = data.items.map(it => (it['商品編號'] || it['GoodIden'] || '').toString().trim()).filter(Boolean);
         latestSuggestCache[1] = {
           ids: planIds,
@@ -679,12 +718,17 @@
       const cached = latestSuggestCache[type];
       if(cached && Array.isArray(cached.items) && cached.items.length){
         setStatus('為您載入推薦商品...');
-        switchToSearch('', cached.ids || [], cached.items);
+        // 如果有分類資訊，使用分類顯示
+        if(cached.categoryGroups){
+          switchToSearch('', cached.ids || [], cached.items, cached.categoryGroups);
+        } else {
+          switchToSearch('', cached.ids || [], cached.items);
+        }
         setTimeout(()=>setStatus('已載入推薦商品'), 200);
         if(cached.meta){
           renderPlanResults([], cached.meta);
         }
-        console.log('🛍 使用快取推薦', type, cached.items.length, 'items');
+        console.log('🛍 使用快取推薦', type, cached.items.length, 'items', cached.categoryGroups ? '(分類模式)' : '');
       }else{
         triggerSuggest(type);
       }

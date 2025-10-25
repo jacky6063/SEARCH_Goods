@@ -403,8 +403,11 @@ class ChatResp(BaseModel):
     meta: Optional[Dict[str, Any]] = None
 
 
-@app.post("/api/chat", response_model=ChatResp)
-async def chat_endpoint(req: ChatReq):
+# 舊的 chat 端點已移至 chat_router_goods_action.py
+# @app.post("/api/chat", response_model=ChatResp)
+# async def chat_endpoint(req: ChatReq):
+    """
+    # 將舊的 chat endpoint 功能註解掉，已遷移到 chat_router_goods_action.py
     session_id = str(req.session_id or "default")
     message = (req.message or "").strip()
     history = req.history or []
@@ -613,6 +616,8 @@ async def chat_endpoint(req: ChatReq):
         reply_text = "我僅能在商品清單範圍內協助～告訴我你想找的品類或預算吧。"
 
     return ChatResp(reply=reply_text, action=action, alignment=alignment_payload, auto_suggest=auto_suggest_payload)
+    """
+    pass
 
 
 @app.post("/api/suggest")
@@ -760,9 +765,9 @@ app.include_router(promo_router_40)
 from search_router_goods_1024001 import router as search_router_goods_1024001
 app.include_router(search_router_goods_1024001)
 
-# ---- goods_1024001: override /api/chat and strengthen search ----
-from chat_router_goods_1024001 import router as chat_router_goods_1024001
-app.include_router(chat_router_goods_1024001)
+# ---- goods_1024001: 已停用，功能已整合到 chat_router_goods_action ----
+# from chat_router_goods_1024001 import router as chat_router_goods_1024001
+# app.include_router(chat_router_goods_1024001)
 
 # ---- goods_action: 覆蓋 /api/chat，含 switch_to_search ----
 from chat_router_goods_action import router as chat_router_goods_action, get_chat_result_by_session

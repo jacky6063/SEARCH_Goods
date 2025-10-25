@@ -23,8 +23,16 @@ def has_budget_intent(text: str) -> bool:
     return bool(kw.search(t) or money.search(t))
 
 class ChatReq(BaseModel):
-    text: str
+    message: str  # 改為與前端一致的欄位名稱
+    text: Optional[str] = None  # 向後相容
+    history: Optional[List[Dict]] = []
+    topn: Optional[int] = 8
     session_id: Optional[str] = None
+    
+    @property
+    def user_message(self):
+        """統一的訊息存取方式"""
+        return self.message or self.text or ""
 
 def _cleanup_session_cache() -> None:
     """清理過期的聊天會話快取"""
@@ -59,10 +67,23 @@ def _store_chat_result(result: Dict[str, Any]) -> str:
     }
     return session_id
 
-@router.post("/api/chat")
+from pydantic import BaseModel
+from typing import Dict
+
+class ChatResponse(BaseModel):
+    ok: Optional[bool] = None
+    reply: str
+    suggestion_ids: Optional[List[str]] = None
+    category_suggestions: Optional[Dict] = None
+    action: Optional[Dict] = None
+    meta: Optional[Dict] = None
+    chat_session_id: Optional[str] = None
+    display_mode: Optional[str] = None
+
+@router.post("/api/chat", response_model=ChatResponse)
 def chat_handler(req: ChatReq):
     # === goods_1024002 fallback: 餅乾+飲料＋(預算) → 規則式回覆 ===
-    user_text = (req.text or "").strip()
+    user_text = req.user_message.strip()
     
     # 清理過期快取
     _cleanup_session_cache()
