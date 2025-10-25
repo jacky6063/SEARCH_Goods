@@ -31,18 +31,33 @@ def parse_budget(text: str) -> Optional[int]:
         return None
 
 def need_fallback(text: str) -> bool:
-    t = (text or "").strip()
+    t = (text or "").strip().lower()
     if not t:
         return False
-    # 檢查是否提到生日聚會、派對等活動
-    party_keywords = ["生日", "聚會", "派對", "party", "慶祝", "活動"]
+    
+    # 擴大生日聚會關鍵字檢測
+    party_keywords = ["生日", "聚會", "派對", "party", "慶祝", "活動", "宴會", "開會", "聚餐", "聚集"]
     has_party = any(k in t for k in party_keywords)
     
-    # 檢查是否提到餅乾和飲料（即使資料庫沒有，也要處理這類查詢）
-    has_cookie = any(k in t for k in CAT_KEYWORDS["餅乾類"])
-    has_drink  = any(k in t for k in CAT_KEYWORDS["飲料類"])
+    # 檢查是否提到餅乾和飲料類別
+    cookie_keywords = ["餅乾", "餅乾類", "蘇打餅", "洋芋片", "餅乾點心", "脆餅", "餅", "點心", "零食", "餅干"]
+    drink_keywords = ["飲料", "飲料類", "果汁", "茶飲", "烏梅汁", "茶", "飲品", "汽水", "豆漿", "奶茶", "飲"]
     
-    return bool(has_party or (has_cookie and has_drink))
+    has_cookie = any(k in t for k in cookie_keywords)
+    has_drink = any(k in t for k in drink_keywords)
+    
+    # 檢查是否提到預算
+    has_budget = any(k in t for k in ["預算", "元", "錢", "金額", "價格", "多少"])
+    
+    # 強化觸發條件：
+    # 1. 有聚會關鍵字 OR
+    # 2. 同時提到餅乾和飲料 OR  
+    # 3. 提到餅乾/飲料其中之一且有預算且查詢夠具體
+    return bool(
+        has_party or 
+        (has_cookie and has_drink) or 
+        ((has_cookie or has_drink) and has_budget and len(t) > 8)  # 查詢夠長且有預算意圖
+    )
 
 def _possible_paths() -> List[str]:
     cands = [
