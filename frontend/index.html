@@ -1169,9 +1169,56 @@
       });
     });
 
+    // 支援分類商品顯示的 renderList 函數
+    window.renderList = function(items, categoryGroups = null) {
+      clearResults();
+      
+      if (categoryGroups && typeof categoryGroups === 'object') {
+        // 分組顯示模式
+        let totalItems = 0;
+        Object.keys(categoryGroups).forEach((categoryName, index) => {
+          const categoryItems = categoryGroups[categoryName];
+          if (!Array.isArray(categoryItems) || categoryItems.length === 0) return;
+          
+          // 創建分類標題
+          const categoryHeader = document.createElement('div');
+          categoryHeader.className = 'category-header';
+          categoryHeader.innerHTML = `
+            <h3 style="margin: 20px 0 10px 0; padding: 8px 12px; background: #f0f4f8; border-left: 4px solid #3b82f6; font-size: 16px; color: #1e40af;">
+              ${index + 1}. ${categoryName} (${categoryItems.length} 個商品)
+            </h3>
+          `;
+          resultsEl.appendChild(categoryHeader);
+          
+          // 顯示該分類下的所有商品
+          categoryItems.forEach(item => {
+            const productCard = card(item);
+            resultsEl.appendChild(productCard);
+            totalItems++;
+          });
+        });
+        
+        setStatus(`已載入分類商品 (共 ${totalItems} 個)`);
+        const countEl = document.getElementById('resultCount');
+        if (countEl) countEl.textContent = `${totalItems} 筆結果 (${Object.keys(categoryGroups).length} 個分類)`;
+        
+      } else if (Array.isArray(items) && items.length > 0) {
+        // 一般顯示模式
+        items.forEach(item => {
+          resultsEl.appendChild(card(item));
+        });
+        
+        setStatus(`已載入商品 (共 ${items.length} 個)`);
+        const countEl = document.getElementById('resultCount');
+        if (countEl) countEl.textContent = `${items.length} 筆結果`;
+      }
+      
+      updatePaginationControls({has_next: false, page: 1, last_page: 1});
+    };
+
     // Initialize from backend config
     loadBranding();
   </script>
-</body>
   <script type="module" src="/patches/auto_boot.js"></script>
+</body>
 </html>

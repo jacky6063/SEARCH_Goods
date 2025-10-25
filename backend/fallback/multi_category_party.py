@@ -389,11 +389,41 @@ def run_fallback(user_text: str) -> Optional[Dict]:
         cookie_picked = sorted(cookie_all, key=lambda x: (x["price"] is None, x["price"] if x["price"] else 10**9))[:8]
         drink_picked  = sorted(drink_all,  key=lambda x: (x["price"] is None, x["price"] if x["price"] else 10**9))[:8]
         reply, ids = compose_reply(cookie_picked, drink_picked, None, None, None)
+        
+        # 建立分類商品資訊，支援前端分組顯示
+        category_suggestions = {}
+        action_items = []
+        
+        if cookie_picked:
+            category_suggestions["餅乾類"] = [
+                {
+                    "id": item["id"],
+                    "name": item["name"], 
+                    "price": item["price"],
+                    "category": "餅乾類"
+                }
+                for item in cookie_picked
+            ]
+            action_items.extend([{"id": item["id"]} for item in cookie_picked])
+        
+        if drink_picked:
+            category_suggestions["飲料類"] = [
+                {
+                    "id": item["id"],
+                    "name": item["name"],
+                    "price": item["price"], 
+                    "category": "飲料類"
+                }
+                for item in drink_picked
+            ]
+            action_items.extend([{"id": item["id"]} for item in drink_picked])
+        
         return {
             "ok": True,
             "reply": reply,
             "suggestion_ids": ids,
-            "action": {"type": "switch_to_search", "items": [{"id": i} for i in ids]},
+            "category_suggestions": category_suggestions,  # 新增分類資訊
+            "action": {"type": "switch_to_search", "items": action_items},
             "meta": {"source": "fallback_multi_category_no_budget"},
         }
 
@@ -415,11 +445,41 @@ def run_fallback(user_text: str) -> Optional[Dict]:
         drink_picked.extend(extra_drink); used += add_sum
 
     reply, ids = compose_reply(cookie_picked, drink_picked, cookie_budget, drink_budget, budget)
+    
+    # 建立分類商品資訊，支援前端分組顯示
+    category_suggestions = {}
+    action_items = []
+    
+    if cookie_picked:
+        category_suggestions["餅乾類"] = [
+            {
+                "id": item["id"],
+                "name": item["name"],
+                "price": item["price"],
+                "category": "餅乾類"
+            }
+            for item in cookie_picked
+        ]
+        action_items.extend([{"id": item["id"]} for item in cookie_picked])
+    
+    if drink_picked:
+        category_suggestions["飲料類"] = [
+            {
+                "id": item["id"], 
+                "name": item["name"],
+                "price": item["price"],
+                "category": "飲料類"
+            }
+            for item in drink_picked
+        ]
+        action_items.extend([{"id": item["id"]} for item in drink_picked])
+    
     return {
         "ok": True,
         "reply": reply,
         "suggestion_ids": ids,
-        "action": {"type": "switch_to_search", "items": [{"id": i} for i in ids]},
+        "category_suggestions": category_suggestions,  # 新增分類資訊
+        "action": {"type": "switch_to_search", "items": action_items},
         "meta": {
             "source": "fallback_multi_category_mixed_ratio",
             "ratio_cookie": cookie_ratio,

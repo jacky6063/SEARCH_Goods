@@ -32,6 +32,18 @@
     const ids = grabIds();
     if (!ids.length) return;
     console.log("[auto_fetch_tap_v4] trigger search:", ids);
+    
+    // 檢查是否有分組資料可用
+    const lastJson = window.lastAssistantJson;
+    if (lastJson?.category_suggestions) {
+      console.log("[auto_fetch_tap_v4] using category suggestions:", Object.keys(lastJson.category_suggestions));
+      if (typeof window.renderList === "function") {
+        window.renderList(null, lastJson.category_suggestions);
+        return;
+      }
+    }
+    
+    // 後備方案：呼叫 /api/search
     fetch("/api/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
