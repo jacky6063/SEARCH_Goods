@@ -188,7 +188,11 @@ def chat_handler(req: ChatReq):
             alignment = llm_result.get("alignment")
             if alignment and alignment.get("items"):
                 suggestion_ids = [item.get("id") for item in alignment["items"] if item.get("id")]
-            
+            has_action = isinstance(llm_result.get("action"), dict) and llm_result["action"].get("type") and llm_result["action"].get("type") != "none"
+            if not suggestion_ids and not has_action:
+                print("[INFO] LLM response without actionable items; fallback to rule-based flow.")
+                raise RuntimeError("llm_no_alignment")
+
             resp = {
                 "ok": True,
                 "reply": llm_result.get("reply", ""),
