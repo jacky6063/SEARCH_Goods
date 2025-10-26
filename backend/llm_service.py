@@ -48,7 +48,20 @@ USE_PROMO = SEARCH_USE_PROMO
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = SEARCH_OPENAI_MODEL
 CHAT_MODEL = CHAT_OPENAI_MODEL
-_client: Optional[OpenAI] = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+
+def _get_client() -> Optional[OpenAI]:
+    """動態獲取 OpenAI 客戶端，支援執行時期的 API key 更新"""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key or api_key == "your-openai-api-key":
+        return None
+    try:
+        return OpenAI(api_key=api_key)
+    except Exception as e:
+        _logger.error(f"Failed to create OpenAI client: {e}")
+        return None
+
+# 保持向後相容性
+_client: Optional[OpenAI] = None  # 將在首次使用時初始化
 _CHAT_DF_CACHE: Optional[pd.DataFrame] = None
 CHAT_STOP_WORDS: set[str] = {
     "我",
@@ -399,7 +412,8 @@ def _filter_products_by_keywords(products: List[Dict[str, Any]], keywords: List[
 
 def _call_chat(prompt: str, system: Optional[str] = None, max_tokens: int = 64, model: Optional[str] = None) -> str:
     """Call OpenAI ChatCompletion (simple wrapper). Returns the assistant text or empty string on error."""
-    if not _client:
+    client = _get_client()
+    if not client:
         return ""
     if not model:
         model = OPENAI_MODEL  # 使用默認模型
@@ -408,7 +422,7 @@ def _call_chat(prompt: str, system: Optional[str] = None, max_tokens: int = 64, 
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
-        res = _client.chat.completions.create(
+        res = client.chat.completions.create(
             model=model,
             messages=messages,
             max_tokens=max_tokens,
@@ -433,7 +447,8 @@ def llm_analyze_query(query: str, system_prompt: Optional[str] = None, use_searc
     use_intent = SEARCH_USE_INTENT if use_search_config else CHAT_USE_INTENT
     model = SEARCH_OPENAI_MODEL if use_search_config else CHAT_OPENAI_MODEL
     
-    if not use_intent or not _client or not query:
+    client = _get_client()
+    if not use_intent or not client or not query:
         return {}
     default_prompt = (
         "你是一個商品搜尋意圖解析器。輸入是使用者的自然語言需求，請輸出 JSON，包含：\n"
@@ -472,7 +487,8 @@ def llm_expand_query(query: str, system_prompt: Optional[str] = None, use_search
     use_expand = SEARCH_USE_EXPAND if use_search_config else CHAT_USE_EXPAND
     model = SEARCH_OPENAI_MODEL if use_search_config else CHAT_OPENAI_MODEL
     
-    if not use_expand or not _client or not query:
+    client = _get_client()
+    if not use_expand or not client or not query:
         return query
     prompt = (
         f"請將使用者查詢盡量擴展成同義、相關或可能的搜尋詞組（以逗號分隔），輸出為一行，不要多餘說明。\n輸入：{query}\n輸出："
@@ -487,7 +503,8 @@ def llm_shorten_20(text: str, use_search_config: bool = True) -> str:
     use_short = SEARCH_USE_SHORT if use_search_config else CHAT_USE_SHORT
     model = SEARCH_OPENAI_MODEL if use_search_config else CHAT_OPENAI_MODEL
     
-    if not use_short or not _client or not text:
+    client = _get_client()
+    if not use_short or not client or not text:
         return (text or "")[:60]
     prompt = (
         f"請將以下內容濃縮為不超過20個字的繁體中文重點描述，避免添加引號或多餘解說：\n\n{text}\n\n輸出："
@@ -503,7 +520,8 @@ def llm_generate_promo(name: str, raw_description: str, extra: Optional[str] = N
     use_promo = SEARCH_USE_PROMO if use_search_config else CHAT_USE_PROMO
     model = SEARCH_OPENAI_MODEL if use_search_config else CHAT_OPENAI_MODEL
     
-    if not use_promo or not _client:
+    client = _get_client()
+    if not use_promo or not client:
         base = raw_description or name
         return (base or "")[:180]
     system_prompt = (
@@ -553,9 +571,10 @@ def llm_rerank_products(
     use_rerank = SEARCH_USE_RERANK if use_search_config else CHAT_USE_RERANK
     model = SEARCH_OPENAI_MODEL if use_search_config else CHAT_OPENAI_MODEL
     
+    client = _get_client()
     if (
         not use_rerank
-        or not _client
+        or not client
         or not candidates
         or topn <= 0
     ):
@@ -594,7 +613,7 @@ def llm_rerank_products(
     )
 
     try:
-        res = _client.chat.completions.create(
+        res = client.chat.completions.create(
             model=model,
             messages=[
                 {"role": "system", "content": prompt},
@@ -666,7 +685,8 @@ def _mock_or_real_llm(
     if context.get("overview"):
         return mock_reply
 
-    if not _client:
+    client = _get_client()
+    if not client:
         return mock_reply
 
     messages: List[Dict[str, str]] = []
@@ -676,7 +696,7 @@ def _mock_or_real_llm(
     messages.append({"role": "user", "content": user_message})
 
     try:
-        res = _client.chat.completions.create(
+        res = client.chat.completions.create(
             model=CHAT_OPENAI_MODEL,  # 使用聊天專用模型
             messages=messages,
             max_tokens=320,
