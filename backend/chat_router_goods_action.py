@@ -170,7 +170,7 @@ def chat_handler(req: ChatReq):
         from goods_search_service import get_catalog_snapshot
         
         # 獲取商品目錄用於 LLM 聊天
-        catalog = get_catalog_snapshot(topn=100)
+        catalog = get_catalog_snapshot(limit=100)
         
         # 使用真正的 LLM 聊天功能
         llm_result = chat_reply(
