@@ -43,6 +43,9 @@ from llm_service import (
     USE_RERANK,
     USE_INTENT,
     USE_PROMO,
+    SEARCH_USE_RERANK,
+    SEARCH_USE_INTENT,
+    SEARCH_USE_PROMO,
     chat_reply,
     classify_recommendation_type,
     llm_generate_plan,
@@ -318,10 +321,10 @@ def api_search(req: SearchReq):
 
     branding_prompt = (_branding_cache.get("nl_prompt") or "").strip() if isinstance(_branding_cache, dict) else ""
     custom_prompt = branding_prompt or None
-    # optional: expand query via LLM stub
+    # optional: expand query via LLM stub - 使用搜索配置
     try:
-        intent = llm_analyze_query(req.query, system_prompt=custom_prompt)
-        expanded = llm_expand_query(req.query, system_prompt=custom_prompt)
+        intent = llm_analyze_query(req.query, system_prompt=custom_prompt, use_search_config=True)
+        expanded = llm_expand_query(req.query, system_prompt=custom_prompt, use_search_config=True)
     except Exception:
         intent = {}
         expanded = req.query
@@ -329,7 +332,7 @@ def api_search(req: SearchReq):
     page = max(1, req.page or 1)
     base_topn = page_size * page
     candidate_topn = base_topn + page_size
-    if USE_RERANK:
+    if SEARCH_USE_RERANK:
         candidate_topn = max(base_topn * 2, base_topn + page_size, base_topn + 20, 60)
     required_terms = intent.get("required_terms") if isinstance(intent, dict) else None
     category_terms = intent.get("category_terms") if isinstance(intent, dict) else None
@@ -358,8 +361,8 @@ def api_search(req: SearchReq):
     end_idx = start_idx + page_size
     has_next = total_available > end_idx
     last_page = max(1, (total_available + page_size - 1) // page_size)
-    if USE_RERANK:
-        reranked = llm_rerank_products(req.query, expanded, all_records, topn=end_idx, system_prompt=custom_prompt)
+    if SEARCH_USE_RERANK:
+        reranked = llm_rerank_products(req.query, expanded, all_records, topn=end_idx, system_prompt=custom_prompt, use_search_config=True)
         records = reranked[start_idx:end_idx]
     else:
         records = all_records[start_idx:end_idx]
@@ -375,9 +378,9 @@ def api_search(req: SearchReq):
             or raw.get("備註")
             or ""
         )
-        if USE_PROMO:
+        if SEARCH_USE_PROMO:
             try:
-                marketing = llm_generate_promo(it.get("商品名稱", ""), original_desc)
+                marketing = llm_generate_promo(it.get("商品名稱", ""), original_desc, use_search_config=True)
                 if marketing:
                     it["商品描述"] = marketing
                 elif not it.get("商品描述") and original_desc:
@@ -389,7 +392,7 @@ def api_search(req: SearchReq):
                 it["商品描述"] = original_desc
             else:
                 try:
-                    it["商品描述"] = llm_shorten_20(it.get("商品名稱", ""))
+                    it["商品描述"] = llm_shorten_20(it.get("商品名稱", ""), use_search_config=True)
                 except Exception:
                     it["商品描述"] = it.get("商品名稱", "")[:60]
     return JSONResponse({

@@ -23,14 +23,31 @@ from goods_search_service import (
 
 _logger = logging.getLogger(__name__)
 
-USE_EXPAND = os.getenv("USE_LLM_EXPAND", "False").lower() in ("1", "true", "yes")
-USE_SHORT = os.getenv("USE_LLM_SHORTDESC", "False").lower() in ("1", "true", "yes")
-USE_RERANK = os.getenv("USE_LLM_RERANK", "False").lower() in ("1", "true", "yes")
-USE_INTENT = os.getenv("USE_LLM_INTENT", "False").lower() in ("1", "true", "yes")
-USE_PROMO = os.getenv("USE_LLM_PROMO", "False").lower() in ("1", "true", "yes")
+# === 搜索功能 LLM 配置 ===
+SEARCH_USE_EXPAND = os.getenv("SEARCH_USE_LLM_EXPAND", os.getenv("USE_LLM_EXPAND", "False")).lower() in ("1", "true", "yes")
+SEARCH_USE_SHORT = os.getenv("SEARCH_USE_LLM_SHORTDESC", os.getenv("USE_LLM_SHORTDESC", "False")).lower() in ("1", "true", "yes")
+SEARCH_USE_RERANK = os.getenv("SEARCH_USE_LLM_RERANK", os.getenv("USE_LLM_RERANK", "False")).lower() in ("1", "true", "yes")
+SEARCH_USE_INTENT = os.getenv("SEARCH_USE_LLM_INTENT", os.getenv("USE_LLM_INTENT", "False")).lower() in ("1", "true", "yes")
+SEARCH_USE_PROMO = os.getenv("SEARCH_USE_LLM_PROMO", os.getenv("USE_LLM_PROMO", "False")).lower() in ("1", "true", "yes")
+SEARCH_OPENAI_MODEL = os.getenv("SEARCH_OPENAI_MODEL", os.getenv("OPENAI_MODEL", "gpt-4o-mini"))
+
+# === 聊天功能 LLM 配置 ===
+CHAT_USE_EXPAND = os.getenv("CHAT_USE_LLM_EXPAND", os.getenv("USE_LLM_EXPAND", "False")).lower() in ("1", "true", "yes")
+CHAT_USE_SHORT = os.getenv("CHAT_USE_LLM_SHORTDESC", os.getenv("USE_LLM_SHORTDESC", "False")).lower() in ("1", "true", "yes")
+CHAT_USE_RERANK = os.getenv("CHAT_USE_LLM_RERANK", os.getenv("USE_LLM_RERANK", "False")).lower() in ("1", "true", "yes")
+CHAT_USE_INTENT = os.getenv("CHAT_USE_LLM_INTENT", os.getenv("USE_LLM_INTENT", "False")).lower() in ("1", "true", "yes")
+CHAT_USE_PROMO = os.getenv("CHAT_USE_LLM_PROMO", os.getenv("USE_LLM_PROMO", "False")).lower() in ("1", "true", "yes")
+CHAT_OPENAI_MODEL = os.getenv("CHAT_OPENAI_MODEL", os.getenv("CHAT_MODEL", os.getenv("OPENAI_MODEL", "gpt-4o-mini")))
+
+# === 向後相容性：保持舊變數名稱 ===
+USE_EXPAND = SEARCH_USE_EXPAND  # 默認使用搜索配置
+USE_SHORT = SEARCH_USE_SHORT
+USE_RERANK = SEARCH_USE_RERANK
+USE_INTENT = SEARCH_USE_INTENT
+USE_PROMO = SEARCH_USE_PROMO
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-CHAT_MODEL = os.getenv("CHAT_MODEL", OPENAI_MODEL)
+OPENAI_MODEL = SEARCH_OPENAI_MODEL
+CHAT_MODEL = CHAT_OPENAI_MODEL
 _client: Optional[OpenAI] = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 _CHAT_DF_CACHE: Optional[pd.DataFrame] = None
 CHAT_STOP_WORDS: set[str] = {
@@ -147,7 +164,7 @@ def classify_recommendation_type(user_text: str) -> int:
     3️⃣ 若顧客提到送禮、搭配、配餐、組合、一起買、適合搭配 → 回傳 3。
     只輸出數字 1、2 或 3，不加文字。
     """.strip()
-    reply = _call_chat(user_text, system=system_prompt, max_tokens=4)
+    reply = _call_chat(user_text, system=system_prompt, model=CHAT_OPENAI_MODEL, max_tokens=4)
     try:
         value = int((reply or "").strip())
         return value if value in (1, 2, 3) else 1
@@ -169,7 +186,7 @@ BUNDLE_JSON_RE = re.compile(r"\{.*?\"intent\"\s*:\s*\"bundle_plan\".*?\}\s*$", r
 
 def llm_generate_plan(user_message: str, catalog_excerpt: str) -> Dict[str, Any]:
     system_prompt = f"{FREESTYLE_PLAN_PROMPT}\n\n以下是可用商品清單摘錄：\n{catalog_excerpt.strip()}"
-    reply_text = _call_chat(user_message, system=system_prompt, max_tokens=500)
+    reply_text = _call_chat(user_message, system=system_prompt, model=CHAT_OPENAI_MODEL, max_tokens=500)
     if not reply_text:
         return {"reply_text": "目前沒有找到合適的商品方案，請提供更具體的需求。", "plan": {"items": []}}
     plan = {"items": []}
@@ -380,17 +397,19 @@ def _filter_products_by_keywords(products: List[Dict[str, Any]], keywords: List[
     return filtered or []
 
 
-def _call_chat(prompt: str, system: Optional[str] = None, max_tokens: int = 64) -> str:
+def _call_chat(prompt: str, system: Optional[str] = None, max_tokens: int = 64, model: Optional[str] = None) -> str:
     """Call OpenAI ChatCompletion (simple wrapper). Returns the assistant text or empty string on error."""
     if not _client:
         return ""
+    if not model:
+        model = OPENAI_MODEL  # 使用默認模型
     try:
         messages = []
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
         res = _client.chat.completions.create(
-            model=OPENAI_MODEL,
+            model=model,
             messages=messages,
             max_tokens=max_tokens,
             temperature=0.0,
@@ -409,8 +428,12 @@ def _merge_prompt(custom: Optional[str], base: str) -> str:
     return f"{custom}\n\n{base}"
 
 
-def llm_analyze_query(query: str, system_prompt: Optional[str] = None) -> Dict[str, Any]:
-    if not USE_INTENT or not _client or not query:
+def llm_analyze_query(query: str, system_prompt: Optional[str] = None, use_search_config: bool = True) -> Dict[str, Any]:
+    """分析查詢意圖，可指定使用搜索或聊天配置"""
+    use_intent = SEARCH_USE_INTENT if use_search_config else CHAT_USE_INTENT
+    model = SEARCH_OPENAI_MODEL if use_search_config else CHAT_OPENAI_MODEL
+    
+    if not use_intent or not _client or not query:
         return {}
     default_prompt = (
         "你是一個商品搜尋意圖解析器。輸入是使用者的自然語言需求，請輸出 JSON，包含：\n"
@@ -421,7 +444,7 @@ def llm_analyze_query(query: str, system_prompt: Optional[str] = None) -> Dict[s
     )
     system_prompt = _merge_prompt(system_prompt, default_prompt)
     prompt = f"請解析以下需求並輸出 JSON（不需要多餘文字）：\n{query}"
-    raw = _call_chat(prompt, system=system_prompt, max_tokens=200)
+    raw = _call_chat(prompt, system=system_prompt, model=model, max_tokens=200)
     if not raw:
         return {}
     try:
@@ -435,37 +458,52 @@ def llm_analyze_query(query: str, system_prompt: Optional[str] = None) -> Dict[s
             return {}
 
 
-def llm_expand_query(query: str, system_prompt: Optional[str] = None) -> str:
-    """Expand user query to include synonyms / related terms to increase recall.
-
-    If disabled or no API key, returns the original query.
+def llm_expand_query(query: str, system_prompt: Optional[str] = None, use_search_config: bool = True) -> str:
+    """擴展使用者查詢以包含同義詞/相關詞彙，可指定使用搜索或聊天配置
+    
+    Args:
+        query: 使用者查詢
+        system_prompt: 系統提示詞
+        use_search_config: True 使用搜索配置，False 使用聊天配置
+    
+    Returns:
+        擴展後的查詢字串，如果禁用或無 API key 則返回原查詢
     """
-    if not USE_EXPAND or not _client or not query:
+    use_expand = SEARCH_USE_EXPAND if use_search_config else CHAT_USE_EXPAND
+    model = SEARCH_OPENAI_MODEL if use_search_config else CHAT_OPENAI_MODEL
+    
+    if not use_expand or not _client or not query:
         return query
     prompt = (
         f"請將使用者查詢盡量擴展成同義、相關或可能的搜尋詞組（以逗號分隔），輸出為一行，不要多餘說明。\n輸入：{query}\n輸出："
     )
     system = _merge_prompt(system_prompt, "你是一個搜尋查詢擴展工具（用繁體中文回應）")
-    out = _call_chat(prompt, system=system, max_tokens=80)
+    out = _call_chat(prompt, system=system, model=model, max_tokens=80)
     return out or query
 
 
-def llm_shorten_20(text: str) -> str:
-    """Generate a short (<=20 characters) summary for the given text."""
-    if not USE_SHORT or not _client or not text:
+def llm_shorten_20(text: str, use_search_config: bool = True) -> str:
+    """產生簡短（<=20字）摘要，可指定使用搜索或聊天配置"""
+    use_short = SEARCH_USE_SHORT if use_search_config else CHAT_USE_SHORT
+    model = SEARCH_OPENAI_MODEL if use_search_config else CHAT_OPENAI_MODEL
+    
+    if not use_short or not _client or not text:
         return (text or "")[:60]
     prompt = (
         f"請將以下內容濃縮為不超過20個字的繁體中文重點描述，避免添加引號或多餘解說：\n\n{text}\n\n輸出："
     )
-    out = _call_chat(prompt, system="你是一個簡短摘要生成器（繁體中文）", max_tokens=60)
+    out = _call_chat(prompt, system="你是一個簡短摘要生成器（繁體中文）", model=model, max_tokens=60)
     if not out:
         return (text or "")[:60]
     return out.strip()[:60]
 
 
-def llm_generate_promo(name: str, raw_description: str, extra: Optional[str] = None) -> str:
-    """Generate a social-media style promotional copy for a product."""
-    if not USE_PROMO or not _client:
+def llm_generate_promo(name: str, raw_description: str, extra: Optional[str] = None, use_search_config: bool = True) -> str:
+    """產生社群媒體風格的產品宣傳文案，可指定使用搜索或聊天配置"""
+    use_promo = SEARCH_USE_PROMO if use_search_config else CHAT_USE_PROMO
+    model = SEARCH_OPENAI_MODEL if use_search_config else CHAT_OPENAI_MODEL
+    
+    if not use_promo or not _client:
         base = raw_description or name
         return (base or "")[:180]
     system_prompt = (
@@ -480,7 +518,7 @@ def llm_generate_promo(name: str, raw_description: str, extra: Optional[str] = N
     if extra:
         content_lines.append(f"補充資訊：{extra}")
     user_prompt = "\n".join(content_lines) + "\n請產出文案："
-    out = _call_chat(user_prompt, system=system_prompt, max_tokens=160)
+    out = _call_chat(user_prompt, system=system_prompt, model=model, max_tokens=160)
     return (out or raw_description or name)[:200]
 
 
@@ -497,13 +535,26 @@ def llm_rerank_products(
     candidates: List[Dict[str, Any]],
     topn: int = 10,
     system_prompt: Optional[str] = None,
+    use_search_config: bool = True,
 ) -> List[Dict[str, Any]]:
-    """Let the LLM re-rank candidate products based on semantic relevance.
-
-    Returns re-ordered candidate list (limited to `topn`) or the original list when disabled.
+    """讓 LLM 基於語義相關性重新排序候選商品，可指定使用搜索或聊天配置
+    
+    Args:
+        user_query: 使用者原始查詢
+        expanded_query: 擴展後的查詢
+        candidates: 候選商品列表
+        topn: 返回的商品數量上限
+        system_prompt: 系統提示詞
+        use_search_config: True 使用搜索配置，False 使用聊天配置
+    
+    Returns:
+        重新排序的商品列表（限制在 topn）或禁用時的原始列表
     """
+    use_rerank = SEARCH_USE_RERANK if use_search_config else CHAT_USE_RERANK
+    model = SEARCH_OPENAI_MODEL if use_search_config else CHAT_OPENAI_MODEL
+    
     if (
-        not USE_RERANK
+        not use_rerank
         or not _client
         or not candidates
         or topn <= 0
@@ -544,7 +595,7 @@ def llm_rerank_products(
 
     try:
         res = _client.chat.completions.create(
-            model=OPENAI_MODEL,
+            model=model,
             messages=[
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": user_message},
@@ -626,7 +677,7 @@ def _mock_or_real_llm(
 
     try:
         res = _client.chat.completions.create(
-            model=CHAT_MODEL,
+            model=CHAT_OPENAI_MODEL,  # 使用聊天專用模型
             messages=messages,
             max_tokens=320,
             temperature=0.4,
