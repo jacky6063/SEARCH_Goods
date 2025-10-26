@@ -52,11 +52,25 @@ CHAT_MODEL = CHAT_OPENAI_MODEL
 def _get_client() -> Optional[OpenAI]:
     """動態獲取 OpenAI 客戶端，支援執行時期的 API key 更新"""
     api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key or api_key == "your-openai-api-key":
+    
+    # Debug 資訊：記錄 API key 狀態
+    if not api_key:
+        print(f"[DEBUG] OPENAI_API_KEY not found in environment")
         return None
+    elif api_key == "your-openai-api-key":
+        print(f"[DEBUG] OPENAI_API_KEY is placeholder value")
+        return None
+    else:
+        # 只顯示前幾個字符以保護敏感資訊
+        masked_key = f"{api_key[:8]}...{api_key[-4:]}" if len(api_key) > 12 else "***"
+        print(f"[DEBUG] OPENAI_API_KEY found: {masked_key}")
+    
     try:
-        return OpenAI(api_key=api_key)
+        client = OpenAI(api_key=api_key)
+        print(f"[DEBUG] OpenAI client created successfully")
+        return client
     except Exception as e:
+        print(f"[DEBUG] Failed to create OpenAI client: {e}")
         _logger.error(f"Failed to create OpenAI client: {e}")
         return None
 
@@ -681,13 +695,18 @@ def _mock_or_real_llm(
         safe_history.append({"role": role, "content": str(content)})
 
     mock_reply = _generate_mock_reply(user_message, catalog, context)
+    print(f"[DEBUG] _mock_or_real_llm called, checking client...")
 
     if context.get("overview"):
+        print(f"[DEBUG] Using mock reply due to overview context")
         return mock_reply
 
     client = _get_client()
     if not client:
+        print(f"[DEBUG] No OpenAI client available, using mock reply")
         return mock_reply
+    
+    print(f"[DEBUG] OpenAI client available, proceeding with real LLM call...")
 
     messages: List[Dict[str, str]] = []
     if system_prompt:
@@ -696,14 +715,17 @@ def _mock_or_real_llm(
     messages.append({"role": "user", "content": user_message})
 
     try:
+        print(f"[DEBUG] Making OpenAI API call with model: {CHAT_OPENAI_MODEL}")
         res = client.chat.completions.create(
             model=CHAT_OPENAI_MODEL,  # 使用聊天專用模型
             messages=messages,
             max_tokens=320,
             temperature=0.4,
         )
+        print(f"[DEBUG] OpenAI API call successful")
         if res and res.choices:
             reply_text = (res.choices[0].message.content or "").strip()
+            print(f"[DEBUG] LLM reply received: {reply_text[:100]}...")
             if reply_text:
                 lowered = reply_text.lower()
                 matches = context.get("matches") or []
@@ -735,10 +757,14 @@ def _mock_or_real_llm(
                         return reply_text
 
                 if any(marker in lowered for marker in negative_markers):
+                    print(f"[DEBUG] LLM reply contains negative markers, using mock reply")
                     return mock_reply
                 return reply_text
     except Exception as exc:
+        print(f"[DEBUG] OpenAI API call failed: {exc}")
         _logger.exception("Chat completion failed: %s", exc)
+    
+    print(f"[DEBUG] Fallback to mock reply")
     return mock_reply
 
 
@@ -1074,9 +1100,15 @@ def chat_reply(
     catalog: List[Dict[str, Any]],
     topn: int = 8,
 ) -> Dict[str, Any]:
-    if os.getenv("USE_CHAT_MODE", "True").lower() not in ("true", "1", "yes"):
+    # Debug 資訊：檢查 USE_CHAT_MODE
+    chat_mode = os.getenv("USE_CHAT_MODE", "True").lower()
+    print(f"[DEBUG] USE_CHAT_MODE = {chat_mode}")
+    
+    if chat_mode not in ("true", "1", "yes"):
+        print(f"[DEBUG] Chat mode disabled, returning mock response")
         return {"reply": "聊天模式目前未啟用。", "action": {"type": "none"}}
 
+    print(f"[DEBUG] chat_reply called with message: {user_message[:50]}...")
     history = history or []
     catalog = catalog or []
     normalized_message = (user_message or "").strip()
