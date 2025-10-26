@@ -481,6 +481,37 @@ def debug_paths():
     }
     return JSONResponse(paths_info)
 
+@app.get("/debug/llm")
+def debug_llm():
+    """診斷端點：檢查 LLM 相關環境變數和配置"""
+    import os
+    from llm_service import _get_client, CHAT_USE_EXPAND, CHAT_USE_INTENT, SEARCH_USE_EXPAND, SEARCH_USE_INTENT
+    
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    api_key_status = "not_set"
+    if api_key:
+        if api_key == "your-openai-api-key":
+            api_key_status = "placeholder"
+        elif api_key.startswith("sk-"):
+            api_key_status = f"valid_key_{api_key[:8]}...{api_key[-4:]}"
+        else:
+            api_key_status = "invalid_format"
+    
+    client = _get_client()
+    
+    llm_info = {
+        "openai_api_key_status": api_key_status,
+        "use_chat_mode": os.getenv("USE_CHAT_MODE", "True"),
+        "chat_use_expand": CHAT_USE_EXPAND,
+        "chat_use_intent": CHAT_USE_INTENT,
+        "search_use_expand": SEARCH_USE_EXPAND,
+        "search_use_intent": SEARCH_USE_INTENT,
+        "client_available": client is not None,
+        "chat_openai_model": os.getenv("CHAT_OPENAI_MODEL", "gpt-4o-mini"),
+        "search_openai_model": os.getenv("SEARCH_OPENAI_MODEL", "gpt-4o-mini")
+    }
+    return JSONResponse(llm_info)
+
 
 # --- Admin endpoints: protected by ADMIN_TOKEN env var (simple token auth)
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN")
