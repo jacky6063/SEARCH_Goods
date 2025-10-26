@@ -463,6 +463,21 @@ def health():
     """Simple health-check endpoint for load balancers/containers."""
     return JSONResponse({"status": "ok"})
 
+@app.get("/debug/paths")
+def debug_paths():
+    """診斷端點：檢查檔案路徑和存在性"""
+    import os
+    paths_info = {
+        "current_working_dir": os.getcwd(),
+        "data_path_env": os.getenv("DATA_PATH"),
+        "computed_data_path": str(DATA_PATH),
+        "data_path_exists": DATA_PATH.exists(),
+        "render_path_exists": Path("/opt/render/project/src/data/VIEW_GOODS_enhanced.csv").exists(),
+        "local_path_exists": (ROOT / "data" / "VIEW_GOODS_enhanced.csv").exists(),
+        "root_path": str(ROOT)
+    }
+    return JSONResponse(paths_info)
+
 
 # --- Admin endpoints: protected by ADMIN_TOKEN env var (simple token auth)
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN")
