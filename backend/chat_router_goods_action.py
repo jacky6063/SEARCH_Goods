@@ -157,10 +157,78 @@ def simple_chat_handler(req: ChatReq):
     
     return resp@router.post("/api/chat", response_model=ChatResponse)
 def chat_handler(req: ChatReq):
-    """主聊天處理器，優先使用複雜系統，失敗時回退到簡單處理"""
+    """主聊天處理器，整合真正的 LLM 聊天功能"""
+    user_text = req.user_message.strip()
+    history = req.history or []
+    
+    # 清理過期快取
+    _cleanup_session_cache()
+    
+    # 1. 優先嘗試 LLM 聊天模式（真正的對話）
     try:
-        # 優先嘗試 fallback 系統處理特殊查詢（如生日聚會）
-        user_text = req.user_message.strip()
+        from llm_service import chat_reply
+        from goods_search_service import get_catalog_snapshot
+        
+        # 獲取商品目錄用於 LLM 聊天
+        catalog = get_catalog_snapshot(topn=100)
+        
+        # 使用真正的 LLM 聊天功能
+        llm_result = chat_reply(
+            user_message=user_text,
+            history=history,
+            catalog=catalog,
+            topn=8
+        )
+        
+        if llm_result and llm_result.get("reply"):
+            print(f"[INFO] LLM chat activated for: {user_text[:50]}...")
+            
+            # 處理 LLM 聊天結果
+            suggestion_ids = []
+            alignment = llm_result.get("alignment")
+            if alignment and alignment.get("items"):
+                suggestion_ids = [item.get("id") for item in alignment["items"] if item.get("id")]
+            
+            resp = {
+                "ok": True,
+                "reply": llm_result.get("reply", ""),
+                "suggestion_ids": suggestion_ids,
+                "meta": {"has_budget_intent": has_budget_intent(user_text)},
+                "action": llm_result.get("action", {
+                    "type": "switch_to_search",
+                    "items": [{"id": sid} for sid in suggestion_ids]
+                } if suggestion_ids else None)
+            }
+            
+            # 為 LLM 聊天結果生成 session_id 並同步快取
+            if suggestion_ids:
+                session_id = str(uuid.uuid4())[:8]
+                CHAT_SESSION_CACHE[session_id] = (time.time(), resp)
+                
+                # 同步更新 SUGGEST_CACHE
+                try:
+                    from app import SUGGEST_CACHE, get_items_by_ids, get_df
+                    df = get_df()
+                    rows = get_items_by_ids(df, suggestion_ids)
+                    SUGGEST_CACHE[session_id] = {
+                        "align_ids": suggestion_ids,
+                        "align_rows": rows,
+                        "query_terms": [user_text],
+                        "ts": time.time(),
+                    }
+                except Exception as e:
+                    print(f"[WARNING] Failed to sync SUGGEST_CACHE: {e}")
+                
+                resp["session_id"] = session_id
+            
+            return resp
+            
+    except Exception as e:
+        print(f"[ERROR] LLM chat failed: {e}")
+        # 繼續嘗試其他方法
+
+    # 2. 嘗試 fallback 系統處理特殊查詢（如生日聚會）
+    try:
         _fb = run_fallback(user_text)
         if _fb and _fb.get("ok"):
             print(f"[INFO] Fallback system activated for: {user_text[:50]}...")
@@ -190,11 +258,10 @@ def chat_handler(req: ChatReq):
             return _fb
     except Exception as e:
         print(f"[ERROR] Fallback system error: {e}")
-        # 回退到簡單處理器
         
+    # 3. 嘗試使用正常搜索系統
     try:
-        # 嘗試使用正常搜索系統
-        items = search_products_strict(query=req.user_message.strip(), limit=10)
+        items = search_products_strict(query=user_text, limit=10)
         suggestion_ids = [FieldAccessor.get_product_id(x) for x in items if FieldAccessor.get_product_id(x)]
         
         if items:
@@ -236,5 +303,5 @@ def chat_handler(req: ChatReq):
     except Exception as e:
         print(f"[ERROR] Advanced search failed: {e}")
     
-    # 最終回退：使用簡單處理器
+    # 4. 最終回退：使用簡單處理器
     return simple_chat_handler(req)
