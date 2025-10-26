@@ -677,29 +677,30 @@ def _normalize(s):
     return str(s or "").strip().lower()
 
 
-def suggest_original_ids(last_align_ids: List[str], limit: int = 8) -> List[str]:
-    # 檢查是否為空的 align_ids 或者需要使用預設建議
-    if not last_align_ids:
-        # 回傳生日派對商品組合 - 針對「按1」建議功能
-        birthday_party_suggestions = [
-            # 餅乾零食類 - 確認存在的商品 ID
-            "4713837032316",  # 玫瑰鹽薄切洋芋片 49元
-            "4713837030497",  # 香辣洋芋片 49元  
-            "4713837032002",  # 黑芝麻餅 79元
-            "4713837031999",  # 椒鹽蘇達餅 79元
-            "4711202224557",  # 吉福小餅(原味) 30元
-            "4711202224038",  # 五香胡椒餅 80元
-            "4711202224045",  # 岩燒海苔餅 80元
-            "4711202221693",  # 黑糖沙琪瑪 70元
-            # 飲品類
-            "4714379952018",  # 米森有機黑糖老薑茶隨身包 18元
-            "4713517167611",  # 曼寧檸香薑茶 180元
-            "4710940006722",  # 吃果籽愛文翡翠吸凍飲 39元
-            "4710940006715",  # 吃果籽柳丁翡翠吸凍飲 39元
-        ]
-        return birthday_party_suggestions[:limit]
-    
-    return (last_align_ids or [])[:limit]
+def suggest_original_ids(last_align_ids: List[str], limit: Optional[int] = None) -> List[str]:
+    ids = [str(x).strip() for x in (last_align_ids or []) if str(x).strip()]
+    if ids:
+        if limit is None or limit <= 0:
+            return ids
+        return ids[:limit]
+
+    birthday_party_suggestions = [
+        "4713837032316",
+        "4713837030497",
+        "4713837032002",
+        "4713837031999",
+        "4711202224557",
+        "4711202224038",
+        "4711202224045",
+        "4711202221693",
+        "4714379952018",
+        "4713517167611",
+        "4710940006722",
+        "4710940006715",
+    ]
+    if limit is None or limit <= 0:
+        return birthday_party_suggestions
+    return birthday_party_suggestions[:limit]
 
 
 def _is_on_sale(row: dict) -> bool:
