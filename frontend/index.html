@@ -860,10 +860,12 @@
     try{
       console.log('🚀 觸發建議請求，類型:', type);
       setStatus('正在為您準備推薦…');
+      const activeSession = window.getChatSession ? window.getChatSession() : null;
+      const payloadSessionId = activeSession || sessionId;
       const resp = await fetch(buildBackendUrl('suggest'), {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ session_id: sessionId, type })
+        body: JSON.stringify({ session_id: payloadSessionId, type })
       });
       if(!resp.ok){ throw new Error(`HTTP ${resp.status}`); }
       const data = await resp.json();
