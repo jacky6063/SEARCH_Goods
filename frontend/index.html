@@ -374,7 +374,23 @@
     if(!chatMessagesEl){ return; }
     const el = document.createElement('div');
     el.className = role === 'user' ? 'bubble user' : 'bubble assistant';
-    el.textContent = text;
+    let displayText = text || "";
+    if(role === 'assistant' && typeof displayText === "string"){
+      const trimmed = displayText.trimEnd();
+      const jsonMatch = trimmed.match(/\{[\s\S]*\}\s*$/);
+      if(jsonMatch){
+        const candidate = jsonMatch[0];
+        try{
+          const parsed = JSON.parse(candidate);
+          el.dataset.intentPayload = candidate;
+          displayText = trimmed.slice(0, trimmed.length - candidate.length).trimEnd();
+          el.dataset.intentType = parsed.intent || "";
+        }catch(err){
+          // ignore parse failure, keep original text
+        }
+      }
+    }
+    el.textContent = displayText;
     chatMessagesEl.appendChild(el);
     chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
   }
