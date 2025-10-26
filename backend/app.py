@@ -556,10 +556,19 @@ app.include_router(search_router_goods_1024001)
 # ---- goods_action: 直接在主 app 定義 chat 端點 ----
 from chat_router_goods_action import chat_handler, ChatReq, ChatResponse, get_chat_result_by_session
 
-@app.post("/api/chat", response_model=ChatResponse)
-async def chat_endpoint(req: ChatReq):
-    """Chat endpoint - 直接調用 chat_handler"""
-    return chat_handler(req)
+@app.post("/api/chat")
+def chat_endpoint(req: ChatReq):
+    """Chat endpoint - 直接調用 chat_handler 並回傳原始結果"""
+    try:
+        result = chat_handler(req)
+        # 如果是 dict，直接回傳，FastAPI 會自動序列化
+        return result
+    except Exception as e:
+        return {
+            "ok": False,
+            "reply": "抱歉，目前聊天服務暫時無法回應，稍後再試。",
+            "error": str(e)
+        }
 
 # ---- 新增會話結果檢索 endpoint ----
 @app.get("/api/chat-session/{session_id}")

@@ -2,6 +2,9 @@ from fallback.multi_category_party import run_fallback
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
+from utils.llm_guard import safe_call_async
+from utils.simple_extract import extract_budget_and_cats
+__LLM_GUARD_INSTALLED__ = True
 from search_ext_goods_1024001 import search_products_strict, infer_filters_from_query
 from field_utils import FieldAccessor, create_product_summary
 import uuid
