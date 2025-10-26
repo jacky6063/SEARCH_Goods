@@ -50,14 +50,26 @@
     .bubble{max-width:80%;padding:10px 12px;border-radius:12px;margin:8px 0;line-height:1.5;white-space:pre-wrap;word-break:break-word;}
     .bubble.user{background:#dbeafe;margin-left:auto;}
     .bubble.assistant{background:#fff;border:1px solid #eef2f7;}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;}
-    .card-body{padding:18px 18px 20px;display:flex;flex-direction:column;gap:8px;}
-    .card-row{display:flex;gap:8px;font-size:14px;line-height:1.6;flex-wrap:wrap;}
-    .card-label{color:var(--sub);font-weight:600;min-width:88px;}
-    .card-value{color:var(--text);word-break:break-all;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s;}
+    .card:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,0.08);}
+    .card-image{position:relative;overflow:hidden;border-radius:18px 18px 0 0;}
+    .card-image::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(45deg,rgba(37,99,235,0.1),transparent);pointer-events:none;}
+    .card-body{padding:18px 18px 20px;display:flex;flex-direction:column;gap:10px;}
+    .card-row{display:flex;gap:10px;font-size:14px;line-height:1.6;align-items:flex-start;}
+    .card-row.highlight{background:rgba(37,99,235,0.05);margin:-4px -8px;padding:8px;border-radius:8px;border-left:3px solid var(--accent);}
+    .card-label{color:var(--sub);font-weight:600;min-width:80px;flex-shrink:0;}
+    .card-value{color:var(--text);word-break:break-all;flex:1;}
+    .card-value.price{font-weight:700;color:#059669;font-size:15px;}
+    .card-value.sale{font-weight:700;color:#dc2626;font-size:15px;}
+    .card-value.name{font-weight:600;color:var(--text);font-size:15px;}
     .link-btn{flex:1;text-align:center;background:var(--accent);color:#fff;border-radius:10px;padding:10px 12px;font-weight:600;text-decoration:none;box-shadow:0 10px 18px rgba(37,99,235,0.2);transition:transform 0.2s;}
     .link-btn:hover{transform:translateY(-2px);}
     .link-btn.inline{display:inline;padding:0;background:transparent;border-radius:0;box-shadow:none;font-weight:600;color:var(--accent);text-decoration:underline;flex:0 0 auto;}
+    .action-btn{border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;gap:4px;}
+    .action-btn.primary{background:var(--accent);color:white;}
+    .action-btn.primary:hover{background:#1e40af;transform:translateY(-1px);}
+    .action-btn.secondary{background:#f1f5f9;color:var(--sub);border:1px solid var(--border);}
+    .action-btn.secondary:hover{background:#e2e8f0;}
     .mobile-bar{display:none;}
     .recording{animation:pulse 1s infinite;}
     .back-to-chat{position:fixed;bottom:80px;right:20px;background-color:#2563eb;color:#fff;border:none;border-radius:999px;padding:10px 16px;box-shadow:0 2px 6px rgba(15,23,42,0.2);cursor:pointer;display:none;z-index:1000;font-weight:600;}
@@ -73,6 +85,28 @@
     .plan-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:8px;}
     .bundle-summary{background:#e8f5e9;color:#1b5e20;padding:6px 10px;border-radius:8px;font-size:13px;font-weight:600;}
     @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(37,99,235,.35)}70%{box-shadow:0 0 0 14px rgba(37,99,235,0)}100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}}
+    @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+    .loading-shimmer{position:relative;overflow:hidden;background:#f1f5f9;}
+    .loading-shimmer::after{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent);animation:shimmer 1.5s infinite;}
+    .skeleton-card{height:200px;border-radius:18px;margin:12px 0;}
+    .skeleton-row{height:16px;background:#e2e8f0;border-radius:4px;margin:8px 0;}
+    .skeleton-row.short{width:60%;}
+    .skeleton-row.medium{width:80%;}
+    .loading-dots::after{content:'';display:inline-block;animation:dots 1.4s infinite both;}
+    @keyframes dots{0%,80%,100%{opacity:0}40%{opacity:1}}
+    .initial-tips{position:fixed;top:0;left:0;right:0;bottom:0;z-index:1000;opacity:0;visibility:hidden;transition:all 0.3s ease;}
+    .initial-tips.show{opacity:1;visibility:visible;}
+    .initial-tips.hide{opacity:0;visibility:hidden;}
+    .tips-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);}
+    .tips-content{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:20px;padding:32px;max-width:480px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);}
+    .tips-content h3{margin:0 0 24px 0;color:var(--text);text-align:center;}
+    .tips-list{display:flex;flex-direction:column;gap:20px;margin-bottom:32px;}
+    .tip-item{display:flex;gap:16px;align-items:flex-start;}
+    .tip-icon{font-size:24px;flex-shrink:0;}
+    .tip-item strong{color:var(--text);display:block;margin-bottom:4px;}
+    .tip-item p{margin:0;color:var(--sub);font-size:14px;line-height:1.5;}
+    .tips-close-btn{width:100%;background:var(--accent);color:white;border:none;padding:16px;border-radius:12px;font-weight:600;font-size:16px;cursor:pointer;transition:background 0.2s;}
+    .tips-close-btn:hover{background:#1e40af;}
     @media (max-width:1024px){
       .workspace{grid-template-columns:1fr;gap:20px;}
       .results{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}
@@ -84,6 +118,12 @@
       .workspace{margin-top:16px;}
       .sidebar{display:none;}
       .results-header{padding-bottom:56px;}
+      .results{grid-template-columns:1fr;gap:16px;}
+      .card{border-radius:12px;}
+      .card-body{padding:16px;}
+      .card-row{font-size:13px;}
+      .card-label{min-width:70px;font-size:12px;}
+      .card-image{height:120px;}
       .mobile-bar{display:grid;grid-template-columns:1fr 60px 72px 120px;gap:8px;position:fixed;left:0;right:0;bottom:0;padding:12px 14px calc(12px + var(--safe-bottom));background:var(--card);border-top:1px solid var(--border);box-shadow:0 -10px 30px rgba(15,23,42,0.1);}
       .mobile-bar input{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:#f8fafc;color:var(--text);}
       .mobile-bar .btn{padding:12px 0;}
@@ -117,6 +157,7 @@
       </div>
       <div class="top-actions">
         <button id="paramToggle" class="btn ghost">參數設定</button>
+        <button onclick="showInitialTips()" class="btn ghost" title="查看使用說明">❓ 幫助</button>
         <button id="adminToggle" class="btn ghost">管理面板</button>
         <div id="versionInfo" class="version-info">版本讀取中…</div>
       </div>
@@ -361,10 +402,84 @@
     const suggestButtons = document.querySelectorAll('.suggest-actions [data-sg]');
     const quickSuggestTypes = new Set(['1','2','3']);
     let latestSuggestCache = {};
+    
+    // 商品分享功能
+    window.shareProduct = function(productDataStr) {
+      try {
+        const product = JSON.parse(productDataStr);
+        const text = `${product.name}\n價格：${product.price}${product.sale ? `\n特價：${product.sale}` : ''}`;
+        const url = product.link || window.location.href;
+        
+        if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+          // 行動裝置使用原生分享
+          navigator.share({
+            title: product.name,
+            text: text,
+            url: url
+          }).catch(console.error);
+        } else {
+          // 桌面版複製到剪貼板
+          const shareText = `${text}\n連結：${url}`;
+          navigator.clipboard.writeText(shareText).then(() => {
+            setStatus('商品資訊已複製到剪貼板！');
+            setTimeout(() => setStatus(''), 2000);
+          }).catch(() => {
+            // 降級到彈出視窗
+            prompt('請複製以下內容:', shareText);
+          });
+        }
+      } catch(err) {
+        console.error('分享失敗:', err);
+        setStatus('分享功能發生錯誤');
+      }
+    };
+
+    // Debug 函數：檢查系統狀態
+    window.debugSearchGoods = function() {
+      console.log('🔍 SEARCH_GOODS 系統狀態:');
+      console.log('- 當前模式:', mode);
+      console.log('- Session ID:', sessionId);
+      console.log('- 建議快取:', Object.keys(latestSuggestCache).map(key => {
+        const cache = latestSuggestCache[key];
+        return `${key}: ${cache.items?.length || 0} 商品, ${cache.ids?.length || 0} IDs`;
+      }));
+      console.log('- 完整快取資料:', latestSuggestCache);
+      return {
+        mode: mode,
+        sessionId: sessionId,
+        suggestCache: latestSuggestCache,
+        cacheKeys: Object.keys(latestSuggestCache)
+      };
+    };
+
+    // 通用快取設定函數，確保資料一致性
+    function setSuggestCache(type, items, options = {}) {
+      if (!items || (!Array.isArray(items) && !hasRenderableProducts(items))) {
+        console.warn('⚠️ setSuggestCache: 無效的商品資料', items);
+        return false;
+      }
+      
+      const itemsArray = Array.isArray(items) ? items : [items];
+      const ids = options.ids || itemsArray.map(item => {
+        return (item['商品編號'] || item['GoodIden'] || item.id || '').toString().trim();
+      }).filter(Boolean);
+      
+      latestSuggestCache[type] = {
+        ids: ids,
+        items: itemsArray,
+        meta: options.meta || null,
+        categoryGroups: options.categoryGroups || null,
+        summary: options.summary || `我找到了 ${itemsArray.length} 款商品`
+      };
+      
+      console.log('✅ 設定建議快取', type, '商品數:', itemsArray.length, 'IDs:', ids.length);
+      return true;
+    }
     let currentMode = "chat";
     let mode = currentMode;
     let chatHistory = [];
     let welcomed = false;
+    let showedInitialTips = localStorage.getItem('search_goods_tips_shown') === 'true';
     function h(s){ return (s||"").replace(/[&<>\"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
     function a(s){ return h(s); }
   function stripIntentPayload(rawText){
@@ -386,7 +501,72 @@
   }
   function setStatus(msg){ if(statusEl){ statusEl.textContent = msg; } }
   function clearResults(){ resultsEl.innerHTML = ""; const c = document.getElementById('resultCount'); if(c && mode === "search") c.textContent = '0 筆結果'; }
-  function setLoading(on){ if(on){ setStatus('載入中…'); } }
+  function setLoading(on){ 
+    if(on){ 
+      setStatus('載入中<span class="loading-dots">...</span>'); 
+      showSkeletonCards();
+    } else {
+      hideSkeletonCards();
+    }
+  }
+  
+  function showSkeletonCards(){
+    const resultsEl = document.getElementById('results');
+    if(!resultsEl) return;
+    
+    // 清除現有內容
+    resultsEl.innerHTML = '';
+    
+    // 顯示 3-4 個骨架卡片
+    for(let i = 0; i < 4; i++){
+      const skeleton = document.createElement('div');
+      skeleton.className = 'card loading-shimmer skeleton-card';
+      skeleton.innerHTML = `
+        <div class="card-body">
+          <div class="skeleton-row medium"></div>
+          <div class="skeleton-row short"></div>
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row short"></div>
+        </div>
+      `;
+      resultsEl.appendChild(skeleton);
+    }
+  }
+  
+  function hideSkeletonCards(){
+    const skeletons = document.querySelectorAll('.skeleton-card');
+    skeletons.forEach(sk => sk.remove());
+  }
+  
+  function showEmptyState(query, message){
+    const resultsEl = document.getElementById('results');
+    if(!resultsEl) return;
+    
+    const msg = message || `很抱歉，目前沒有找到符合您需求的商品喔 🙏\n您可以嘗試其他關鍵字，或告訴我品牌、型號或預算範圍，我再幫您推薦合適的商品 💡\n（目前查詢關鍵字：${query}）`;
+    
+    const empty = document.createElement("div");
+    empty.className = "card";
+    empty.innerHTML = `
+      <div style="text-align:center;padding:40px 20px;">
+        <div style="font-size:48px;margin-bottom:16px;opacity:0.6;">🔍</div>
+        <h3 style="color:var(--sub);margin:0 0 12px 0;font-weight:600;">暫時沒有符合的商品</h3>
+        <p style="color:var(--sub);margin:0;line-height:1.6;white-space:pre-line;">${h(msg)}</p>
+        <div style="margin-top:20px;">
+          <button onclick="switchToChat()" style="background:var(--accent);color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;">
+            💬 改用聊天搜尋
+          </button>
+        </div>
+      </div>
+    `;
+    resultsEl.appendChild(empty);
+  }
+  function hasRenderableProducts(list){
+    if(!Array.isArray(list) || !list.length){ return false; }
+    return list.some(item=>{
+      if(!item || typeof item !== "object"){ return false; }
+      return Boolean(item["商品名稱"] || item["Name"] || item["name"]);
+    });
+  }
   function getActiveInput(){ const isMobile = window.matchMedia("(max-width:600px)").matches; return (isMobile && typeof mq !== "undefined" && mq) ? mq : q; }
   function appendChatBubble(role, text){
     if(!chatMessagesEl){ return; }
@@ -457,7 +637,23 @@
       lastPage = 1;
       hasNextPage = false;
       const summaryLine = summaryLineFromText || `我找到了 ${prefetchedItems.length} 款商品`;
-      window.renderList(prefetchedItems, categoryGroups, summaryLine);
+      if(hasRenderableProducts(prefetchedItems)){
+        console.log('✅ switchToSearch: 直接渲染商品列表');
+        window.renderList(prefetchedItems, categoryGroups, summaryLine);
+        const c = document.getElementById('resultCount'); 
+        if(c) c.textContent = `${prefetchedItems.length} 筆結果`;
+      } else {
+        console.log('⚠️ switchToSearch: 商品資料不完整，使用 ID 重新查詢');
+        const fallbackIds = Array.isArray(itemIds) && itemIds.length ? itemIds : prefetchedItems.map(it => (it && (it["商品編號"] || it["GoodIden"] || it.id || "")).toString().trim()).filter(Boolean);
+        if(fallbackIds.length){
+          doSearchByIds(fallbackIds, summaryLine);
+        } else {
+          console.log('❌ switchToSearch: 沒有可用的商品 ID，清空結果');
+          clearResults();
+          setStatus('無法載入商品資料，請重新搜尋。');
+        }
+        return;
+      }
       setStatus('已載入建議商品');
       const countEl = document.getElementById('resultCount'); 
       if(countEl) {
@@ -553,13 +749,15 @@
       if(chatHistory.length > 40){ chatHistory = chatHistory.slice(-40); }
       if(data.auto_suggest && Array.isArray(data.auto_suggest.items) && data.auto_suggest.items.length){
         const cacheKey = data.auto_suggest.type || 1;
-        latestSuggestCache[cacheKey] = {
-          ids: data.auto_suggest.ids || [],
-          items: data.auto_suggest.items,
-          meta: data.auto_suggest.meta || data.meta || null,
-          summary: (assistantParsed.display.split('\n')[0] || '').trim()
-        };
-        showSuggestPrompt(cacheKey, data.auto_suggest.label || SUGGEST_TYPES[cacheKey]);
+        const summary = (assistantParsed.display.split('\n')[0] || '').trim();
+        
+        if(setSuggestCache(cacheKey, data.auto_suggest.items, {
+          ids: data.auto_suggest.ids,
+          meta: data.auto_suggest.meta || data.meta,
+          summary: summary
+        })) {
+          showSuggestPrompt(cacheKey, data.auto_suggest.label || SUGGEST_TYPES[cacheKey]);
+        }
       }
       // 處理分類商品建議 (優先處理)
       if(data.category_suggestions && typeof data.category_suggestions === 'object'){
@@ -575,24 +773,22 @@
           }
         });
         
-        latestSuggestCache[1] = {
+        setSuggestCache(1, allItems, {
           ids: allIds,
-          items: allItems,
           categoryGroups: data.category_suggestions,
-          meta: data.meta || null,
+          meta: data.meta,
           summary: (assistantParsed.display.split('\n')[0] || '').trim()
-        };
+        });
         showSuggestPrompt(1, SUGGEST_TYPES[1]);
       }
       // 處理一般商品列表 (如果沒有分類建議)
       else if(Array.isArray(data.items) && data.items.length){
         const planIds = data.items.map(it => (it['商品編號'] || it['GoodIden'] || '').toString().trim()).filter(Boolean);
-        latestSuggestCache[1] = {
+        setSuggestCache(1, data.items, {
           ids: planIds,
-          items: data.items,
-          meta: data.meta || null,
+          meta: data.meta,
           summary: (assistantParsed.display.split('\n')[0] || '').trim()
-        };
+        });
         showSuggestPrompt(1, SUGGEST_TYPES[1]);
       }
       const summaryLine = (assistantParsed.display.split('\n')[0] || '').trim();
@@ -603,10 +799,10 @@
         }else if(data.category_suggestions && typeof data.category_suggestions === 'object'){
           prefetched = Object.values(data.category_suggestions).flat().filter(Boolean);
         }
-        if(prefetched.length){
+        if(prefetched.length && hasRenderableProducts(prefetched)){
           switchToSearch('', data.suggestion_ids, prefetched, data.category_suggestions, summaryLine);
         }else{
-          switchToSearch('', data.suggestion_ids, undefined, undefined, summaryLine);
+          doSearchByIds(data.suggestion_ids, summaryLine);
         }
       }
       setStatus('聊天已回覆，還想了解其他商品嗎？');
@@ -662,6 +858,7 @@
 
   async function triggerSuggest(type){
     try{
+      console.log('🚀 觸發建議請求，類型:', type);
       setStatus('正在為您準備推薦…');
       const resp = await fetch(buildBackendUrl('suggest'), {
         method:'POST',
@@ -670,21 +867,72 @@
       });
       if(!resp.ok){ throw new Error(`HTTP ${resp.status}`); }
       const data = await resp.json();
+      
+      console.log('📦 建議 API 回應:', data);
+      
       if(Array.isArray(data.items) && data.items.length){
-        latestSuggestCache[type] = {
-          ids: data.ids || [],
-          items: data.items,
-          meta: data.meta || null,
-          summary: (data.message ? data.message.split('\n')[0] : '').trim()
-        };
+        // 設定快取
+        const summary = (data.message ? data.message.split('\n')[0] : '').trim();
+        setSuggestCache(type, data.items, {
+          ids: data.ids,
+          meta: data.meta,
+          summary: summary
+        });
+        
+        console.log('✅ 建議快取已設定:', latestSuggestCache[type]);
+        
+        // 切換到商品模式並顯示結果
         switchToSearch('', data.ids || [], data.items, undefined, data.message || '');
         setStatus(data.message || '已載入推薦商品');
       }else{
-        setStatus('目前沒有合適的推薦，請告訴我更多需求。');
-        switchToChat();
+        console.log('❌ 沒有建議商品，嘗試搜尋熱門商品');
+        // 當沒有建議商品時，不直接回到聊天模式，而是搜尋熱門商品
+        const fallbackQuery = type === 1 ? '熱門商品' : type === 2 ? '特價商品' : '推薦商品';
+        setStatus(`正在為您搜尋${fallbackQuery}...`);
+        
+        // 執行回退搜尋
+        try {
+          const searchResp = await fetch(API_ENDPOINT, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+              query: fallbackQuery,
+              page: 1,
+              size: 8 
+            })
+          });
+          
+          if(searchResp.ok){
+            const searchData = await searchResp.json();
+            if(Array.isArray(searchData.items) && searchData.items.length){
+              // 更新快取
+              const fallbackIds = searchData.items.map(item => item['商品編號'] || item['GoodIden'] || '').filter(Boolean);
+              const fallbackSummary = `為您找到 ${searchData.items.length} 款${fallbackQuery}`;
+              setSuggestCache(type, searchData.items, {
+                ids: fallbackIds,
+                summary: fallbackSummary
+              });
+              
+              switchToSearch(fallbackQuery, fallbackIds, searchData.items, undefined, fallbackSummary);
+              setStatus(`已為您載入${fallbackQuery}`);
+            } else {
+              setStatus('目前沒有合適的推薦，請告訴我更多需求。');
+              switchToChat();
+            }
+          } else {
+            setStatus('目前沒有合適的推薦，請告訴我更多需求。');
+            switchToChat();
+          }
+        } catch(searchErr) {
+          console.error('❌ 回退搜尋失敗:', searchErr);
+          setStatus('目前沒有合適的推薦，請告訴我更多需求。');
+          switchToChat();
+        }
       }
     }catch(err){
+      console.error('❌ 建議請求失敗:', err);
       setStatus(`推薦失敗：${err && err.message ? err.message : err}`);
+      switchToChat();
     }
   }
 
@@ -718,25 +966,131 @@
 
       const rows = [];
       
-      // 必顯欄位
-      rows.push(`<div class="card-row"><span class="card-label">商品編號：</span><span class="card-value">${id ? h(id) : "—"}</span></div>`);
-      rows.push(`<div class="card-row"><span class="card-label">商品名稱：</span><span class="card-value">${h(name)}</span></div>`);
-      rows.push(`<div class="card-row"><span class="card-label">商品價格：</span><span class="card-value">${price ? h(price) : "—"}</span></div>`);
+      // 商品名稱 (突出顯示)
+      rows.push(`<div class="card-row highlight"><span class="card-label">商品名稱：</span><span class="card-value name">${h(name)}</span></div>`);
       
-      // 條件顯示：商品特價（僅在有值時顯示）
-      if(sale && sale.trim()){
-        rows.push(`<div class="card-row"><span class="card-label">商品特價：</span><span class="card-value">${h(sale)}</span></div>`);
+      // 價格資訊區塊
+      const hasSale = sale && sale.trim();
+      if(hasSale){
+        rows.push(`<div class="card-row"><span class="card-label">原價：</span><span class="card-value price">${price ? h(price) : "—"}</span></div>`);
+        rows.push(`<div class="card-row"><span class="card-label">特價：</span><span class="card-value sale">🏷️ ${h(sale)}</span></div>`);
+      } else {
+        rows.push(`<div class="card-row"><span class="card-label">價格：</span><span class="card-value price">${price ? h(price) : "—"}</span></div>`);
       }
       
-      // 商品網址
+      // 商品編號
+      if(id && id.trim()){
+        rows.push(`<div class="card-row"><span class="card-label">商品編號：</span><span class="card-value">${h(id)}</span></div>`);
+      }
+      
+      // 商品描述 (如果有的話)
+      if(desc && desc.trim()){
+        const shortDesc = desc.length > 100 ? desc.substring(0, 100) + '...' : desc;
+        rows.push(`<div class="card-row"><span class="card-label">商品描述：</span><span class="card-value">${h(shortDesc)}</span></div>`);
+      }
+      
+      // 操作按鈕區域
+      const actionButtons = [];
+      
       if(link && link.trim()){
-        rows.push(`<div class="card-row"><span class="card-label">商品網址：</span><a class="card-value link-btn inline" href="${a(link)}" target="_blank" rel="noopener">前往購買</a></div>`);
-      } else {
-        rows.push(`<div class="card-row"><span class="card-label">商品網址：</span><span class="card-value">—</span></div>`);
+        actionButtons.push(`<a class="action-btn primary" href="${a(link)}" target="_blank" rel="noopener">🛒 購買</a>`);
+      }
+      
+      actionButtons.push(`<button class="action-btn secondary" onclick="shareProduct('${a(JSON.stringify({name,price,sale,link}).replace(/'/g, "\\'"))}')">📤 分享</button>`);
+      
+      if(actionButtons.length){
+        rows.push(`<div class="card-actions" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">${actionButtons.join('')}</div>`);
       }
 
-      el.innerHTML = `<div class="card-body">${rows.join("")}</div>`;
+      // 組合卡片內容
+      let cardContent = '';
+      
+      // 如果有商品圖片，添加圖片區域
+      if(image && image.trim()){
+        cardContent += `
+          <div class="card-image" style="background-image:url('${a(image)}');background-size:cover;background-position:center;height:160px;display:flex;align-items:end;">
+            <div style="background:linear-gradient(transparent,rgba(0,0,0,0.6));width:100%;padding:12px;color:white;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,0.5);">
+              ${h(name)}
+            </div>
+          </div>
+        `;
+      }
+      
+      cardContent += `<div class="card-body">${rows.join("")}</div>`;
+      el.innerHTML = cardContent;
+      
+      // 圖片載入錯誤處理
+      if(image && image.trim()){
+        const imgTest = new Image();
+        imgTest.onerror = () => {
+          const cardImage = el.querySelector('.card-image');
+          if(cardImage) {
+            cardImage.style.display = 'none';
+          }
+        };
+        imgTest.src = image;
+      }
+      
       return el;
+    }
+    
+    // 顯示初次使用提示
+    window.showInitialTips = function() {
+      // 如果已有提示視窗，直接返回
+      if(document.querySelector('.initial-tips')) return;
+      
+      const tipsEl = document.createElement('div');
+      tipsEl.className = 'initial-tips';
+      tipsEl.innerHTML = `
+        <div class="tips-overlay" onclick="hideInitialTips()"></div>
+        <div class="tips-content">
+          <h3>🎉 歡迎使用商品搜尋系統</h3>
+          <div class="tips-list">
+            <div class="tip-item">
+              <span class="tip-icon">💬</span>
+              <div>
+                <strong>智能對話搜尋</strong>
+                <p>直接描述您的需求，例如「我想找5000元以下的筆電」</p>
+              </div>
+            </div>
+            <div class="tip-item">
+              <span class="tip-icon">🔍</span>
+              <div>
+                <strong>關鍵字搜尋</strong>
+                <p>切換到搜尋模式，輸入商品名稱或品牌</p>
+              </div>
+            </div>
+            <div class="tip-item">
+              <span class="tip-icon">🎯</span>
+              <div>
+                <strong>智能推薦</strong>
+                <p>點擊「按 1」獲取個人化商品推薦</p>
+              </div>
+            </div>
+            <div class="tip-item">
+              <span class="tip-icon">📤</span>
+              <div>
+                <strong>商品分享</strong>
+                <p>找到喜歡的商品可以直接分享給朋友</p>
+              </div>
+            </div>
+          </div>
+          <button onclick="hideInitialTips()" class="tips-close-btn">開始使用</button>
+        </div>
+      `;
+      
+      document.body.appendChild(tipsEl);
+      setTimeout(() => tipsEl.classList.add('show'), 100);
+    }
+    
+    window.hideInitialTips = function() {
+      const tipsEl = document.querySelector('.initial-tips');
+      if(tipsEl) {
+        tipsEl.classList.add('hide');
+        setTimeout(() => tipsEl.remove(), 300);
+      }
+      localStorage.setItem('search_goods_tips_shown', 'true');
+      showedInitialTips = true;
     }
 
     const q = document.getElementById("q"), sendBtn = document.getElementById("sendBtn"), resetBtn = document.getElementById("resetBtn"), voiceBtn = document.getElementById("voiceBtn");
@@ -755,20 +1109,41 @@
 
     function handleSuggestTrigger(type){
       const cached = latestSuggestCache[type];
-      if(cached && Array.isArray(cached.items) && cached.items.length){
+      
+      // 檢查是否有可用的快取資料
+      if(cached && ((Array.isArray(cached.ids) && cached.ids.length) || hasRenderableProducts(cached.items))){
+        console.log('🛍 使用快取推薦', type, 'ids:', cached.ids?.length || 0, 'items:', cached.items?.length || 0);
         setStatus('為您載入推薦商品...');
-        // 如果有分類資訊，使用分類顯示
-        if(cached.categoryGroups){
-          switchToSearch('', cached.ids || [], cached.items, cached.categoryGroups, cached.summary);
+        const summaryLine = cached.summary || `我找到了 ${(cached.ids?.length || cached.items?.length || 0)} 款商品`;
+        
+        // 優先使用完整的商品資料
+        if(hasRenderableProducts(cached.items)){
+          console.log('✅ 商品資料完整，直接顯示');
+          if(cached.categoryGroups){
+            switchToSearch('', cached.ids || [], cached.items, cached.categoryGroups, summaryLine);
+          } else {
+            switchToSearch('', cached.ids || [], cached.items, undefined, summaryLine);
+          }
+          if(cached.meta){
+            renderPlanResults([], cached.meta);
+          }
+          setTimeout(()=>setStatus('已載入推薦商品'), 200);
+        } else if(Array.isArray(cached.ids) && cached.ids.length) {
+          // 商品資料不完整，使用 ID 重新查詢
+          console.log('⚠️ 商品資料不完整，使用 ID 重新查詢');
+          switchToSearch(); // 先切換到商品模式
+          doSearchByIds(cached.ids, summaryLine);
         } else {
-          switchToSearch('', cached.ids || [], cached.items, undefined, cached.summary);
+          // 沒有有效資料，觸發新的建議請求
+          console.log('⚠️ 快取資料無效，重新觸發建議');
+          triggerSuggest(type);
         }
-        setTimeout(()=>setStatus('已載入推薦商品'), 200);
-        if(cached.meta){
-          renderPlanResults([], cached.meta);
+      } else {
+        console.log('❌ 沒有快取資料，重新觸發建議');
+        // 先切換到搜尋模式，避免顯示「目前沒有合適的推薦」的訊息
+        if(mode !== 'search'){
+          switchToSearch();
         }
-        console.log('🛍 使用快取推薦', type, cached.items.length, 'items', cached.categoryGroups ? '(分類模式)' : '');
-      }else{
         triggerSuggest(type);
       }
     }
@@ -776,6 +1151,8 @@
     suggestButtons.forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const t = Number(btn.dataset.sg || '1');
+        console.log('🔘 點擊建議按鈕', t, '當前快取狀態:', latestSuggestCache[t] ? 
+          `有快取 (${latestSuggestCache[t].items?.length || 0} 商品)` : '無快取');
         handleSuggestTrigger(t);
       });
     });
@@ -896,18 +1273,7 @@
           const c = document.getElementById('resultCount'); if(c) c.textContent = `${data.items.length} 筆結果`;
           updatePaginationControls({has_next: !!data.has_next, page: data.page, last_page: data.last_page});
         }else{
-          const msg=data.message||`很抱歉，目前沒有找到符合您需求的商品喔 🙏\n您可以嘗試其他關鍵字，或告訴我品牌、型號或預算範圍，我再幫您推薦合適的商品 💡\n（目前查詢關鍵字：${query}）`;
-          const empty=document.createElement("div");
-          empty.className="card";
-          empty.innerHTML=`
-            <div class="card-img">
-              <div class="card-placeholder">找不到結果</div>
-            </div>
-            <div class="card-body">
-              <h3 class="card-title">暫時沒有符合的商品</h3>
-              <p class="card-desc">${h(msg).replace(/\\n/g,"<br>")}</p>
-            </div>`;
-          resultsEl.appendChild(empty);
+          showEmptyState(query, data.message);
           const c = document.getElementById('resultCount'); if(c) c.textContent = `0 筆結果`;
           setStatus("已回覆查無資料訊息");
           updatePaginationControls({has_next: false, page: data.page ?? page, last_page: data.last_page ?? currentPage});
@@ -1169,6 +1535,13 @@
       hasNextPage = false;
       lastQuery = ids.join(', ');
       const payload = { ids };
+      
+      // 確保切換到商品模式
+      if(mode !== 'search'){
+        console.log('🔄 doSearchByIds: 切換到商品模式');
+        switchToSearch();
+      }
+      
       setLoading(true); sendBtn && (sendBtn.disabled=true); mSendBtn && (mSendBtn.disabled=true);
       try{
         const res = await fetch(API_ENDPOINT,{method:"POST",headers:{ "Content-Type":"application/json"},body:JSON.stringify(payload)});
@@ -1415,6 +1788,15 @@
 
     // Initialize from backend config
     loadBranding();
+    
+    // 頁面載入完成後顯示初次使用提示
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (!showedInitialTips) {
+          showInitialTips();
+        }
+      }, 1500);
+    });
   </script>
   <script type="module" src="/patches/auto_boot.js"></script>
 </body>
