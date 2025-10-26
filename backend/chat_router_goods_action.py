@@ -61,13 +61,12 @@ def _store_chat_result(result: Dict[str, Any]) -> str:
         return None
         
     session_id = str(uuid.uuid4())
-    CHAT_SESSION_CACHE[session_id] = {
+    CHAT_SESSION_CACHE[session_id] = (time.time(), {
         "category_suggestions": result.get("category_suggestions"),
         "suggestion_ids": result.get("suggestion_ids", []),
         "action": result.get("action"),
         "meta": result.get("meta", {}),
-        "timestamp": time.time()
-    }
+    })
     return session_id
 
 from pydantic import BaseModel
@@ -123,7 +122,7 @@ def simple_chat_handler(req: ChatReq):
         # 一般查詢處理
         reply = "您好！我是智能客服，可以為您推薦商品。請告訴我您需要什麼類型的商品？"
     
-    resp = {
+        resp = {
         "ok": True,
         "reply": reply,
         "suggestion_ids": suggestion_ids,
@@ -138,12 +137,25 @@ def simple_chat_handler(req: ChatReq):
     if suggestion_ids:
         session_id = str(uuid.uuid4())[:8]
         CHAT_SESSION_CACHE[session_id] = (time.time(), resp)
+        
+        # 同步更新 app.py 的 SUGGEST_CACHE 以支援建議功能
+        try:
+            from app import SUGGEST_CACHE, get_items_by_ids, get_df
+            df = get_df()
+            rows = get_items_by_ids(df, suggestion_ids)
+            SUGGEST_CACHE[session_id] = {
+                "align_ids": suggestion_ids,
+                "align_rows": rows,
+                "query_terms": [user_text],
+                "ts": time.time(),
+            }
+        except Exception as e:
+            print(f"[WARNING] Failed to sync SUGGEST_CACHE: {e}")
+        
         resp["chat_session_id"] = session_id
         resp["display_mode"] = "flat"
     
-    return resp
-
-@router.post("/api/chat", response_model=ChatResponse)
+    return resp@router.post("/api/chat", response_model=ChatResponse)
 def chat_handler(req: ChatReq):
     """主聊天處理器，優先使用複雜系統，失敗時回退到簡單處理"""
     try:
@@ -156,6 +168,22 @@ def chat_handler(req: ChatReq):
             # 為 fallback 結果加入會話追蹤
             session_id = _store_chat_result(_fb)
             if session_id:
+                # 同步更新 app.py 的 SUGGEST_CACHE 以支援建議功能
+                suggestion_ids = _fb.get("suggestion_ids", [])
+                if suggestion_ids:
+                    try:
+                        from app import SUGGEST_CACHE, get_items_by_ids, get_df
+                        df = get_df()
+                        rows = get_items_by_ids(df, suggestion_ids)
+                        SUGGEST_CACHE[session_id] = {
+                            "align_ids": suggestion_ids,
+                            "align_rows": rows,
+                            "query_terms": [user_text],
+                            "ts": time.time(),
+                        }
+                    except Exception as e:
+                        print(f"[WARNING] Failed to sync SUGGEST_CACHE: {e}")
+                        
                 _fb["chat_session_id"] = session_id
                 _fb["display_mode"] = "grouped" if _fb.get("category_suggestions") else "flat"
             
@@ -186,6 +214,20 @@ def chat_handler(req: ChatReq):
             
             session_id = _store_chat_result(resp)
             if session_id:
+                # 同步更新 app.py 的 SUGGEST_CACHE 以支援建議功能
+                try:
+                    from app import SUGGEST_CACHE, get_items_by_ids, get_df
+                    df = get_df()
+                    rows = get_items_by_ids(df, suggestion_ids)
+                    SUGGEST_CACHE[session_id] = {
+                        "align_ids": suggestion_ids,
+                        "align_rows": rows,
+                        "query_terms": [req.user_message],
+                        "ts": time.time(),
+                    }
+                except Exception as e:
+                    print(f"[WARNING] Failed to sync SUGGEST_CACHE: {e}")
+                    
                 resp["chat_session_id"] = session_id
                 resp["display_mode"] = "flat"
             
