@@ -45,14 +45,14 @@
     .results-header h2{margin:0;font-size:22px;font-weight:600;}
     #resultCount{font-size:14px;color:var(--sub);background:#eef2ff;padding:6px 12px;border-radius:999px;}
     .results{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;}
-    .result-summary{font-size:16px;font-weight:600;color:var(--text);margin:4px 0 8px;}
+    .result-summary{display:none;}
     .chat-box{height:520px;overflow:auto;padding:12px;background:#f7f8fb;border-radius:12px;border:1px solid var(--border);}
     .bubble{max-width:80%;padding:10px 12px;border-radius:12px;margin:8px 0;line-height:1.5;white-space:pre-wrap;word-break:break-word;}
     .bubble.user{background:#dbeafe;margin-left:auto;}
     .bubble.assistant{background:#fff;border:1px solid #eef2f7;}
     .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s;}
     .card:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,0.08);}
-    .card-image{position:relative;overflow:hidden;border-radius:18px 18px 0 0;}
+    .card-image{position:relative;overflow:hidden;border-radius:18px 18px 0 0;aspect-ratio:1/1;background-color:#f1f5f9;display:flex;align-items:flex-end;}
     .card-image::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(45deg,rgba(37,99,235,0.1),transparent);pointer-events:none;}
     .card-body{padding:18px 18px 20px;display:flex;flex-direction:column;gap:10px;}
     .card-row{display:flex;gap:10px;font-size:14px;line-height:1.6;align-items:flex-start;}
@@ -1010,7 +1010,7 @@
       // 如果有商品圖片，添加圖片區域
       if(image && image.trim()){
         cardContent += `
-          <div class="card-image" style="background-image:url('${a(image)}');background-size:cover;background-position:center;height:160px;display:flex;align-items:end;">
+          <div class="card-image" style="background-image:url('${a(image)}');background-size:cover;background-position:center;">
             <div style="background:linear-gradient(transparent,rgba(0,0,0,0.6));width:100%;padding:12px;color:white;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,0.5);">
               ${h(name)}
             </div>
@@ -1739,10 +1739,7 @@
     window.renderList = function(items, categoryGroups = null, summaryText = null) {
       clearResults();
       if(summaryText){
-        const summaryEl = document.createElement('div');
-        summaryEl.className = 'result-summary';
-        summaryEl.textContent = summaryText;
-        resultsEl.appendChild(summaryEl);
+        console.log('🔍 商品摘要:', summaryText);
       }
       
       if (categoryGroups && typeof categoryGroups === 'object') {
