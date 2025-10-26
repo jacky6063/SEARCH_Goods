@@ -434,6 +434,12 @@ def api_version():
         "built_at": BUILD_TIME,
     })
 
+@app.get("/version")
+async def get_version():
+    """簡化版本端點，回傳 JSON 格式"""
+    short_commit = BUILD_COMMIT[:7] if BUILD_COMMIT not in (None, "unknown") else BUILD_COMMIT
+    return JSONResponse({"version": f"main@{short_commit}"})
+
 
 @app.get("/health")
 def health():
