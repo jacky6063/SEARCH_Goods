@@ -527,8 +527,6 @@ def admin_upload_csv(request: Request, file: UploadFile = File(...), x_admin_tok
 
 # serve frontend static files (SPA fallback)
 frontend_path = ROOT / "frontend"
-if frontend_path.exists():
-    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
 
 # Optional: fallback for unknown paths to serve index.html (helps SPA routing)
 @app.middleware("http")
@@ -640,3 +638,7 @@ def get_chat_session_endpoint(session_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ---- Mount frontend static files after all API routes so they don't intercept /api/* ----
+if frontend_path.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
