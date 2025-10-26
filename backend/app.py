@@ -624,7 +624,7 @@ def chat_endpoint(req: ChatReq):
             return ChatResp(
                 reply=result.get("reply", ""),
                 suggestion_ids=result.get("suggestion_ids", []),
-                session_id=req.session_id
+                session_id=result.get("session_id", req.session_id)
             )
         else:
             return ChatResp(

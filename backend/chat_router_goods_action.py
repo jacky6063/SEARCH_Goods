@@ -212,9 +212,12 @@ def chat_handler(req: ChatReq):
                 } if suggestion_ids else None
             }
             
-            session_id = _store_chat_result(resp)
-            if session_id:
-                # 同步更新 app.py 的 SUGGEST_CACHE 以支援建議功能
+            # 為高級搜索結果生成 session_id 並同步快取
+            session_id = str(uuid.uuid4())[:8]
+            CHAT_SESSION_CACHE[session_id] = (time.time(), resp)
+            
+            # 同步更新 app.py 的 SUGGEST_CACHE 以支援建議功能
+            if suggestion_ids:
                 try:
                     from app import SUGGEST_CACHE, get_items_by_ids, get_df
                     df = get_df()
@@ -227,10 +230,8 @@ def chat_handler(req: ChatReq):
                     }
                 except Exception as e:
                     print(f"[WARNING] Failed to sync SUGGEST_CACHE: {e}")
-                    
-                resp["chat_session_id"] = session_id
-                resp["display_mode"] = "flat"
             
+            resp["session_id"] = session_id
             return resp
     except Exception as e:
         print(f"[ERROR] Advanced search failed: {e}")
