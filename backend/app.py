@@ -553,29 +553,84 @@ app.include_router(search_router_goods_1024001)
 
 # ---- goods_1024001: 舊的 chat 路由器已移除以避免與 chat_router_goods_action 衝突 ----
 
-# ---- goods_action: 直接在主 app 定義 chat 端點 ----
-from chat_router_goods_action import chat_handler, ChatReq, ChatResponse, get_chat_result_by_session
+# ---- 統一聊天 API JSON 格式 ----
+from chat_router_goods_action import chat_handler, ChatReq, get_chat_result_by_session
+from typing import List
 
-@app.post("/api/chat")
+# 統一回應模型定義
+class ChatResp(BaseModel):
+    reply: str
+    suggestion_ids: List[str] = []
+    session_id: Optional[str] = None
+
+class ChatSessionResp(BaseModel):
+    session_id: str
+    history: List[Dict] = []
+
+@app.post("/api/chat", response_model=ChatResp)
 def chat_endpoint(req: ChatReq):
-    """Chat endpoint - 直接調用 chat_handler 並回傳原始結果"""
+    """
+    處理使用者聊天請求，回傳標準 JSON 格式：
+    {
+      "reply": "AI 回覆內容",
+      "suggestion_ids": ["123", "456"],
+      "session_id": "abcd1234"
+    }
+    """
     try:
         result = chat_handler(req)
-        # 如果是 dict，直接回傳，FastAPI 會自動序列化
-        return result
+        
+        # 統一處理回傳格式
+        if isinstance(result, dict):
+            return ChatResp(
+                reply=result.get("reply", ""),
+                suggestion_ids=result.get("suggestion_ids", []),
+                session_id=req.session_id
+            )
+        else:
+            return ChatResp(
+                reply=str(result),
+                suggestion_ids=[],
+                session_id=req.session_id
+            )
     except Exception as e:
-        return {
-            "ok": False,
-            "reply": "抱歉，目前聊天服務暫時無法回應，稍後再試。",
-            "error": str(e)
-        }
+        return ChatResp(
+            reply="抱歉，目前聊天服務暫時無法回應，稍後再試。",
+            suggestion_ids=[],
+            session_id=req.session_id
+        )
 
 # ---- 新增會話結果檢索 endpoint ----
-@app.get("/api/chat-session/{session_id}")
-def get_chat_session(session_id: str):
-    """根據會話 ID 獲取聊天結果"""
-    result = get_chat_result_by_session(session_id)
-    if result:
-        return JSONResponse({"ok": True, "result": result})
-    else:
-        return JSONResponse({"ok": False, "error": "Session not found or expired"})
+@app.get("/api/chat-session/{session_id}", response_model=ChatSessionResp)
+def get_chat_session_endpoint(session_id: str):
+    """
+    取得指定會話內容，統一回傳 JSON：
+    {
+      "session_id": "xxxx",
+      "history": [ { "role":"user","content":"..." }, ... ]
+    }
+    """
+    try:
+        session_data = get_chat_result_by_session(session_id)
+        
+        if not session_data:
+            raise HTTPException(status_code=404, detail="Session not found or expired")
+            
+        # 格式化歷史記錄
+        history = []
+        if isinstance(session_data, dict):
+            # 將會話數據轉換為標準對話歷史格式
+            if "category_suggestions" in session_data:
+                history.append({
+                    "role": "assistant", 
+                    "content": f"建議分類: {session_data.get('category_suggestions', {})}"
+                })
+        
+        return ChatSessionResp(
+            session_id=session_id,
+            history=history
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
