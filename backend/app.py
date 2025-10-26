@@ -621,10 +621,30 @@ def chat_endpoint(req: ChatReq):
         
         # 統一處理回傳格式
         if isinstance(result, dict):
+            # 確保總是有 session_id，如果沒有就生成一個
+            session_id = result.get("session_id") or req.session_id
+            if not session_id and result.get("suggestion_ids"):
+                import uuid
+                session_id = str(uuid.uuid4())[:8]
+                # 同步到 SUGGEST_CACHE
+                try:
+                    suggestion_ids = result.get("suggestion_ids", [])
+                    if suggestion_ids:
+                        df = get_df()
+                        rows = get_items_by_ids(df, suggestion_ids)
+                        SUGGEST_CACHE[session_id] = {
+                            "align_ids": suggestion_ids,
+                            "align_rows": rows,
+                            "query_terms": [req.message],
+                            "ts": time.time(),
+                        }
+                except Exception as e:
+                    logger.warning(f"Failed to sync SUGGEST_CACHE: {e}")
+                    
             return ChatResp(
                 reply=result.get("reply", ""),
                 suggestion_ids=result.get("suggestion_ids", []),
-                session_id=result.get("session_id", req.session_id)
+                session_id=session_id
             )
         else:
             return ChatResp(
