@@ -664,19 +664,31 @@
       const price = item["商品價格"] || "";
       const sale = item["商品特價"] || "";
       const link = item["商品購物網址"] || "";
-      const image = item["商品圖片網址"] || "";
+      const image = item["商品圖片網址"] || item["Goodspic_Link1"] || "";
 
-      if(desc){ el.dataset.description = desc; }
-      if(image){ el.dataset.image = image; }
+      // 保存完整商品資訊供後續使用（LLM 文案生成、圖片顯示等）
+      if(desc && desc.trim()){ el.dataset.description = desc; }
+      if(image && image.trim()){ el.dataset.image = image; }
+      if(name){ el.dataset.productName = name; }
+      if(id){ el.dataset.productId = id; }
+      
+      // 標記需要 LLM 生成 40 字文案（供未來功能使用）
+      el.dataset.needsLlmDescription = "true";
 
       const rows = [];
+      
+      // 必顯欄位
       rows.push(`<div class="card-row"><span class="card-label">商品編號：</span><span class="card-value">${id ? h(id) : "—"}</span></div>`);
       rows.push(`<div class="card-row"><span class="card-label">商品名稱：</span><span class="card-value">${h(name)}</span></div>`);
       rows.push(`<div class="card-row"><span class="card-label">商品價格：</span><span class="card-value">${price ? h(price) : "—"}</span></div>`);
-      if(sale){
+      
+      // 條件顯示：商品特價（僅在有值時顯示）
+      if(sale && sale.trim()){
         rows.push(`<div class="card-row"><span class="card-label">商品特價：</span><span class="card-value">${h(sale)}</span></div>`);
       }
-      if(link){
+      
+      // 商品網址
+      if(link && link.trim()){
         rows.push(`<div class="card-row"><span class="card-label">商品網址：</span><a class="card-value link-btn inline" href="${a(link)}" target="_blank" rel="noopener">前往購買</a></div>`);
       } else {
         rows.push(`<div class="card-row"><span class="card-label">商品網址：</span><span class="card-value">—</span></div>`);
