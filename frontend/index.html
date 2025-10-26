@@ -450,12 +450,13 @@
       if(q && q !== activeInput){ q.value = query; }
       if(typeof mq !== "undefined" && mq && mq !== activeInput){ mq.value = query; }
     }
+    const summaryLineFromText = (summaryText && summaryText.trim()) ? summaryText.trim().split('\n')[0] : null;
     if(Array.isArray(prefetchedItems) && prefetchedItems.length){
       lastQuery = `suggestion-${Date.now()}`;
       currentPage = 1;
       lastPage = 1;
       hasNextPage = false;
-      const summaryLine = (summaryText && summaryText.trim()) ? summaryText.trim().split('\n')[0] : `我找到了 ${prefetchedItems.length} 款商品`;
+      const summaryLine = summaryLineFromText || `我找到了 ${prefetchedItems.length} 款商品`;
       window.renderList(prefetchedItems, categoryGroups, summaryLine);
       setStatus('已載入建議商品');
       const countEl = document.getElementById('resultCount'); 
@@ -471,7 +472,7 @@
       return;
     }
     if(usingIds){
-      doSearchByIds(itemIds);
+      doSearchByIds(itemIds, summaryLineFromText);
     }else if(query){
       doSearchWithPagination(query, 1);
     }else{
@@ -556,7 +557,7 @@
           ids: data.auto_suggest.ids || [],
           items: data.auto_suggest.items,
           meta: data.auto_suggest.meta || data.meta || null,
-          summary: assistantParsed.display.split('\n')[0] || ''
+          summary: (assistantParsed.display.split('\n')[0] || '').trim()
         };
         showSuggestPrompt(cacheKey, data.auto_suggest.label || SUGGEST_TYPES[cacheKey]);
       }
@@ -579,7 +580,7 @@
           items: allItems,
           categoryGroups: data.category_suggestions,
           meta: data.meta || null,
-          summary: assistantParsed.display.split('\n')[0] || ''
+          summary: (assistantParsed.display.split('\n')[0] || '').trim()
         };
         showSuggestPrompt(1, SUGGEST_TYPES[1]);
       }
@@ -590,9 +591,23 @@
           ids: planIds,
           items: data.items,
           meta: data.meta || null,
-          summary: assistantParsed.display.split('\n')[0] || ''
+          summary: (assistantParsed.display.split('\n')[0] || '').trim()
         };
         showSuggestPrompt(1, SUGGEST_TYPES[1]);
+      }
+      const summaryLine = (assistantParsed.display.split('\n')[0] || '').trim();
+      if(Array.isArray(data.suggestion_ids) && data.suggestion_ids.length){
+        let prefetched = [];
+        if(Array.isArray(data.items) && data.items.length){
+          prefetched = data.items;
+        }else if(data.category_suggestions && typeof data.category_suggestions === 'object'){
+          prefetched = Object.values(data.category_suggestions).flat().filter(Boolean);
+        }
+        if(prefetched.length){
+          switchToSearch('', data.suggestion_ids, prefetched, data.category_suggestions, summaryLine);
+        }else{
+          switchToSearch('', data.suggestion_ids, undefined, undefined, summaryLine);
+        }
       }
       setStatus('聊天已回覆，還想了解其他商品嗎？');
     }catch(err){
@@ -659,9 +674,10 @@
         latestSuggestCache[type] = {
           ids: data.ids || [],
           items: data.items,
-          meta: data.meta || null
+          meta: data.meta || null,
+          summary: (data.message ? data.message.split('\n')[0] : '').trim()
         };
-        switchToSearch('', data.ids || [], data.items);
+        switchToSearch('', data.ids || [], data.items, undefined, data.message || '');
         setStatus(data.message || '已載入推薦商品');
       }else{
         setStatus('目前沒有合適的推薦，請告訴我更多需求。');
@@ -1147,7 +1163,7 @@
       }
     }
 
-    async function doSearchByIds(ids){
+    async function doSearchByIds(ids, summaryText = null){
       currentPage = 1;
       lastPage = 1;
       hasNextPage = false;
@@ -1157,12 +1173,13 @@
       try{
         const res = await fetch(API_ENDPOINT,{method:"POST",headers:{ "Content-Type":"application/json"},body:JSON.stringify(payload)});
         const data = await res.json();
-        clearResults();
         if(Array.isArray(data.items) && data.items.length){
-          data.items.forEach(it=>resultsEl.appendChild(card(it)));
+          const summaryLine = summaryText || (data.message ? data.message.split('\n')[0] : `我找到了 ${data.items.length} 款商品`);
+          window.renderList(data.items, null, summaryLine);
           setStatus(data.message || "查詢完成");
           const c = document.getElementById('resultCount'); if(c) c.textContent = `${data.items.length} 筆結果`;
         }else{
+          clearResults();
           setStatus('目前無法顯示這些商品，請再試一次或更換條件。');
           const c = document.getElementById('resultCount'); if(c) c.textContent = `0 筆結果`;
         }
