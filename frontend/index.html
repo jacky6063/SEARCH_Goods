@@ -45,6 +45,7 @@
     .results-header h2{margin:0;font-size:22px;font-weight:600;}
     #resultCount{font-size:14px;color:var(--sub);background:#eef2ff;padding:6px 12px;border-radius:999px;}
     .results{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;}
+    .result-summary{font-size:16px;font-weight:600;color:var(--text);margin:4px 0 8px;}
     .chat-box{height:520px;overflow:auto;padding:12px;background:#f7f8fb;border-radius:12px;border:1px solid var(--border);}
     .bubble{max-width:80%;padding:10px 12px;border-radius:12px;margin:8px 0;line-height:1.5;white-space:pre-wrap;word-break:break-word;}
     .bubble.user{background:#dbeafe;margin-left:auto;}
@@ -366,6 +367,23 @@
     let welcomed = false;
     function h(s){ return (s||"").replace(/[&<>\"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
     function a(s){ return h(s); }
+  function stripIntentPayload(rawText){
+    const result = { display: rawText || "", payload: null, intent: null };
+    if(typeof rawText !== "string"){ return result; }
+    const trimmed = rawText.trimEnd();
+    const jsonMatch = trimmed.match(/\{[\s\S]*\}\s*$/);
+    if(!jsonMatch){ return result; }
+    const candidate = jsonMatch[0];
+    try{
+      const parsed = JSON.parse(candidate);
+      result.payload = candidate;
+      result.intent = parsed;
+      result.display = trimmed.slice(0, trimmed.length - candidate.length).trimEnd();
+    }catch(err){
+      // ignore parse error, return original text
+    }
+    return result;
+  }
   function setStatus(msg){ if(statusEl){ statusEl.textContent = msg; } }
   function clearResults(){ resultsEl.innerHTML = ""; const c = document.getElementById('resultCount'); if(c && mode === "search") c.textContent = '0 筆結果'; }
   function setLoading(on){ if(on){ setStatus('載入中…'); } }
@@ -376,18 +394,13 @@
     el.className = role === 'user' ? 'bubble user' : 'bubble assistant';
     let displayText = text || "";
     if(role === 'assistant' && typeof displayText === "string"){
-      const trimmed = displayText.trimEnd();
-      const jsonMatch = trimmed.match(/\{[\s\S]*\}\s*$/);
-      if(jsonMatch){
-        const candidate = jsonMatch[0];
-        try{
-          const parsed = JSON.parse(candidate);
-          el.dataset.intentPayload = candidate;
-          displayText = trimmed.slice(0, trimmed.length - candidate.length).trimEnd();
-          el.dataset.intentType = parsed.intent || "";
-        }catch(err){
-          // ignore parse failure, keep original text
-        }
+      const parsed = stripIntentPayload(displayText);
+      displayText = parsed.display;
+      if(parsed.payload){
+        el.dataset.intentPayload = parsed.payload;
+      }
+      if(parsed.intent && parsed.intent.intent){
+        el.dataset.intentType = parsed.intent.intent;
       }
     }
     el.textContent = displayText;
@@ -422,7 +435,7 @@
     renderWelcome();
   }
 
-  function switchToSearch(queryText, itemIds, prefetchedItems, categoryGroups){
+  function switchToSearch(queryText, itemIds, prefetchedItems, categoryGroups, summaryText){
     const usingIds = Array.isArray(itemIds) && itemIds.length > 0;
     setMode('search');
     if(chatPanel){ chatPanel.style.display = 'none'; }
@@ -442,16 +455,8 @@
       currentPage = 1;
       lastPage = 1;
       hasNextPage = false;
-      clearResults();
-      
-      // 如果有分類資訊，使用分類顯示
-      if(categoryGroups && typeof categoryGroups === 'object'){
-        window.renderList(prefetchedItems, categoryGroups);
-      } else {
-        // 傳統顯示方式
-        prefetchedItems.forEach(it=>resultsEl.appendChild(card(it)));
-      }
-      
+      const summaryLine = (summaryText && summaryText.trim()) ? summaryText.trim().split('\n')[0] : `我找到了 ${prefetchedItems.length} 款商品`;
+      window.renderList(prefetchedItems, categoryGroups, summaryLine);
       setStatus('已載入建議商品');
       const countEl = document.getElementById('resultCount'); 
       if(countEl) {
@@ -536,11 +541,12 @@
       }
       
       assistantReplyText = (typeof data.reply === 'string' && data.reply) ? data.reply : '目前暫時沒有合適的推薦喔。';
+      const assistantParsed = stripIntentPayload(assistantReplyText);
       appendChatBubble('assistant', assistantReplyText);
       chatHistory.push({role:'user', content: msg});
       chatHistory.push({
         role:'assistant',
-        content: assistantReplyText,
+        content: assistantParsed.display,
         alignment: data.alignment || null
       });
       if(chatHistory.length > 40){ chatHistory = chatHistory.slice(-40); }
@@ -549,7 +555,8 @@
         latestSuggestCache[cacheKey] = {
           ids: data.auto_suggest.ids || [],
           items: data.auto_suggest.items,
-          meta: data.auto_suggest.meta || data.meta || null
+          meta: data.auto_suggest.meta || data.meta || null,
+          summary: assistantParsed.display.split('\n')[0] || ''
         };
         showSuggestPrompt(cacheKey, data.auto_suggest.label || SUGGEST_TYPES[cacheKey]);
       }
@@ -571,7 +578,8 @@
           ids: allIds,
           items: allItems,
           categoryGroups: data.category_suggestions,
-          meta: data.meta || null
+          meta: data.meta || null,
+          summary: assistantParsed.display.split('\n')[0] || ''
         };
         showSuggestPrompt(1, SUGGEST_TYPES[1]);
       }
@@ -581,7 +589,8 @@
         latestSuggestCache[1] = {
           ids: planIds,
           items: data.items,
-          meta: data.meta || null
+          meta: data.meta || null,
+          summary: assistantParsed.display.split('\n')[0] || ''
         };
         showSuggestPrompt(1, SUGGEST_TYPES[1]);
       }
@@ -734,9 +743,9 @@
         setStatus('為您載入推薦商品...');
         // 如果有分類資訊，使用分類顯示
         if(cached.categoryGroups){
-          switchToSearch('', cached.ids || [], cached.items, cached.categoryGroups);
+          switchToSearch('', cached.ids || [], cached.items, cached.categoryGroups, cached.summary);
         } else {
-          switchToSearch('', cached.ids || [], cached.items);
+          switchToSearch('', cached.ids || [], cached.items, undefined, cached.summary);
         }
         setTimeout(()=>setStatus('已載入推薦商品'), 200);
         if(cached.meta){
@@ -1315,10 +1324,11 @@
               const searchData = await response.json();
               if (searchData.items && searchData.items.length > 0) {
                 // 使用 renderList 顯示商品，支援分類顯示
+                const summaryLine = ((chatResult.reply || chatResult.summary || "") || "").toString().split('\n')[0] || `我找到了 ${searchData.items.length} 款商品`;
                 if (chatResult.groups && Object.keys(chatResult.groups).length > 0) {
-                  window.renderList(searchData.items, chatResult.groups);
+                  window.renderList(searchData.items, chatResult.groups, summaryLine);
                 } else {
-                  window.renderList(searchData.items);
+                  window.renderList(searchData.items, null, summaryLine);
                 }
                 setStatus(`已同步聊天結果 (共 ${searchData.items.length} 個商品)`);
                 return true;
@@ -1334,8 +1344,14 @@
     };
 
     // 支援分類商品顯示的 renderList 函數
-    window.renderList = function(items, categoryGroups = null) {
+    window.renderList = function(items, categoryGroups = null, summaryText = null) {
       clearResults();
+      if(summaryText){
+        const summaryEl = document.createElement('div');
+        summaryEl.className = 'result-summary';
+        summaryEl.textContent = summaryText;
+        resultsEl.appendChild(summaryEl);
+      }
       
       if (categoryGroups && typeof categoryGroups === 'object') {
         // 分組顯示模式
