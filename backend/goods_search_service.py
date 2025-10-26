@@ -16,7 +16,24 @@ DEFAULT_KWS: List[str] = [
 
 _COLUMN_DEFINITION_PATH = Path(__file__).with_name("column_definitions.json")
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_DATA_PATH = Path(os.getenv("DATA_PATH", ROOT / "data" / "VIEW_GOODS_enhanced.csv"))
+
+# 自動檢測 Render 環境的正確 CSV 路徑
+def _get_csv_path():
+    """自動檢測並返回正確的 CSV 文件路徑"""
+    # 如果環境變數已設定，直接使用
+    env_path = os.getenv("DATA_PATH")
+    if env_path:
+        return Path(env_path)
+    
+    # Render 環境路徑檢測
+    render_path = Path("/opt/render/project/src/data/VIEW_GOODS_enhanced.csv")
+    if render_path.exists():
+        return render_path
+    
+    # 默認本地開發路徑
+    return ROOT / "data" / "VIEW_GOODS_enhanced.csv"
+
+DEFAULT_DATA_PATH = _get_csv_path()
 _GOODS_ROWS_CACHE: Optional[List[Dict[str, Any]]] = None
 
 
