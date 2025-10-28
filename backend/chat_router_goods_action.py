@@ -6,9 +6,31 @@ from utils.llm_guard import safe_call_async
 from utils.simple_extract import extract_budget_and_cats
 __LLM_GUARD_INSTALLED__ = True
 from search_ext_goods_1024001 import search_products_strict, infer_filters_from_query
-from field_utils import FieldAccessor, create_product_summary
+from field_utils import FieldAccessor
 import uuid
 import time
+
+
+def _format_item_list_reply(header_count: int, items: List[Dict[str, Any]]) -> str:
+    """將商品清單格式化為完整欄位列表的聊天回覆。"""
+    lines: List[str] = [f"我找到 {header_count} 款商品，詳細如下："]
+    for idx, item in enumerate(items, 1):
+        gid = str(item.get("GoodIden") or item.get("商品編號") or "").strip()
+        name = str(item.get("Name") or item.get("商品名稱") or "").strip()
+        price = str(item.get("Price") or item.get("售價") or "").strip()
+        special = str(item.get("SpecialOffer") or item.get("特價") or "").strip()
+        link = str(item.get("Goods_Link1") or item.get("商品購物網址") or "").strip()
+
+        entry_lines = [
+            f"{idx}. 商品編號：{gid}",
+            f"商品名稱：{name}",
+            f"商品價格：{price}",
+        ]
+        if special:
+            entry_lines.append(f"商品特價：{special}")
+        entry_lines.append(f"購物連結：{link}")
+        lines.append("\n".join(entry_lines))
+    return "\n\n".join(lines)
 
 router = APIRouter()
 
@@ -291,8 +313,7 @@ def chat_handler(req: ChatReq):
         suggestion_ids = [FieldAccessor.get_product_id(x) for x in items if FieldAccessor.get_product_id(x)]
         
         if items:
-            samples = create_product_summary(items, max_items=3)
-            reply = f"我找到 {len(items)} 款商品，例如 {samples}。需要我顯示詳細介紹與圖片嗎？"
+            reply = _format_item_list_reply(len(items), items)
             
             resp = {
                 "ok": True,
