@@ -583,9 +583,31 @@
         el.dataset.intentType = parsed.intent.intent;
       }
     }
-    el.textContent = displayText;
+    if(role === 'assistant'){
+      el.innerHTML = formatAssistantMessage(displayText);
+    }else{
+      el.textContent = displayText;
+    }
     chatMessagesEl.appendChild(el);
     chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+  }
+
+  function formatAssistantMessage(rawText){
+    if(typeof rawText !== "string" || !rawText){
+      return "";
+    }
+    const lines = rawText.split(/\n/);
+    const transformed = lines.map(line=>{
+      const linkMatch = line.match(/^(購物連結：)\s*(https?:\/\/\S+)/i);
+      if(linkMatch){
+        const prefix = h(linkMatch[1] || "");
+        const url = linkMatch[2] || "";
+        const safeUrlAttr = a(url);
+        return `${prefix} <a href="${safeUrlAttr}" target="_blank" rel="noopener noreferrer">${safeUrlAttr}</a>`;
+      }
+      return h(line);
+    });
+    return transformed.join("<br>");
   }
   function renderWelcome(){
     if(welcomed){ return; }
