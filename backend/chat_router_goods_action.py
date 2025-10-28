@@ -15,11 +15,11 @@ def _format_item_list_reply(header_count: int, items: List[Dict[str, Any]]) -> s
     """將商品清單格式化為完整欄位列表的聊天回覆。"""
     lines: List[str] = [f"我找到 {header_count} 款商品，詳細如下："]
     for idx, item in enumerate(items, 1):
-        gid = str(item.get("GoodIden") or item.get("商品編號") or "").strip()
-        name = str(item.get("Name") or item.get("商品名稱") or "").strip()
-        price = str(item.get("Price") or item.get("售價") or "").strip()
-        special = str(item.get("SpecialOffer") or item.get("特價") or "").strip()
-        link = str(item.get("Goods_Link1") or item.get("商品購物網址") or "").strip()
+        gid = str(item.get("GoodIden") or item.get("商品編號") or item.get("id") or "").strip()
+        name = str(item.get("Name") or item.get("商品名稱") or item.get("name") or "").strip()
+        price = str(item.get("Price") or item.get("售價") or item.get("price") or "").strip()
+        special = str(item.get("SpecialOffer") or item.get("特價") or item.get("special") or item.get("sale") or "").strip()
+        link = str(item.get("Goods_Link1") or item.get("商品購物網址") or item.get("link") or item.get("url") or "").strip()
 
         entry_lines = [
             f"{idx}. 商品編號：{gid}",
@@ -32,6 +32,26 @@ def _format_item_list_reply(header_count: int, items: List[Dict[str, Any]]) -> s
         lines.append("\n".join(entry_lines))
     return "\n\n".join(lines)
 
+
+def _fetch_items_for_reply(prefetched: Optional[List[Dict[str, Any]]], suggestion_ids: List[str]) -> List[Dict[str, Any]]:
+    """取得完整欄位的商品列表，若沒有預取資料則回到資料庫查詢。"""
+    items = prefetched or []
+    if items:
+        return items
+    if not suggestion_ids:
+        return []
+    try:
+        from app import get_df
+        from goods_search_service import get_items_by_ids as _get_items_by_ids
+
+        df = get_df()
+        if df is None:
+            return []
+        return _get_items_by_ids(df, suggestion_ids)
+    except Exception as exc:
+        print(f"[WARNING] 無法取得完整商品資料：{exc}")
+        return []
+
 router = APIRouter()
 
 # 聊天會話結果快取
@@ -39,6 +59,7 @@ CHAT_SESSION_CACHE = {}
 CACHE_TTL = 300  # 5 分鐘 TTL
 
 AGREE_WORDS = {"要","ok","OK","Ok","好","可以","行","確定","沒問題","那就這些","都可以","ＯＫ","Ｏk","ｏｋ"}
+SUGGEST_PROMPT_SUFFIX = "也可輸入 1=原建議、2=特價關聯、3=智慧搭配。"
 
 def has_budget_intent(text: str) -> bool:
     import re
@@ -142,23 +163,25 @@ def simple_chat_handler(req: ChatReq):
             "4710940006722",  # 吃果籽愛文翡翠吸凍飲 39元
             "4710940006715",  # 吃果籽柳丁翡翠吸凍飲 39元
         ]
-        reply = f"""我為您規劃的生日聚會商品組合：
-
-🍪 **餅乾類** (8款，約400-500元)：
-- 洋芋片系列 (玫瑰鹽、香辣、岩燒海苔) 
-- 蘇達餅系列 (黑芝麻、椒鹽、燕麥起司、紅藜紫菜)
-- 星米果 (蒜香海苔)
-
-🥤 **飲料類商品** 會在下一輪為您推薦
-
-總預算控制在 1000 元內，需要我顯示詳細商品資訊嗎？也可輸入 1=查看推薦、2=特價商品、3=智慧搭配。"""
+        fetched = _fetch_items_for_reply(None, suggestion_ids)
+        if fetched:
+            reply = _format_item_list_reply(len(fetched), fetched) + f"\n\n{SUGGEST_PROMPT_SUFFIX}"
+        else:
+            reply = (
+                "我為您準備了適合生日聚會的餅乾與飲料組合，總預算控制在 1000 元內。\n"
+                "需要我顯示詳細商品資訊嗎？也可輸入 1=查看推薦、2=特價商品、3=智慧搭配。"
+            )
     elif "餅乾" in user_text or "cookie" in user_text.lower():
         suggestion_ids = [
             "4711202224557",  # 九福小餅(原味)
             "4711202224403",  # 麻花(海苔口味)
             "4711202224410",  # 麻花(芝麻口味)
         ]
-        reply = f"我找到 {len(suggestion_ids)} 款餅乾商品，需要我顯示詳細介紹與圖片嗎？"
+        fetched = _fetch_items_for_reply(None, suggestion_ids)
+        if fetched:
+            reply = _format_item_list_reply(len(fetched), fetched) + f"\n\n{SUGGEST_PROMPT_SUFFIX}"
+        else:
+            reply = f"我找到 {len(suggestion_ids)} 款餅乾商品，需要我顯示詳細介紹與圖片嗎？\n{SUGGEST_PROMPT_SUFFIX}"
     elif "飲料" in user_text or "drink" in user_text.lower():
         # 這裡可以添加飲料類商品 ID
         reply = "我們有多款飲料可選，請稍候為您準備詳細商品資訊。"
@@ -166,7 +189,7 @@ def simple_chat_handler(req: ChatReq):
         # 一般查詢處理
         reply = "您好！我是智能客服，可以為您推薦商品。請告訴我您需要什麼類型的商品？"
     
-        resp = {
+    resp = {
         "ok": True,
         "reply": reply,
         "suggestion_ids": suggestion_ids,
@@ -199,7 +222,10 @@ def simple_chat_handler(req: ChatReq):
         resp["chat_session_id"] = session_id
         resp["display_mode"] = "flat"
     
-    return resp@router.post("/api/chat", response_model=ChatResponse)
+    return resp
+
+
+@router.post("/api/chat", response_model=ChatResponse)
 def chat_handler(req: ChatReq):
     """主聊天處理器，整合真正的 LLM 聊天功能"""
     user_text = req.user_message.strip()
@@ -247,6 +273,10 @@ def chat_handler(req: ChatReq):
                     "items": [{"id": sid} for sid in suggestion_ids]
                 } if suggestion_ids else None)
             }
+            if suggestion_ids:
+                detailed_items = _fetch_items_for_reply(None, suggestion_ids)
+                if detailed_items:
+                    resp["reply"] = _format_item_list_reply(len(detailed_items), detailed_items) + f"\n\n{SUGGEST_PROMPT_SUFFIX}"
             
             # 為 LLM 聊天結果生成 session_id 並同步快取
             if suggestion_ids:
@@ -281,11 +311,15 @@ def chat_handler(req: ChatReq):
         if _fb and _fb.get("ok"):
             print(f"[INFO] Fallback system activated for: {user_text[:50]}...")
             
+            suggestion_ids = _fb.get("suggestion_ids", [])
+            detailed_items = _fetch_items_for_reply(None, suggestion_ids)
+            if detailed_items:
+                _fb["reply"] = _format_item_list_reply(len(detailed_items), detailed_items) + f"\n\n{SUGGEST_PROMPT_SUFFIX}"
+
             # 為 fallback 結果加入會話追蹤
             session_id = _store_chat_result(_fb)
             if session_id:
                 # 同步更新 app.py 的 SUGGEST_CACHE 以支援建議功能
-                suggestion_ids = _fb.get("suggestion_ids", [])
                 if suggestion_ids:
                     try:
                         from app import SUGGEST_CACHE, get_items_by_ids, get_df
@@ -313,7 +347,7 @@ def chat_handler(req: ChatReq):
         suggestion_ids = [FieldAccessor.get_product_id(x) for x in items if FieldAccessor.get_product_id(x)]
         
         if items:
-            reply = _format_item_list_reply(len(items), items)
+            reply = _format_item_list_reply(len(items), items) + f"\n\n{SUGGEST_PROMPT_SUFFIX}"
             
             resp = {
                 "ok": True,
