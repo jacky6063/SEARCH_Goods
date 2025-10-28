@@ -9,6 +9,94 @@ from search_ext_goods_1024001 import search_products_strict, infer_filters_from_
 from field_utils import FieldAccessor
 import uuid
 import time
+import re
+
+
+def _clean_text(value: Optional[str]) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    text = text.replace("\n", " ").replace("\r", " ")
+    text = re.sub(r"[，,。．\.；;！!／/、\\|（）()【】［］\[\]]", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def _select_marketing_tail(name: str, description: str) -> str:
+    combined = (name or "") + " " + (description or "")
+    for keyword, tail in MARKETING_TAILS:
+        if keyword and keyword in combined:
+            return tail
+    return "，香濃暖胃好活力"
+
+
+def _build_marketing_description(item: Dict[str, Any]) -> str:
+    name = _clean_text(item.get("Name") or item.get("商品名稱") or item.get("name"))
+    desc_candidates = [
+        item.get("ShortDesc_20"),
+        item.get("ShortDesc"),
+        item.get("商品描述"),
+        item.get("DESCRIPTION"),
+        item.get("Description"),
+        item.get("備註"),
+    ]
+    raw_desc = ""
+    for candidate in desc_candidates:
+        cleaned = _clean_text(candidate)
+        if cleaned:
+            raw_desc = cleaned
+            break
+    combined = (raw_desc or "") + (name or "")
+
+    name_core = name or ""
+    if name_core:
+        name_core = re.sub(r"[（(].*?[)）]", "", name_core)
+        name_core = re.split(r"[／/]", name_core)[0]
+        name_core = re.sub(r"\d+(?:g|ml|包|袋|入|瓶|顆)", "", name_core, flags=re.IGNORECASE)
+        name_core = name_core.strip()
+    if not name_core:
+        name_core = "人氣好物"
+    if len(name_core) > 8:
+        name_core = name_core[:8]
+
+    feature_map = [
+        ("有機", "有機安心"),
+        ("全穀", "全穀纖維"),
+        ("多穀", "多穀營養"),
+        ("高纖", "高纖滿滿"),
+        ("低糖", "低糖無負擔"),
+        ("無糖", "無糖輕盈"),
+        ("即食", "即沖即享"),
+        ("即沖", "即沖即享"),
+        ("濃郁", "濃郁香醇"),
+        ("滑順", "滑順順口"),
+        ("酥脆", "酥脆好口感"),
+        ("香脆", "香脆好口感"),
+        ("植物", "植物好選"),
+    ]
+    features: List[str] = []
+    for keyword, phrase in feature_map:
+        if keyword in combined and phrase not in features:
+            features.append(phrase)
+        if len(features) >= 2:
+            break
+
+    if not features:
+        if any(kw in combined for kw in ["麥片", "燕麥"]):
+            features.append("高纖滿滿")
+        elif "粥" in combined:
+            features.append("暖胃即享")
+        else:
+            features.append("香濃好滋味")
+
+    body = name_core + "".join(features[:2])
+    tail = _select_marketing_tail(name, raw_desc)
+    marketing = (body + tail).strip()
+    if not marketing:
+        marketing = f"{name_core}香濃暖胃好活力"
+    if len(marketing) > 30:
+        marketing = marketing[:30]
+    return marketing
 
 
 def _format_item_list_reply(header_count: int, items: List[Dict[str, Any]]) -> str:
@@ -18,16 +106,16 @@ def _format_item_list_reply(header_count: int, items: List[Dict[str, Any]]) -> s
         gid = str(item.get("GoodIden") or item.get("商品編號") or item.get("id") or "").strip()
         name = str(item.get("Name") or item.get("商品名稱") or item.get("name") or "").strip()
         price = str(item.get("Price") or item.get("售價") or item.get("price") or "").strip()
-        special = str(item.get("SpecialOffer") or item.get("特價") or item.get("special") or item.get("sale") or "").strip()
         link = str(item.get("Goods_Link1") or item.get("商品購物網址") or item.get("link") or item.get("url") or "").strip()
+        marketing = _build_marketing_description(item)
 
         entry_lines = [
-            f"{idx}. 商品編號：{gid}",
+            f"{idx}.",
+            f"商品編號：{gid}",
             f"商品名稱：{name}",
+            f"商品描述：{marketing}",
             f"商品價格：{price}",
         ]
-        if special:
-            entry_lines.append(f"商品特價：{special}")
         entry_lines.append(f"購物連結：{link}")
         lines.append("\n".join(entry_lines))
     return "\n\n".join(lines)
@@ -60,6 +148,15 @@ CACHE_TTL = 300  # 5 分鐘 TTL
 
 AGREE_WORDS = {"要","ok","OK","Ok","好","可以","行","確定","沒問題","那就這些","都可以","ＯＫ","Ｏk","ｏｋ"}
 SUGGEST_PROMPT_SUFFIX = "也可輸入 1=原建議、2=特價關聯、3=智慧搭配。"
+MARKETING_TAILS = [
+    ("麥片", "，晨起元氣好選擇"),
+    ("燕麥", "，守護輕盈好體態"),
+    ("粥", "，暖胃即食好滋味"),
+    ("餅乾", "，酥脆共享好時光"),
+    ("飲料", "，清爽補水好滿足"),
+    ("茶", "，溫潤放鬆好時刻"),
+    ("咖啡", "，香醇醒神好夥伴"),
+]
 
 def has_budget_intent(text: str) -> bool:
     import re
