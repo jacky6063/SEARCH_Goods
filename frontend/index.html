@@ -453,6 +453,20 @@
     };
 
     // 通用快取設定函數，確保資料一致性
+    function normalizeStructuredItem(item){
+      if(!item || typeof item !== "object"){ return null; }
+      const copy = { ...item };
+      if(!copy["商品購物網址"] && copy["購物連結"]){ copy["商品購物網址"] = copy["購物連結"]; }
+      if(!copy["購物連結"] && copy["商品購物網址"]){ copy["購物連結"] = copy["商品購物網址"]; }
+      if(!copy["商品圖片網址"] && copy["商品圖片"]){ copy["商品圖片網址"] = copy["商品圖片"]; }
+      if(!copy["商品圖片"] && copy["商品圖片網址"]){ copy["商品圖片"] = copy["商品圖片網址"]; }
+      if(!copy["商品描述"] && copy["description"]){ copy["商品描述"] = copy["description"]; }
+      if(!copy["商品價格"] && copy["price"]){ copy["商品價格"] = copy["price"]; }
+      if(!copy["商品特價"] && copy["special"]){ copy["商品特價"] = copy["special"]; }
+      if(!copy["GoodIden"] && copy["商品編號"]){ copy["GoodIden"] = copy["商品編號"]; }
+      return copy;
+    }
+
     function setSuggestCache(type, items, options = {}) {
       if (!items || (!Array.isArray(items) && !hasRenderableProducts(items))) {
         console.warn('⚠️ setSuggestCache: 無效的商品資料', items);
@@ -469,7 +483,8 @@
         items: itemsArray,
         meta: options.meta || null,
         categoryGroups: options.categoryGroups || null,
-        summary: options.summary || `我找到了 ${itemsArray.length} 款商品`
+        summary: options.summary || `我找到了 ${itemsArray.length} 款商品`,
+        structured: options.structured || null
       };
       
       console.log('✅ 設定建議快取', type, '商品數:', itemsArray.length, 'IDs:', ids.length);
@@ -761,6 +776,11 @@
       
       assistantReplyText = (typeof data.reply === 'string' && data.reply) ? data.reply : '目前暫時沒有合適的推薦喔。';
       const assistantParsed = stripIntentPayload(assistantReplyText);
+      const summaryLineFromReply = (assistantParsed.display.split('\n')[0] || '').trim();
+      const structuredPayload = (assistantParsed.intent && Array.isArray(assistantParsed.intent.items)) ? assistantParsed.intent : null;
+      let structuredItems = structuredPayload ? structuredPayload.items.map(normalizeStructuredItem).filter(Boolean) : null;
+      let structuredSummary = structuredPayload?.summary || summaryLineFromReply;
+      let structuredStored = false;
       appendChatBubble('assistant', assistantReplyText);
       chatHistory.push({role:'user', content: msg});
       chatHistory.push({
@@ -769,20 +789,33 @@
         alignment: data.alignment || null
       });
       if(chatHistory.length > 40){ chatHistory = chatHistory.slice(-40); }
+      if(structuredItems && structuredItems.length){
+        const structuredIds = structuredItems.map(it => (it && (it['商品編號'] || it['GoodIden'] || it.id || '')).toString().trim()).filter(Boolean);
+        if(setSuggestCache(1, structuredItems, {
+          ids: structuredIds,
+          meta: data.meta,
+          summary: structuredSummary,
+          structured: structuredItems
+        })){
+          showSuggestPrompt(1, SUGGEST_TYPES[1]);
+          structuredStored = true;
+        }
+      }
       if(data.auto_suggest && Array.isArray(data.auto_suggest.items) && data.auto_suggest.items.length){
         const cacheKey = data.auto_suggest.type || 1;
-        const summary = (assistantParsed.display.split('\n')[0] || '').trim();
-        
-        if(setSuggestCache(cacheKey, data.auto_suggest.items, {
-          ids: data.auto_suggest.ids,
-          meta: data.auto_suggest.meta || data.meta,
-          summary: summary
-        })) {
-          showSuggestPrompt(cacheKey, data.auto_suggest.label || SUGGEST_TYPES[cacheKey]);
+        const summary = structuredSummary;
+        if(!(cacheKey === 1 && structuredStored)){
+          if(setSuggestCache(cacheKey, data.auto_suggest.items, {
+            ids: data.auto_suggest.ids,
+            meta: data.auto_suggest.meta || data.meta,
+            summary: summary
+          })) {
+            showSuggestPrompt(cacheKey, data.auto_suggest.label || SUGGEST_TYPES[cacheKey]);
+          }
         }
       }
       // 處理分類商品建議 (優先處理)
-      if(data.category_suggestions && typeof data.category_suggestions === 'object'){
+      if(!structuredStored && data.category_suggestions && typeof data.category_suggestions === 'object'){
         const allItems = [];
         const allIds = [];
         Object.values(data.category_suggestions).forEach(categoryItems => {
@@ -799,31 +832,39 @@
           ids: allIds,
           categoryGroups: data.category_suggestions,
           meta: data.meta,
-          summary: (assistantParsed.display.split('\n')[0] || '').trim()
+          summary: structuredSummary
         });
         showSuggestPrompt(1, SUGGEST_TYPES[1]);
       }
       // 處理一般商品列表 (如果沒有分類建議)
-      else if(Array.isArray(data.items) && data.items.length){
+      else if(!structuredStored && Array.isArray(data.items) && data.items.length){
         const planIds = data.items.map(it => (it['商品編號'] || it['GoodIden'] || '').toString().trim()).filter(Boolean);
         setSuggestCache(1, data.items, {
           ids: planIds,
           meta: data.meta,
-          summary: (assistantParsed.display.split('\n')[0] || '').trim()
+          summary: structuredSummary
         });
         showSuggestPrompt(1, SUGGEST_TYPES[1]);
       }
-      const summaryLine = (assistantParsed.display.split('\n')[0] || '').trim();
+      const summaryLine = structuredSummary;
       if(Array.isArray(data.suggestion_ids) && data.suggestion_ids.length){
-        let prefetched = [];
-        if(Array.isArray(data.items) && data.items.length){
-          prefetched = data.items;
-        }else if(data.category_suggestions && typeof data.category_suggestions === 'object'){
-          prefetched = Object.values(data.category_suggestions).flat().filter(Boolean);
+        let handled = false;
+        if(structuredItems && structuredItems.length){
+          switchToSearch('', data.suggestion_ids, structuredItems, null, summaryLine);
+          handled = true;
+        } else {
+          let prefetched = [];
+          if(Array.isArray(data.items) && data.items.length){
+            prefetched = data.items;
+          }else if(data.category_suggestions && typeof data.category_suggestions === 'object'){
+            prefetched = Object.values(data.category_suggestions).flat().filter(Boolean);
+          }
+          if(prefetched.length && hasRenderableProducts(prefetched)){
+            switchToSearch('', data.suggestion_ids, prefetched, data.category_suggestions, summaryLine);
+            handled = true;
+          }
         }
-        if(prefetched.length && hasRenderableProducts(prefetched)){
-          switchToSearch('', data.suggestion_ids, prefetched, data.category_suggestions, summaryLine);
-        }else{
+        if(!handled){
           doSearchByIds(data.suggestion_ids, summaryLine);
         }
       }
@@ -1135,18 +1176,19 @@
       const cached = latestSuggestCache[type];
       
       // 檢查是否有可用的快取資料
-      if(cached && ((Array.isArray(cached.ids) && cached.ids.length) || hasRenderableProducts(cached.items))){
-        console.log('🛍 使用快取推薦', type, 'ids:', cached.ids?.length || 0, 'items:', cached.items?.length || 0);
+      if(cached && ((Array.isArray(cached.ids) && cached.ids.length) || hasRenderableProducts(cached.items) || hasRenderableProducts(cached.structured))){
+        const candidateItems = Array.isArray(cached.structured) && cached.structured.length ? cached.structured : cached.items;
+        console.log('🛍 使用快取推薦', type, 'ids:', cached.ids?.length || 0, 'items:', candidateItems?.length || 0);
         setStatus('為您載入推薦商品...');
-        const summaryLine = cached.summary || `我找到了 ${(cached.ids?.length || cached.items?.length || 0)} 款商品`;
+        const summaryLine = cached.summary || `我找到了 ${(cached.ids?.length || candidateItems?.length || 0)} 款商品`;
         
         // 優先使用完整的商品資料
-        if(hasRenderableProducts(cached.items)){
+        if(hasRenderableProducts(candidateItems)){
           console.log('✅ 商品資料完整，直接顯示');
           if(cached.categoryGroups){
-            switchToSearch('', cached.ids || [], cached.items, cached.categoryGroups, summaryLine);
+            switchToSearch('', cached.ids || [], candidateItems, cached.categoryGroups, summaryLine);
           } else {
-            switchToSearch('', cached.ids || [], cached.items, undefined, summaryLine);
+            switchToSearch('', cached.ids || [], candidateItems, undefined, summaryLine);
           }
           if(cached.meta){
             renderPlanResults([], cached.meta);

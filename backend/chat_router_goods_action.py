@@ -1,5 +1,5 @@
 from fallback.multi_category_party import run_fallback
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from fastapi import APIRouter
 from pydantic import BaseModel
 from utils.llm_guard import safe_call_async
@@ -10,6 +10,7 @@ from field_utils import FieldAccessor
 import uuid
 import time
 import re
+import json
 
 
 def _clean_text(value: Optional[str]) -> str:
@@ -99,14 +100,17 @@ def _build_marketing_description(item: Dict[str, Any]) -> str:
     return marketing
 
 
-def _format_item_list_reply(header_count: int, items: List[Dict[str, Any]]) -> str:
-    """將商品清單格式化為完整欄位列表的聊天回覆。"""
-    lines: List[str] = [f"我找到 {header_count} 款商品，詳細如下："]
+def _build_structured_items(items: List[Dict[str, Any]]) -> Dict[str, Any]:
+    summary = f"我找到 {len(items)} 款商品，詳細如下："
+    payload_items: List[Dict[str, Any]] = []
+    lines: List[str] = [summary]
     for idx, item in enumerate(items, 1):
         gid = str(item.get("GoodIden") or item.get("商品編號") or item.get("id") or "").strip()
         name = str(item.get("Name") or item.get("商品名稱") or item.get("name") or "").strip()
         price = str(item.get("Price") or item.get("售價") or item.get("price") or "").strip()
+        special = str(item.get("SpecialOffer") or item.get("特價") or item.get("special") or item.get("sale") or "").strip()
         link = str(item.get("Goods_Link1") or item.get("商品購物網址") or item.get("link") or item.get("url") or "").strip()
+        image = str(item.get("Goodspic_Link1") or item.get("商品圖片網址") or item.get("商品圖片") or item.get("image") or "").strip()
         marketing = _build_marketing_description(item)
 
         entry_lines = [
@@ -116,9 +120,40 @@ def _format_item_list_reply(header_count: int, items: List[Dict[str, Any]]) -> s
             f"商品描述：{marketing}",
             f"商品價格：{price}",
         ]
+        if special:
+            entry_lines.append(f"商品特價：{special}")
         entry_lines.append(f"購物連結：{link}")
         lines.append("\n".join(entry_lines))
-    return "\n\n".join(lines)
+
+        payload_items.append({
+            "index": idx,
+            "商品編號": gid,
+            "商品名稱": name,
+            "商品描述": marketing,
+            "商品價格": price,
+            "商品特價": special,
+            "商品購物網址": link,
+            "購物連結": link,
+            "商品圖片網址": image,
+            "商品圖片": image,
+        })
+    return {
+        "summary": summary,
+        "items": payload_items,
+        "text_lines": lines,
+    }
+
+
+def _compose_structured_reply(items: List[Dict[str, Any]], include_suffix: bool = True) -> Tuple[str, Dict[str, Any]]:
+    if not items:
+        return "", {"summary": "", "items": []}
+    structured = _build_structured_items(items)
+    text_body = "\n\n".join(structured["text_lines"])
+    if include_suffix and SUGGEST_PROMPT_SUFFIX:
+        text_body = f"{text_body}\n\n{SUGGEST_PROMPT_SUFFIX}"
+    json_blob = json.dumps({"summary": structured["summary"], "items": structured["items"]}, ensure_ascii=False)
+    reply_text = f"{text_body}\n{json_blob}"
+    return reply_text, structured
 
 
 def _fetch_items_for_reply(prefetched: Optional[List[Dict[str, Any]]], suggestion_ids: List[str]) -> List[Dict[str, Any]]:
@@ -237,6 +272,7 @@ def simple_chat_handler(req: ChatReq):
     has_food = any(kw in user_text for kw in food_keywords)
     
     suggestion_ids = []
+    structured_payload: Optional[Dict[str, Any]] = None
     
     if has_party and has_food:
         # 固定推薦商品 ID 清單 - 針對生日派對情境 (預算 1000 元，餅乾600元 + 飲品400元)
@@ -262,7 +298,7 @@ def simple_chat_handler(req: ChatReq):
         ]
         fetched = _fetch_items_for_reply(None, suggestion_ids)
         if fetched:
-            reply = _format_item_list_reply(len(fetched), fetched) + f"\n\n{SUGGEST_PROMPT_SUFFIX}"
+            reply, structured_payload = _compose_structured_reply(fetched)
         else:
             reply = (
                 "我為您準備了適合生日聚會的餅乾與飲料組合，總預算控制在 1000 元內。\n"
@@ -276,7 +312,7 @@ def simple_chat_handler(req: ChatReq):
         ]
         fetched = _fetch_items_for_reply(None, suggestion_ids)
         if fetched:
-            reply = _format_item_list_reply(len(fetched), fetched) + f"\n\n{SUGGEST_PROMPT_SUFFIX}"
+            reply, structured_payload = _compose_structured_reply(fetched)
         else:
             reply = f"我找到 {len(suggestion_ids)} 款餅乾商品，需要我顯示詳細介紹與圖片嗎？\n{SUGGEST_PROMPT_SUFFIX}"
     elif "飲料" in user_text or "drink" in user_text.lower():
@@ -296,6 +332,8 @@ def simple_chat_handler(req: ChatReq):
             "items": [{"id": sid} for sid in suggestion_ids]
         } if suggestion_ids else None
     }
+    if structured_payload:
+        resp["structured_payload"] = structured_payload
     
     # 儲存聊天結果並加入會話 ID
     if suggestion_ids:
@@ -307,12 +345,16 @@ def simple_chat_handler(req: ChatReq):
             from app import SUGGEST_CACHE, get_items_by_ids, get_df
             df = get_df()
             rows = get_items_by_ids(df, suggestion_ids)
-            SUGGEST_CACHE[session_id] = {
+            cache_entry = {
                 "align_ids": suggestion_ids,
                 "align_rows": rows,
                 "query_terms": [user_text],
                 "ts": time.time(),
             }
+            if structured_payload:
+                cache_entry["structured_items"] = structured_payload.get("items", [])
+                cache_entry["structured_summary"] = structured_payload.get("summary", "")
+            SUGGEST_CACHE[session_id] = cache_entry
         except Exception as e:
             print(f"[WARNING] Failed to sync SUGGEST_CACHE: {e}")
         
@@ -370,10 +412,13 @@ def chat_handler(req: ChatReq):
                     "items": [{"id": sid} for sid in suggestion_ids]
                 } if suggestion_ids else None)
             }
+            structured_payload: Optional[Dict[str, Any]] = None
             if suggestion_ids:
                 detailed_items = _fetch_items_for_reply(None, suggestion_ids)
                 if detailed_items:
-                    resp["reply"] = _format_item_list_reply(len(detailed_items), detailed_items) + f"\n\n{SUGGEST_PROMPT_SUFFIX}"
+                    formatted_reply, structured_payload = _compose_structured_reply(detailed_items)
+                    resp["reply"] = formatted_reply
+                    resp["structured_payload"] = structured_payload
             
             # 為 LLM 聊天結果生成 session_id 並同步快取
             if suggestion_ids:
@@ -385,12 +430,16 @@ def chat_handler(req: ChatReq):
                     from app import SUGGEST_CACHE, get_items_by_ids, get_df
                     df = get_df()
                     rows = get_items_by_ids(df, suggestion_ids)
-                    SUGGEST_CACHE[session_id] = {
+                    cache_entry = {
                         "align_ids": suggestion_ids,
                         "align_rows": rows,
                         "query_terms": [user_text],
                         "ts": time.time(),
                     }
+                    if structured_payload:
+                        cache_entry["structured_items"] = structured_payload.get("items", [])
+                        cache_entry["structured_summary"] = structured_payload.get("summary", "")
+                    SUGGEST_CACHE[session_id] = cache_entry
                 except Exception as e:
                     print(f"[WARNING] Failed to sync SUGGEST_CACHE: {e}")
                 
@@ -409,9 +458,12 @@ def chat_handler(req: ChatReq):
             print(f"[INFO] Fallback system activated for: {user_text[:50]}...")
             
             suggestion_ids = _fb.get("suggestion_ids", [])
+            structured_payload: Optional[Dict[str, Any]] = None
             detailed_items = _fetch_items_for_reply(None, suggestion_ids)
             if detailed_items:
-                _fb["reply"] = _format_item_list_reply(len(detailed_items), detailed_items) + f"\n\n{SUGGEST_PROMPT_SUFFIX}"
+                formatted_reply, structured_payload = _compose_structured_reply(detailed_items)
+                _fb["reply"] = formatted_reply
+                _fb["structured_payload"] = structured_payload
 
             # 為 fallback 結果加入會話追蹤
             session_id = _store_chat_result(_fb)
@@ -422,12 +474,16 @@ def chat_handler(req: ChatReq):
                         from app import SUGGEST_CACHE, get_items_by_ids, get_df
                         df = get_df()
                         rows = get_items_by_ids(df, suggestion_ids)
-                        SUGGEST_CACHE[session_id] = {
+                        cache_entry = {
                             "align_ids": suggestion_ids,
                             "align_rows": rows,
                             "query_terms": [user_text],
                             "ts": time.time(),
                         }
+                        if structured_payload:
+                            cache_entry["structured_items"] = structured_payload.get("items", [])
+                            cache_entry["structured_summary"] = structured_payload.get("summary", "")
+                        SUGGEST_CACHE[session_id] = cache_entry
                     except Exception as e:
                         print(f"[WARNING] Failed to sync SUGGEST_CACHE: {e}")
                         
@@ -444,7 +500,7 @@ def chat_handler(req: ChatReq):
         suggestion_ids = [FieldAccessor.get_product_id(x) for x in items if FieldAccessor.get_product_id(x)]
         
         if items:
-            reply = _format_item_list_reply(len(items), items) + f"\n\n{SUGGEST_PROMPT_SUFFIX}"
+            reply, structured_payload = _compose_structured_reply(items)
             
             resp = {
                 "ok": True,
@@ -456,6 +512,8 @@ def chat_handler(req: ChatReq):
                     "items": [{"id": sid} for sid in suggestion_ids]
                 } if suggestion_ids else None
             }
+            if structured_payload:
+                resp["structured_payload"] = structured_payload
             
             # 為高級搜索結果生成 session_id 並同步快取
             session_id = str(uuid.uuid4())[:8]
@@ -467,12 +525,16 @@ def chat_handler(req: ChatReq):
                     from app import SUGGEST_CACHE, get_items_by_ids, get_df
                     df = get_df()
                     rows = get_items_by_ids(df, suggestion_ids)
-                    SUGGEST_CACHE[session_id] = {
+                    cache_entry = {
                         "align_ids": suggestion_ids,
                         "align_rows": rows,
                         "query_terms": [req.user_message],
                         "ts": time.time(),
                     }
+                    if structured_payload:
+                        cache_entry["structured_items"] = structured_payload.get("items", [])
+                        cache_entry["structured_summary"] = structured_payload.get("summary", "")
+                    SUGGEST_CACHE[session_id] = cache_entry
                 except Exception as e:
                     print(f"[WARNING] Failed to sync SUGGEST_CACHE: {e}")
             
