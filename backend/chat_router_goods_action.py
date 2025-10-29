@@ -399,7 +399,26 @@ def chat_handler(req: ChatReq):
             alignment = llm_result.get("alignment")
             if alignment and alignment.get("items"):
                 suggestion_ids = [item.get("id") for item in alignment["items"] if item.get("id")]
+            
+            # 🩺 檢查是否為資訊諮詢模式（不需要商品推薦）
+            is_information_intent = llm_result.get("intent") == "information"
             has_action = isinstance(llm_result.get("action"), dict) and llm_result["action"].get("type") and llm_result["action"].get("type") != "none"
+            
+            # 資訊諮詢模式直接返回對話，不需要商品建議
+            if is_information_intent:
+                print(f"[INFO] Information consultation mode - no product search needed")
+                return {
+                    "ok": True,
+                    "reply": llm_result.get("reply", ""),
+                    "suggestion_ids": [],
+                    "meta": {
+                        "has_budget_intent": False,
+                        "intent": llm_result.get("intent"),
+                        "intent_subtype": llm_result.get("intent_subtype")
+                    },
+                    "action": {"type": "none"}
+                }
+            
             if not suggestion_ids and not has_action:
                 print("[INFO] LLM response without actionable items; fallback to rule-based flow.")
                 raise RuntimeError("llm_no_alignment")
