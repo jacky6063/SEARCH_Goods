@@ -181,6 +181,24 @@ RECOMMENDATION_PATTERNS = [
     "推薦", "推薦商品", "推薦好用", "哪個好", "建議", "適合"
 ]
 
+# 🎯 上下文產品詢問檢測 - 混合智慧快速版
+CONTEXT_INQUIRY_HIGH_CONFIDENCE = [
+    "你有賣", "你們有賣", "店裡有", "有這個商品嗎", "有這個產品嗎", 
+    "可以買到嗎", "哪裡買", "怎麼購買", "能買到", "有在賣"
+]
+
+CONTEXT_INQUIRY_MEDIUM_CONFIDENCE = [
+    "建議的", "推薦的", "剛才說的", "上面提到的", "這個產品", 
+    "這個商品", "那個", "這種", "剛提到", "你說的"
+]
+
+# 核心產品關鍵詞庫（基於資料庫熱門產品）
+CORE_PRODUCT_KEYWORDS = [
+    "椰子油", "橄欖油", "堅果", "蜂蜜", "燕麥", "奇亞籽", "藜麥", 
+    "維生素", "膠原蛋白", "益生菌", "蛋白粉", "魚油", "酵素",
+    "綠茶", "咖啡", "巧克力", "餅乾", "麵條", "醬料"
+]
+
 CONFIRMATION_TERMS: Set[str] = {
     "要",
     "好",
@@ -928,6 +946,79 @@ def _detect_intent_subtype(query: str) -> str:
     return "general"
 
 
+def _detect_context_product_inquiry(user_message: str, history: List[Dict[str, str]]) -> Optional[Dict[str, Any]]:
+    """
+    🎯 混合智慧上下文產品詢問檢測器 - 快速版
+    
+    Returns:
+        None: 非上下文產品詢問
+        Dict: {
+            "action": "direct_search" | "confirm_search",
+            "query": str,
+            "product": str, 
+            "confidence": float,
+            "confirmation_message": str (僅confirm_search時)
+        }
+    """
+    if not user_message or not history:
+        return None
+    
+    message_lower = user_message.lower()
+    
+    # 1. 檢測置信度
+    confidence = 0.0
+    inquiry_type = None
+    
+    if any(trigger in message_lower for trigger in CONTEXT_INQUIRY_HIGH_CONFIDENCE):
+        confidence = 0.9
+        inquiry_type = "direct"
+    elif any(trigger in message_lower for trigger in CONTEXT_INQUIRY_MEDIUM_CONFIDENCE):
+        confidence = 0.6  
+        inquiry_type = "indirect"
+    else:
+        return None
+    
+    # 2. 提取上下文產品 (最近4輪對話)
+    recent_content = " ".join([
+        msg.get("content", "") for msg in history[-4:] if isinstance(msg, dict)
+    ])
+    all_context = recent_content + " " + user_message
+    
+    # 3. 匹配產品關鍵詞
+    matched_products = []
+    for keyword in CORE_PRODUCT_KEYWORDS:
+        if keyword in all_context:
+            matched_products.append(keyword)
+    
+    if not matched_products:
+        return None
+    
+    # 4. 選擇目標產品（最後提到的）
+    target_product = matched_products[-1]
+    
+    # 5. 根據置信度決策
+    if confidence >= 0.8:
+        # 高置信度：直接轉換為產品搜索
+        return {
+            "action": "direct_search",
+            "query": target_product,
+            "product": target_product,
+            "confidence": confidence,
+            "matched_products": matched_products,
+            "inquiry_type": inquiry_type
+        }
+    else:
+        # 中置信度：確認後轉換
+        return {
+            "action": "confirm_search",
+            "product": target_product, 
+            "confidence": confidence,
+            "matched_products": matched_products,
+            "inquiry_type": inquiry_type,
+            "confirmation_message": f"您是想了解{target_product}的商品資訊嗎？我可以為您搜尋相關產品。"
+        }
+
+
 def _detect_conversation_intent(query: str) -> str:
     """檢測對話意圖: 'information' | 'product_search' | 'general'"""
     if not query:
@@ -1441,7 +1532,42 @@ def chat_reply(
     normalized_message = (user_message or "").strip()
     previous_alignment = _extract_alignment_from_history(history)
 
-    # 🚀 優先進行意圖檢測 - 進階優化的核心
+    # 🎯 優先檢測上下文產品詢問 - 混合智慧核心
+    context_inquiry = _detect_context_product_inquiry(normalized_message, history)
+    if context_inquiry:
+        print(f"[INFO] Context product inquiry detected: {context_inquiry['action']} for {context_inquiry['product']}")
+        
+        if context_inquiry["action"] == "direct_search":
+            # 高置信度：直接轉換為產品搜索
+            return {
+                "reply": f"好的！我來為您搜尋{context_inquiry['product']}的相關商品。",
+                "action": {
+                    "type": "switch_to_search",
+                    "query": context_inquiry["query"],
+                    "reason": "context_product_search"
+                },
+                "intent": "context_product_search",
+                "context_info": context_inquiry,
+                "alignment": None,
+                "auto_suggest": None
+            }
+        elif context_inquiry["action"] == "confirm_search":
+            # 中置信度：確認後轉換
+            return {
+                "reply": context_inquiry["confirmation_message"],
+                "action": {"type": "none"},
+                "intent": "confirmation_needed",
+                "context_info": context_inquiry,
+                "alignment": {
+                    "intent": "product_confirm",
+                    "items": [{"id": "", "name": context_inquiry["product"]}],
+                    "need_confirm_show_details": True,
+                    "reason": "context_product_confirmation"
+                },
+                "auto_suggest": None
+            }
+    
+    # 🚀 一般意圖檢測 - 進階優化的核心
     intent = _detect_conversation_intent(normalized_message)
     print(f"[DEBUG] Detected intent: {intent}")
     
@@ -1465,12 +1591,23 @@ def chat_reply(
 
     if _is_confirmation_message(normalized_message) and previous_alignment and previous_alignment.get("items"):
         items = previous_alignment["items"]
-        reply_text = "收到，我為您顯示詳細介紹與圖片。"
-        action = {
-            "type": "switch_to_search",
-            "items": items,
-            "reason": "user confirmation",
-        }
+        
+        # 🎯 檢查是否為上下文產品確認
+        if previous_alignment.get("intent") == "product_confirm":
+            product_name = items[0].get("name") if items else "相關商品"
+            reply_text = f"好的！我來為您搜尋{product_name}。"
+            action = {
+                "type": "switch_to_search", 
+                "query": product_name,
+                "reason": "context_product_confirmed",
+            }
+        else:
+            reply_text = "收到，我為您顯示詳細介紹與圖片。"
+            action = {
+                "type": "switch_to_search",
+                "items": items,
+                "reason": "user confirmation",
+            }
         return {"reply": reply_text, "action": action, "alignment": previous_alignment}
 
     context = _prepare_chat_context(user_message, catalog)
