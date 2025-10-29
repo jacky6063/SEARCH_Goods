@@ -81,6 +81,8 @@ CHAT_STOP_WORDS: set[str] = {
     "我",
     "要",
     "想",
+    "想買",
+    "想購買",
     "可以",
     "請",
     "幫",
@@ -105,6 +107,9 @@ CHAT_STOP_WORDS: set[str] = {
     "我們",
     "你們",
     "主要",
+    "購",
+    "買",
+    "漂亮",
 }
 
 CHAT_CATEGORY_TOPICS: Dict[str, List[str]] = {
@@ -115,6 +120,20 @@ CHAT_CATEGORY_TOPICS: Dict[str, List[str]] = {
     "保健食品類": ["養身飲品", "養身食品"],
     "生活用品類": ["籃球鞋", "慢跑鞋", "登山鞋", "經典手提包", "經典側/斜背包"],
 }
+
+FEMALE_MARKERS: Tuple[str, ...] = (
+    "女", "女性", "女用", "女士", "女孩", "女款", "lady", "woman", "女性款"
+)
+
+STRUCTURED_QUERY_RULES: Tuple[Dict[str, Any], ...] = (
+    {
+        "keywords": ["背包", "女包", "女用背包", "女用", "包包", "包款", "肩背包", "後背包", "雙肩包", "手提包", "隨身包"],
+        "category": "包",
+        "must": ["背包", "包"],
+        "female_terms": FEMALE_MARKERS,
+        "excluded": ["湯", "燉包", "茶", "醬", "麵", "調味", "湯包"],
+    },
+)
 
 GENERAL_OVERVIEW_TRIGGERS: tuple[str, ...] = (
     "賣什麼",
@@ -129,6 +148,38 @@ GENERAL_OVERVIEW_TRIGGERS: tuple[str, ...] = (
     "商品分類",
     "賣什麼東西",
 )
+
+# 進階意圖識別：區分資訊諮詢 vs 商品查詢
+INFORMATION_INTENT_PATTERNS = {
+    "health_info": [
+        "對健康", "有什麼幫助", "功效", "好處", "營養價值", "健康效果", 
+        "有益", "有害", "副作用", "注意事項", "營養成分", "保健效果"
+    ],
+    "usage_guide": [
+        "怎麼用", "如何使用", "用法", "使用方法", "怎麼吃", "怎麼喝",
+        "用量", "用時", "什麼時候用", "一天幾次", "使用頻率", "使用時機",
+        "一天用多少", "每天用多少", "用多少"
+    ],
+    "knowledge": [
+        "是什麼", "成分", "原理", "為什麼", "原因", "機制", 
+        "製作過程", "來源", "特色", "特點", "原料"
+    ],
+    "comparison": [
+        "比較", "差異", "哪個好", "推薦哪個", "區別", "不同", 
+        "優缺點", "vs", "相比", "對比"
+    ]
+}
+
+# 明確購買意圖關鍵詞
+PURCHASE_INTENT_PATTERNS = [
+    "我要買", "想買", "購買", "下單", "訂購", "有賣", 
+    "價格", "多少錢", "便宜", "特價", "優惠", "商品"
+]
+
+# 商品推薦諮詢（介於資訊和購買之間）
+RECOMMENDATION_PATTERNS = [
+    "推薦", "推薦商品", "推薦好用", "哪個好", "建議", "適合"
+]
 
 CONFIRMATION_TERMS: Set[str] = {
     "要",
@@ -348,8 +399,53 @@ def _extract_alignment_from_history(history: List[Dict[str, Any]]) -> Optional[D
             }
     return None
 
+def _derive_structured_filters(query: str, keywords: List[str]) -> Dict[str, Any]:
+    lowered_query = (query or "").lower()
+    filters: Dict[str, Any] = {}
+    for rule in STRUCTURED_QUERY_RULES:
+        rule_keywords = rule.get("keywords") or []
+        if any(term.lower() in lowered_query for term in rule_keywords):
+            filters["category_filter"] = rule.get("category")
+            must: List[str] = []
+            must.extend(rule.get("must") or [])
+            female_terms = rule.get("female_terms") or []
+            if female_terms and any(marker in lowered_query for marker in female_terms):
+                must.extend(rule.get("female_must") or [])
+            filters["must_have_keywords"] = list(dict.fromkeys([kw for kw in must if kw]))
+            excluded = rule.get("excluded") or []
+            if excluded:
+                filters["excluded_keywords"] = list(dict.fromkeys(excluded))
+            break
+    return filters
+
+
+def _apply_structured_filters(records: List[Dict[str, Any]], filters: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if not records or not filters:
+        return records
+    category_filter = (filters.get("category_filter") or "").lower()
+    must_keywords = [kw.lower() for kw in filters.get("must_have_keywords") or [] if kw]
+    excluded_keywords = [kw.lower() for kw in filters.get("excluded_keywords") or [] if kw]
+    filtered: List[Dict[str, Any]] = []
+    for item in records:
+        name = str(item.get("Name") or item.get("商品名稱") or item.get("name") or "").lower()
+        category = str(item.get("CateName") or item.get("分類名稱") or item.get("category") or "").lower()
+        haystack = " ".join([
+            name,
+            category,
+            str(item.get("DESCRIPTION") or item.get("Description") or item.get("ShortDesc") or ""),
+        ]).lower()
+        if category_filter and category_filter not in category:
+            continue
+        if must_keywords and not all(kw in haystack for kw in must_keywords):
+            continue
+        if excluded_keywords and any(kw in haystack for kw in excluded_keywords):
+            continue
+        filtered.append(item)
+    return filtered
+
+
 def _search_products_for_chat(
-    query: str, keywords: List[str], topn: int = 5
+    query: str, keywords: List[str], topn: int = 5, filters: Optional[Dict[str, Any]] = None
 ) -> Dict[str, List[Dict[str, Any]]]:
     result = {"exact": [], "fuzzy": []}
     if not query:
@@ -365,7 +461,14 @@ def _search_products_for_chat(
             topn=topn,
             sort_price=True,
         )
-        result["fuzzy"] = fuzzy_records or []
+        filtered_fuzzy = _apply_structured_filters(fuzzy_records or [], filters)
+        if filters and not filtered_fuzzy:
+            try:
+                from search_ext_goods_1024001 import search_products_strict
+                filtered_fuzzy = search_products_strict(query=query, limit=topn, filters=filters) or []
+            except Exception:
+                filtered_fuzzy = []
+        result["fuzzy"] = filtered_fuzzy
 
         core_phrase = _strip_filler_phrases(query)
         significant_keywords = _extract_core_terms(keywords)
@@ -391,7 +494,11 @@ def _search_products_for_chat(
             if matched:
                 exact_matches.append(row.to_dict())
         if exact_matches:
-            result["exact"] = _dedupe_products(exact_matches, topn)
+            deduped_exact = _dedupe_products(exact_matches, topn)
+            exact_filtered = _apply_structured_filters(deduped_exact, filters)
+            if filters and not exact_filtered:
+                exact_filtered = _apply_structured_filters(deduped_exact, None)
+            result["exact"] = exact_filtered
         return result
     except Exception as exc:
         _logger.exception("chat product search failed: %s", exc)
@@ -768,23 +875,115 @@ def _mock_or_real_llm(
     return mock_reply
 
 
+def _detect_conversation_intent(query: str) -> str:
+    """檢測對話意圖: 'information' | 'product_search' | 'general'"""
+    if not query:
+        return "general"
+    
+    query_lower = query.lower()
+    
+    # 檢查是否為資訊諮詢（優先級最高）
+    for intent_type, patterns in INFORMATION_INTENT_PATTERNS.items():
+        if any(pattern in query_lower for pattern in patterns):
+            return "information"
+    
+    # 檢查是否為推薦諮詢（用資訊模式處理，提供建議後再引導到商品）
+    if any(pattern in query_lower for pattern in RECOMMENDATION_PATTERNS):
+        return "information"
+    
+    # 檢查是否為明確購買意圖
+    if any(pattern in query_lower for pattern in PURCHASE_INTENT_PATTERNS):
+        return "product_search"
+    
+    # 特殊情況：包含產品名稱但沒有購買意圖的問題，歸類為資訊諮詢
+    # 例如：「椰子油和橄欖油有什麼差別」
+    if any(word in query_lower for word in ["差別", "不同", "vs", "和", "與"]) and not any(word in query_lower for word in ["推薦", "買", "購買"]):
+        return "information"
+    
+    # 預設為一般對話
+    return "general"
+
+
+def _build_information_system_prompt() -> str:
+    """建立資訊諮詢專用的系統提示詞"""
+    return """你是一位專業的健康產品顧問與營養師。當用戶詢問產品的健康資訊、使用方法、成分知識時，請提供專業、客觀、實用的資訊回應。
+
+回應原則：
+1. 提供實用的健康資訊和使用建議，基於科學知識
+2. 保持客觀中立，避免誇大效果或醫療宣稱
+3. 用溫和、專業但親切的語調回應
+4. 如涉及健康問題，建議諮詢專業醫師或營養師
+5. 可以分享一般性的產品知識，但重點在資訊分享而非銷售
+6. 適當時可自然地提及「如果您想了解相關產品，我也可以為您推薦」
+
+請用繁體中文回應，控制在100-200字內。"""
+
+
+def _call_chat_for_information(user_message: str, history: List[Dict[str, str]], system_prompt: str) -> str:
+    """專門處理資訊諮詢的 LLM 調用"""
+    client = _get_client()
+    if not client:
+        return "很抱歉，目前無法提供詳細的產品資訊。建議您諮詢專業營養師或查閱權威資料來源。"
+    
+    # 構建包含歷史對話的完整提示詞
+    context_prompt = user_message
+    if history:
+        # 取最近3輪對話作為上下文
+        recent_history = []
+        for msg in (history or [])[-6:]:
+            if isinstance(msg, dict) and msg.get("role") and msg.get("content"):
+                role = "用戶" if msg["role"] == "user" else "助理"
+                recent_history.append(f"{role}: {msg['content']}")
+        
+        if recent_history:
+            context_prompt = "對話歷史：\n" + "\n".join(recent_history[-3:]) + "\n\n當前問題：" + user_message
+    
+    # 調用 LLM 獲取資訊回應
+    try:
+        response = _call_chat(
+            prompt=context_prompt, 
+            system=system_prompt, 
+            model=CHAT_OPENAI_MODEL, 
+            max_tokens=300
+        )
+        
+        if not response:
+            return "很抱歉，目前無法提供詳細回應。建議您查閱相關資料或諮詢專業人員。"
+        
+        # 在適當的地方自然引導到產品推薦
+        if len(response) < 150 and not any(keyword in response for keyword in ["推薦", "產品", "商品"]):
+            response += "\n\n如果您想了解相關產品，我也可以為您推薦。"
+        
+        return response
+        
+    except Exception as e:
+        _logger.exception("資訊諮詢 LLM 調用失敗: %s", e)
+        return "很抱歉，目前系統忙碌中。建議您稍後再試，或諮詢專業營養師獲得更詳細的資訊。"
+
+
 def _extract_keywords(text: str) -> List[str]:
     tokens = re.findall(r"[\u4e00-\u9fff]+|[a-zA-Z0-9]+", text or "")
     keywords: List[str] = []
     for token in tokens:
         token = token.strip().lower()
-        if not token:
+        if not token or token in CHAT_STOP_WORDS:
             continue
         if re.fullmatch(r"[\u4e00-\u9fff]+", token):
-            if len(token) <= 4 and token not in CHAT_STOP_WORDS:
+            if len(token) >= 2:
                 keywords.append(token)
-            for char in token:
-                if char and char not in CHAT_STOP_WORDS:
-                    keywords.append(char)
+                # 加入連續雙字以利匹配（避免單字噪音）
+                for idx in range(len(token) - 1):
+                    bigram = token[idx : idx + 2]
+                    if bigram not in CHAT_STOP_WORDS:
+                        keywords.append(bigram)
         else:
-            if token not in CHAT_STOP_WORDS:
-                keywords.append(token)
-    return keywords
+            keywords.append(token)
+    # 去重保持順序
+    deduped: List[str] = []
+    for kw in keywords:
+        if kw and kw not in deduped:
+            deduped.append(kw)
+    return deduped
 
 
 def _match_catalog_items(keywords: List[str], catalog: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -882,6 +1081,7 @@ def _prepare_chat_context(user_message: str, catalog: List[Dict[str, Any]]) -> D
         not significant_keywords
         and any(trigger in normalized_query for trigger in GENERAL_OVERVIEW_TRIGGERS)
     )
+    structured_filters = _derive_structured_filters(query, keywords)
     if wants_overview:
         product_search = {"exact": [], "fuzzy": []}
         exact_products = []
@@ -890,7 +1090,7 @@ def _prepare_chat_context(user_message: str, catalog: List[Dict[str, Any]]) -> D
         categories = list(CHAT_CATEGORY_TOPICS.keys())
         matches = []
     else:
-        product_search = _search_products_for_chat(query, keywords, topn=6)
+        product_search = _search_products_for_chat(query, keywords, topn=6, filters=structured_filters)
         exact_products = _dedupe_products(product_search.get("exact", []), 4)
         fuzzy_products = _dedupe_products(product_search.get("fuzzy", []), 6)
         products = exact_products or _filter_products_by_keywords(fuzzy_products, keywords)
@@ -905,6 +1105,7 @@ def _prepare_chat_context(user_message: str, catalog: List[Dict[str, Any]]) -> D
         "category_question": category_question,
         "categories": categories,
         "overview": CHAT_CATEGORY_TOPICS if wants_overview else {},
+        "structured_filters": structured_filters,
     }
 
 
@@ -1114,6 +1315,24 @@ def chat_reply(
     normalized_message = (user_message or "").strip()
     previous_alignment = _extract_alignment_from_history(history)
 
+    # 🚀 優先進行意圖檢測 - 進階優化的核心
+    intent = _detect_conversation_intent(normalized_message)
+    print(f"[DEBUG] Detected intent: {intent}")
+    
+    # 📚 資訊諮詢類問題優先用 LLM 對話，不進行商品搜索
+    if intent == "information":
+        print(f"[INFO] Information intent detected, using conversational LLM")
+        system_prompt = _build_information_system_prompt()
+        reply_text = _call_chat_for_information(normalized_message, history, system_prompt)
+        
+        return {
+            "reply": reply_text,
+            "action": {"type": "none"},  # 不觸發商品搜索模式
+            "intent": "information",
+            "alignment": None,
+            "auto_suggest": None
+        }
+
     if _is_confirmation_message(normalized_message) and previous_alignment and previous_alignment.get("items"):
         items = previous_alignment["items"]
         reply_text = "收到，我為您顯示詳細介紹與圖片。"
@@ -1125,6 +1344,7 @@ def chat_reply(
         return {"reply": reply_text, "action": action, "alignment": previous_alignment}
 
     context = _prepare_chat_context(user_message, catalog)
+    structured_filters = context.get("structured_filters") or {}
     prompt_items = context.get("matches") or catalog[:max(topn, 1)]
     system_prompt = _build_system_prompt(prompt_items)
     reply_text = _mock_or_real_llm(system_prompt, history, user_message, catalog, context)
@@ -1145,7 +1365,11 @@ def chat_reply(
             + "\n".join(lines)
             + "\n\n想看哪一類的詳細介紹？告訴我類別或條件，我再幫您列出商品。"
         )
-        return {"reply": reply_text, "action": action}
+        return {
+            "reply": reply_text,
+            "action": action,
+            "structured_filters": structured_filters,
+        }
 
     alignment_items = _build_alignment_items(products)
 
@@ -1187,4 +1411,5 @@ def chat_reply(
     if alignment_payload:
         response["alignment"] = alignment_payload
     response["query_terms"] = context.get("keywords") or []
+    response["structured_filters"] = structured_filters
     return response
