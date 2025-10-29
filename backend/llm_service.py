@@ -946,15 +946,72 @@ def _detect_intent_subtype(query: str) -> str:
     return "general"
 
 
+def _extract_full_product_context(content: str, matched_keywords: List[str]) -> str:
+    """
+    從內容中提取完整的產品描述，包含修飾詞
+    例如：從 "冷壓純鮮椰子油對健康有什麼幫助" 提取 "冷壓純鮮椰子油"
+    """
+    if not matched_keywords:
+        return ""
+    
+    # 為每個匹配的關鍵詞尋找完整描述
+    best_match = ""
+    longest_length = 0
+    
+    for keyword in matched_keywords:
+        # 在內容中找到關鍵詞的位置
+        keyword_pos = content.find(keyword)
+        if keyword_pos == -1:
+            continue
+            
+        # 向前尋找修飾詞的起始位置
+        start_pos = keyword_pos
+        chars_before = content[:keyword_pos]
+        
+        # 常見修飾詞模式
+        modifiers = ['冷壓', '純鮮', '有機', '天然', '特級', '初榨', '原味', '無糖', '低脂', '高纖']
+        
+        # 向前搜索修飾詞
+        words_before = chars_before.split()
+        if words_before:
+            # 檢查最後幾個詞是否為修飾詞
+            for i in range(len(words_before) - 1, max(-1, len(words_before) - 4), -1):
+                word = words_before[i]
+                if any(mod in word for mod in modifiers):
+                    start_pos = content.find(word, max(0, keyword_pos - 50))
+                    break
+        
+        # 向後尋找產品描述的結束位置
+        end_pos = keyword_pos + len(keyword)
+        chars_after = content[end_pos:]
+        
+        # 檢查是否有後續的產品相關詞
+        product_suffixes = ['油', '粉', '片', '粒', '膠囊', '錠', '液', '醬', '茶', '咖啡']
+        for suffix in product_suffixes:
+            if chars_after.startswith(suffix):
+                end_pos += len(suffix)
+                break
+        
+        # 提取完整產品名稱
+        full_product = content[start_pos:end_pos].strip()
+        
+        # 選擇最長且合理的描述
+        if len(full_product) > longest_length and len(full_product) <= 20:  # 避免過長描述
+            best_match = full_product
+            longest_length = len(full_product)
+    
+    return best_match or matched_keywords[-1]
+
+
 def _detect_context_product_inquiry(user_message: str, history: List[Dict[str, str]]) -> Optional[Dict[str, Any]]:
     """
-    🎯 混合智慧上下文產品詢問檢測器 - 快速版
+    🎯 混合智慧上下文產品詢問檢測器 - 增強版
     
     Returns:
         None: 非上下文產品詢問
         Dict: {
             "action": "direct_search" | "confirm_search",
-            "query": str,
+            "query": str,  # 完整產品描述，如 "冷壓純鮮椰子油"
             "product": str, 
             "confidence": float,
             "confirmation_message": str (僅confirm_search時)
@@ -978,44 +1035,52 @@ def _detect_context_product_inquiry(user_message: str, history: List[Dict[str, s
     else:
         return None
     
-    # 2. 提取上下文產品 (最近4輪對話)
-    recent_content = " ".join([
-        msg.get("content", "") for msg in history[-4:] if isinstance(msg, dict)
-    ])
-    all_context = recent_content + " " + user_message
+    # 2. 提取上下文內容 (最近4輪對話)
+    recent_messages = []
+    for msg in history[-4:]:
+        if isinstance(msg, dict) and msg.get("content"):
+            recent_messages.append(msg["content"])
+    
+    all_context = " ".join(recent_messages)
     
     # 3. 匹配產品關鍵詞
-    matched_products = []
+    matched_keywords = []
     for keyword in CORE_PRODUCT_KEYWORDS:
         if keyword in all_context:
-            matched_products.append(keyword)
+            matched_keywords.append(keyword)
     
-    if not matched_products:
+    if not matched_keywords:
         return None
     
-    # 4. 選擇目標產品（最後提到的）
-    target_product = matched_products[-1]
+    # 4. 提取完整產品描述
+    full_product_description = _extract_full_product_context(all_context, matched_keywords)
+    target_keyword = matched_keywords[-1]  # 最後提到的核心關鍵詞
+    
+    print(f"[DEBUG] Context extraction: '{target_keyword}' → '{full_product_description}'")
     
     # 5. 根據置信度決策
     if confidence >= 0.8:
         # 高置信度：直接轉換為產品搜索
         return {
             "action": "direct_search",
-            "query": target_product,
-            "product": target_product,
+            "query": full_product_description,  # 使用完整描述
+            "product": target_keyword,  # 核心關鍵詞用於顯示
             "confidence": confidence,
-            "matched_products": matched_products,
-            "inquiry_type": inquiry_type
+            "matched_products": matched_keywords,
+            "inquiry_type": inquiry_type,
+            "full_description": full_product_description
         }
     else:
         # 中置信度：確認後轉換
         return {
             "action": "confirm_search",
-            "product": target_product, 
+            "product": target_keyword,
+            "query": full_product_description, 
             "confidence": confidence,
-            "matched_products": matched_products,
+            "matched_products": matched_keywords,
             "inquiry_type": inquiry_type,
-            "confirmation_message": f"您是想了解{target_product}的商品資訊嗎？我可以為您搜尋相關產品。"
+            "full_description": full_product_description,
+            "confirmation_message": f"您是想了解{full_product_description}的商品資訊嗎？我可以為您搜尋相關產品。"
         }
 
 
@@ -1539,8 +1604,9 @@ def chat_reply(
         
         if context_inquiry["action"] == "direct_search":
             # 高置信度：直接轉換為產品搜索
+            display_name = context_inquiry.get('full_description', context_inquiry['product'])
             return {
-                "reply": f"好的！我來為您搜尋{context_inquiry['product']}的相關商品。",
+                "reply": f"好的！我來為您搜尋{display_name}的相關商品。",
                 "action": {
                     "type": "switch_to_search",
                     "query": context_inquiry["query"],
