@@ -369,7 +369,6 @@ def chat_handler(req: ChatReq):
     """主聊天處理器，整合真正的 LLM 聊天功能"""
     user_text = req.user_message.strip()
     history = req.history or []
-    structured_filters: Dict[str, Any] = {}
     
     # 清理過期快取
     _cleanup_session_cache()
@@ -389,7 +388,6 @@ def chat_handler(req: ChatReq):
             catalog=catalog,
             topn=8
         )
-        structured_filters = llm_result.get("structured_filters") or {}
         
         if llm_result and llm_result.get("reply"):
             print(f"[INFO] LLM chat activated for: {user_text[:50]}...")
@@ -414,8 +412,6 @@ def chat_handler(req: ChatReq):
                     "items": [{"id": sid} for sid in suggestion_ids]
                 } if suggestion_ids else None)
             }
-            if structured_filters:
-                resp["structured_filters"] = structured_filters
             structured_payload: Optional[Dict[str, Any]] = None
             if suggestion_ids:
                 detailed_items = _fetch_items_for_reply(None, suggestion_ids)
@@ -443,8 +439,6 @@ def chat_handler(req: ChatReq):
                     if structured_payload:
                         cache_entry["structured_items"] = structured_payload.get("items", [])
                         cache_entry["structured_summary"] = structured_payload.get("summary", "")
-                    if structured_filters:
-                        cache_entry["structured_filters"] = structured_filters
                     SUGGEST_CACHE[session_id] = cache_entry
                 except Exception as e:
                     print(f"[WARNING] Failed to sync SUGGEST_CACHE: {e}")
@@ -502,7 +496,7 @@ def chat_handler(req: ChatReq):
         
     # 3. 嘗試使用正常搜索系統
     try:
-        items = search_products_strict(query=user_text, limit=10, filters=structured_filters)
+        items = search_products_strict(query=user_text, limit=10)
         suggestion_ids = [FieldAccessor.get_product_id(x) for x in items if FieldAccessor.get_product_id(x)]
         
         if items:
@@ -520,8 +514,6 @@ def chat_handler(req: ChatReq):
             }
             if structured_payload:
                 resp["structured_payload"] = structured_payload
-            if structured_filters:
-                resp["structured_filters"] = structured_filters
             
             # 為高級搜索結果生成 session_id 並同步快取
             session_id = str(uuid.uuid4())[:8]
@@ -542,8 +534,6 @@ def chat_handler(req: ChatReq):
                     if structured_payload:
                         cache_entry["structured_items"] = structured_payload.get("items", [])
                         cache_entry["structured_summary"] = structured_payload.get("summary", "")
-                    if structured_filters:
-                        cache_entry["structured_filters"] = structured_filters
                     SUGGEST_CACHE[session_id] = cache_entry
                 except Exception as e:
                     print(f"[WARNING] Failed to sync SUGGEST_CACHE: {e}")

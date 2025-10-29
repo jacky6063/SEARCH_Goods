@@ -22,7 +22,8 @@ class ChatReq(BaseModel):
 @router.post("/api/chat")
 def chat_handler(req: ChatReq):
     # 用強化搜尋拿 10 支（會依需求自動套類別/必含詞）
-    items = search_products_strict(query=req.text, limit=10)
+    base_filters = infer_filters_from_query(req.text)
+    items = search_products_strict(query=req.text, limit=10, filters=base_filters)
     suggestion_ids = [FieldAccessor.get_product_id(x) for x in items if FieldAccessor.get_product_id(x)]
 
     # 基本文案（不含預算）
@@ -31,7 +32,7 @@ def chat_handler(req: ChatReq):
         reply = f"我找到 {len(items)} 款商品，例如 {samples}。需要我顯示詳細介紹與圖片嗎？也可輸入 1=原建議、2=特價關聯、3=智慧搭配。"
     else:
         # 若套了鞋類過濾仍為 0，就明確回覆「此類無結果」，避免回不相干商品
-        if infer_filters_from_query(req.text):
+        if base_filters:
             reply = "目前沒有符合此品類的結果。要不要換個關鍵詞或尺寸再試試？"
         else:
             reply = "目前找不到相符的商品，可以提供更多關鍵字嗎？"

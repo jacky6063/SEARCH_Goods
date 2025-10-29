@@ -624,6 +624,56 @@
     });
     return transformed.join("<br>");
   }
+
+  // 🎯 智慧狀態檢測器 - 用戶體驗增強
+  function detectQuestionType(message) {
+    if (!message) return '已送出訊息，請稍候…';
+    
+    const msg = message.toLowerCase();
+    
+    // 健康資訊諮詢
+    if (msg.includes('健康') || msg.includes('功效') || msg.includes('好處') || 
+        msg.includes('營養') || msg.includes('有益') || msg.includes('有害') || 
+        msg.includes('副作用') || msg.includes('注意事項')) {
+      return '🩺 專業健康諮詢中，請稍候…';
+    }
+    
+    // 使用方法指導
+    if (msg.includes('怎麼用') || msg.includes('用法') || msg.includes('使用方法') || 
+        msg.includes('怎麼吃') || msg.includes('怎麼喝') || msg.includes('用量') || 
+        msg.includes('一天用多少') || msg.includes('什麼時候用')) {
+      return '📋 使用指導分析中，請稍候…';
+    }
+    
+    // 產品知識
+    if (msg.includes('是什麼') || msg.includes('成分') || msg.includes('原理') || 
+        msg.includes('製作過程') || msg.includes('來源') || msg.includes('特色')) {
+      return '🔬 產品知識查詢中，請稍候…';
+    }
+    
+    // 比較分析
+    if (msg.includes('比較') || msg.includes('差異') || msg.includes('哪個好') || 
+        msg.includes('區別') || msg.includes('不同') || msg.includes('vs') || 
+        msg.includes('相比')) {
+      return '⚖️ 產品比較分析中，請稍候…';
+    }
+    
+    // 推薦諮詢
+    if (msg.includes('推薦') || msg.includes('建議') || msg.includes('適合')) {
+      return '🎯 專業推薦分析中，請稍候…';
+    }
+    
+    // 購買意圖
+    if (msg.includes('買') || msg.includes('購買') || msg.includes('下單') || 
+        msg.includes('訂購') || msg.includes('價格') || msg.includes('多少錢') || 
+        msg.includes('優惠') || msg.includes('特價')) {
+      return '🛒 商品搜索中，請稍候…';
+    }
+    
+    // 預設狀態
+    return '💭 智慧分析中，請稍候…';
+  }
+
   function renderWelcome(){
     if(welcomed){ return; }
     appendChatBubble('assistant', '您好～我是哈通客服小哈，可以告訴我想找什麼商品嗎？');
@@ -745,7 +795,11 @@
     }
     const msg = rawText;
     appendChatBubble('user', msg);
-    setStatus('已送出訊息，請稍候…');
+    
+    // 🎨 智慧狀態指示器 - 根據問題類型顯示不同狀態
+    const smartStatus = detectQuestionType(msg);
+    setStatus(smartStatus);
+    
     if(inputEl){ inputEl.value = ''; }
     if(q && q !== inputEl){ q.value = ''; }
     if(typeof mq !== "undefined" && mq && mq !== inputEl){ mq.value = ''; }
