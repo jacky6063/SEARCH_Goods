@@ -258,10 +258,10 @@ def extract_terms(query: str) -> List[str]:
 
 def _row_text(row: Dict[str, Any]) -> str:
     parts = [
-        row.get("Name", ""),
-        row.get("DESCRIPTION") or row.get("Description") or "",
-        row.get("CateName") or row.get("分類名稱") or "",
-        row.get("REMARK") or row.get("備註") or "",
+        row.get("Name", "") or row.get("商品名稱", ""),
+        row.get("DESCRIPTION") or row.get("Description") or row.get("描述", ""),
+        row.get("CateName") or row.get("分類名稱", ""),
+        row.get("REMARK") or row.get("備註", ""),
     ]
     return " ".join(str(p) for p in parts).lower()
 
@@ -275,7 +275,8 @@ def score_row(row: Dict[str, Any], terms: List[str]) -> float:
             continue
         expanded_terms = _expand_category_terms([normalized])
         if any(term in text for term in expanded_terms):
-            in_name = normalized in str(row.get("Name","" )).lower()
+            product_name = str(row.get("Name", "") or row.get("商品名稱", "")).lower()
+            in_name = normalized in product_name
             if in_name:
                 score += 2.0
             elif normalized.isdigit() or re.fullmatch(r"\d+(?:\.\d+)?", normalized):
