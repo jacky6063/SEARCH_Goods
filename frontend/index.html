@@ -393,6 +393,26 @@ SEARCH_Goods 系統 - 前端應用程式
     .operator-popup.hidden{
       display:none;
     }
+    /* 情緒徽章（客服彈窗用，簡化版） */
+    .popup-emotion-badges{
+      display:inline-flex;
+      gap:6px;
+      margin-bottom:4px;
+      flex-wrap:wrap;
+    }
+    .popup-emotion-badge{
+      padding:3px 8px;
+      border-radius:10px;
+      font-size:11px;
+      font-weight:700;
+      color:#fff;
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+    }
+    .popup-emotion-badge.anxiety{background:linear-gradient(135deg,#ffc107 0%,#ff9800 100%);}
+    .popup-emotion-badge.urgency{background:linear-gradient(135deg,#ff4444 0%,#cc0000 100%);}
+    .popup-emotion-badge.anger{background:linear-gradient(135deg,#e91e63 0%,#c2185b 100%);}
     /* 真人客服遮罩：鎖定背景 */
     .operator-overlay{
       position:fixed;
@@ -4377,7 +4397,7 @@ let isYtMuted = true;
           
           if (data.messages && data.messages.length > 0) {
             data.messages.forEach(msg => {
-              appendPopupMessage(msg.role, msg.content);
+              appendPopupMessage(msg);
             });
             
             // 滾動到底部
@@ -4441,7 +4461,7 @@ let isYtMuted = true;
         
         if (data.messages && data.messages.length > 0) {
           data.messages.forEach(msg => {
-            appendPopupMessage(msg.role, msg.content);
+            appendPopupMessage(msg);
           });
           
           // 更新訊息計數
@@ -4457,7 +4477,12 @@ let isYtMuted = true;
     }
     
     // 在彈窗中添加訊息
-    function appendPopupMessage(role, content) {
+    function appendPopupMessage(messageOrRole, contentFallback) {
+      const isObj = typeof messageOrRole === 'object' && messageOrRole !== null;
+      const role = isObj ? messageOrRole.role : messageOrRole;
+      const content = isObj ? messageOrRole.content : contentFallback;
+      const emotion = isObj ? (messageOrRole.emotion_data || null) : null;
+
       const messageDiv = document.createElement('div');
       
       // 統一 role 類型以符合 CSS 類別
@@ -4471,13 +4496,37 @@ let isYtMuted = true;
       messageDiv.className = `popup-message ${displayRole}`;
       
       const roleLabel = role === 'user' ? '👤 您' : (role === 'Humans' || role === 'operator' ? '👩‍💼 客服' : '🤖 AI');
+      const emotionBadges = renderPopupEmotionBadges(emotion);
       
       messageDiv.innerHTML = `
         <div class="popup-message-role">${roleLabel}</div>
-        <div class="popup-message-bubble">${escapeHtml(content)}</div>
+        <div class="popup-message-bubble">
+          ${emotionBadges}
+          ${escapeHtml(content)}
+        </div>
       `;
       
       popupChatArea.appendChild(messageDiv);
+    }
+
+    // 渲染彈窗內的情緒徽章（簡化版本）
+    function renderPopupEmotionBadges(emotion) {
+      if (!emotion || typeof emotion !== 'object') return '';
+      const anxiety = Number(emotion.anxiety_level) || 0;
+      const urgency = Number(emotion.urgency_level) || 0;
+      const anger = Number(emotion.anger_level) || 0;
+      const badges = [];
+      if (anxiety >= 7) {
+        badges.push(`<span class="popup-emotion-badge anxiety">😰 不安 ${anxiety}</span>`);
+      }
+      if (urgency >= 8) {
+        badges.push(`<span class="popup-emotion-badge urgency">⚡ 緊急 ${urgency}</span>`);
+      }
+      if (anger >= 6) {
+        badges.push(`<span class="popup-emotion-badge anger">😠 不滿 ${anger}</span>`);
+      }
+      if (!badges.length) return '';
+      return `<div class="popup-emotion-badges">${badges.join('')}</div>`;
     }
     
     // 在彈窗中發送訊息
