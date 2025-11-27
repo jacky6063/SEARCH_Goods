@@ -1,0 +1,32 @@
+#!/bin/sh
+# Pre-commit hook: 在 commit 前自動執行 E2E 測試
+# 如果測試失敗，會阻止 commit
+
+echo "🔍 執行 pre-commit 測試..."
+echo ""
+
+# 執行 E2E 測試
+npm run test:e2e
+
+# 儲存測試結果
+TEST_RESULT=$?
+
+# 根據測試結果決定是否允許 commit
+if [ $TEST_RESULT -ne 0 ]; then
+  echo ""
+  echo "❌ 測試失敗！請修復錯誤後再 commit"
+  echo "💡 提示：你可以檢查以下項目："
+  echo "   - 是否有 JavaScript 錯誤"
+  echo "   - 管理面板功能是否正常"
+  echo "   - 是否刪除了關鍵函數"
+  echo ""
+  echo "📊 查看詳細測試報告："
+  echo "   npx playwright show-report"
+  echo ""
+  exit 1
+fi
+
+echo ""
+echo "✅ 所有測試通過！準備 commit..."
+echo ""
+exit 0

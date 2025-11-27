@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品卡片顯示測試</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #2563eb; }
+        h2 { color: #475569; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        .status { 
+            padding: 10px 15px; 
+            border-radius: 6px; 
+            margin: 10px 0;
+            font-weight: 600;
+        }
+        .status.success { background: #dcfce7; color: #166534; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+        .status.info { background: #dbeafe; color: #1e40af; }
+        .log-box {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .log-entry { margin: 5px 0; }
+        .log-success { color: #4ade80; }
+        .log-error { color: #f87171; }
+        .log-warning { color: #fbbf24; }
+        .log-info { color: #60a5fa; }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 5px;
+        }
+        button:hover { background: #1d4ed8; }
+        button:active { transform: translateY(1px); }
+        .product-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8fafc;
+        }
+        .product-info { display: grid; gap: 8px; }
+        .product-info span { font-size: 14px; }
+        .product-info strong { color: #1e40af; }
+    </style>
+</head>
+<body>
+    <h1>🧪 商品卡片顯示測試</h1>
+    
+    <div class="test-section">
+        <h2>📋 測試環境檢查</h2>
+        <div id="env-status"></div>
+        <button onclick="checkEnvironment()">🔍 檢查環境</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 API 測試</h2>
+        <div id="api-status"></div>
+        <button onclick="testChatAPI()">🚀 測試聊天 API</button>
+        <div id="api-logs" class="log-box" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎨 商品資料解析測試</h2>
+        <div id="parse-status"></div>
+        <button onclick="testDataParsing()">🧮 測試資料解析</button>
+        <div id="parse-logs" class="log-box" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🛍️ 商品資料預覽</h2>
+        <div id="products-preview"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📝 測試總結</h2>
+        <div id="summary"></div>
+        <button onclick="runAllTests()">▶️ 運行全部測試</button>
+        <button onclick="openMainApp()">🌐 打開主應用</button>
+    </div>
+
+    <script>
+        let testResults = {
+            envCheck: null,
+            apiTest: null,
+            parseTest: null
+        };
+
+        function log(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            container.style.display = 'block';
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function checkEnvironment() {
+            const statusDiv = document.getElementById('env-status');
+            statusDiv.innerHTML = '<div class="status info">檢查中...</div>';
+            
+            try {
+                // 檢查後端
+                const backendRes = await fetch('http://localhost:8000/health');
+                const backendOk = backendRes.ok;
+                
+                // 檢查前端
+                const frontendRes = await fetch('http://localhost:5173/');
+                const frontendOk = frontendRes.ok;
+                
+                let html = '';
+                if (backendOk) {
+                    html += '<div class="status success">✅ 後端服務正常 (http://localhost:8000)</div>';
+                } else {
+                    html += '<div class="status error">❌ 後端服務異常</div>';
+                }
+                
+                if (frontendOk) {
+                    html += '<div class="status success">✅ 前端服務正常 (http://localhost:5173)</div>';
+                } else {
+                    html += '<div class="status error">❌ 前端服務異常</div>';
+                }
+                
+                testResults.envCheck = backendOk && frontendOk;
+                statusDiv.innerHTML = html;
+                updateSummary();
+            } catch (err) {
+                statusDiv.innerHTML = `<div class="status error">❌ 環境檢查失敗: ${err.message}</div>`;
+                testResults.envCheck = false;
+                updateSummary();
+            }
+        }
+
+        async function testChatAPI() {
+            const statusDiv = document.getElementById('api-status');
+            const logsDiv = document.getElementById('api-logs');
+            statusDiv.innerHTML = '<div class="status info">測試中...</div>';
+            logsDiv.innerHTML = '';
+            logsDiv.style.display = 'block';
+            
+            try {
+                log('api-logs', '發送聊天請求: "有斜款背包"', 'info');
+                
+                const response = await fetch('http://localhost:8000/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: '有斜款背包',
+                        history: [],
+                        session_id: 'test_' + Date.now()
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                log('api-logs', `✅ API 回應成功`, 'success');
+                log('api-logs', `📝 回覆長度: ${data.reply?.length || 0} 字元`, 'info');
+                log('api-logs', `📦 structured_products: ${data.structured_products?.length || 0} 款`, 'success');
+                log('api-logs', `🎯 suggestion_ids: ${data.suggestion_ids?.length || 0} 個`, 'success');
+                log('api-logs', `📊 structured_payload 存在: ${!!data.structured_payload}`, 'success');
+                
+                if (!data.structured_products || data.structured_products.length === 0) {
+                    log('api-logs', '❌ 缺少 structured_products', 'error');
+                    testResults.apiTest = false;
+                } else {
+                    log('api-logs', '✅ 商品資料完整', 'success');
+                    testResults.apiTest = true;
+                    
+                    // 儲存商品資料供預覽
+                    window.testProducts = data.structured_products;
+                    displayProducts(data.structured_products);
+                }
+                
+                statusDiv.innerHTML = `<div class="status success">✅ API 測試通過 (${data.structured_products?.length || 0} 款商品)</div>`;
+                updateSummary();
+            } catch (err) {
+                log('api-logs', `❌ API 測試失敗: ${err.message}`, 'error');
+                statusDiv.innerHTML = `<div class="status error">❌ API 測試失敗: ${err.message}</div>`;
+                testResults.apiTest = false;
+                updateSummary();
+            }
+        }
+
+        function testDataParsing() {
+            const statusDiv = document.getElementById('parse-status');
+            const logsDiv = document.getElementById('parse-logs');
+            logsDiv.innerHTML = '';
+            logsDiv.style.display = 'block';
+            
+            if (!window.testProducts) {
+                statusDiv.innerHTML = '<div class="status error">❌ 請先運行 API 測試</div>';
+                return;
+            }
+            
+            try {
+                log('parse-logs', '開始解析商品資料...', 'info');
+                
+                const products = window.testProducts;
+                log('parse-logs', `📦 商品數量: ${products.length}`, 'info');
+                
+                // 檢查必要欄位
+                let missingFields = [];
+                products.forEach((item, idx) => {
+                    const required = ['商品編號', '商品名稱', '商品價格'];
+                    required.forEach(field => {
+                        if (!item[field]) {
+                            missingFields.push(`商品 ${idx + 1} 缺少 ${field}`);
+                        }
+                    });
+                });
+                
+                if (missingFields.length > 0) {
+                    log('parse-logs', `⚠️ 發現缺失欄位:`, 'warning');
+                    missingFields.forEach(msg => log('parse-logs', `  - ${msg}`, 'warning'));
+                } else {
+                    log('parse-logs', '✅ 所有商品欄位完整', 'success');
+                }
+                
+                // 檢查購物連結
+                let linksOk = products.filter(item => item['購物連結'] || item['商品購物網址']).length;
+                log('parse-logs', `🔗 有購物連結: ${linksOk}/${products.length}`, linksOk === products.length ? 'success' : 'warning');
+                
+                // 測試 normalizeStructuredItem 邏輯
+                log('parse-logs', '測試欄位標準化...', 'info');
+                const testItem = { ...products[0] };
+                if (!testItem['商品購物網址'] && testItem['購物連結']) {
+                    testItem['商品購物網址'] = testItem['購物連結'];
+                    log('parse-logs', '✅ 購物連結標準化成功', 'success');
+                }
+                
+                testResults.parseTest = missingFields.length === 0;
+                statusDiv.innerHTML = testResults.parseTest 
+                    ? '<div class="status success">✅ 資料解析測試通過</div>'
+                    : '<div class="status error">❌ 資料解析發現問題</div>';
+                updateSummary();
+            } catch (err) {
+                log('parse-logs', `❌ 解析測試失敗: ${err.message}`, 'error');
+                statusDiv.innerHTML = `<div class="status error">❌ 解析測試失敗</div>`;
+                testResults.parseTest = false;
+                updateSummary();
+            }
+        }
+
+        function displayProducts(products) {
+            const container = document.getElementById('products-preview');
+            container.innerHTML = '<h3>商品列表預覽</h3>';
+            
+            products.slice(0, 3).forEach((item, idx) => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-info">
+                        <span><strong>索引:</strong> ${idx + 1}</span>
+                        <span><strong>商品編號:</strong> ${item['商品編號'] || 'N/A'}</span>
+                        <span><strong>商品名稱:</strong> ${item['商品名稱'] || 'N/A'}</span>
+                        <span><strong>商品價格:</strong> ${item['商品價格'] || 'N/A'}</span>
+                        <span><strong>購物連結:</strong> ${item['購物連結'] ? '✅ 有' : '❌ 無'}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            
+            if (products.length > 3) {
+                container.innerHTML += `<p style="color: #64748b;">... 還有 ${products.length - 3} 款商品</p>`;
+            }
+        }
+
+        function updateSummary() {
+            const summaryDiv = document.getElementById('summary');
+            const total = Object.values(testResults).filter(v => v !== null).length;
+            const passed = Object.values(testResults).filter(v => v === true).length;
+            
+            let html = '<h3>測試結果</h3>';
+            html += `<div class="status ${passed === total && total > 0 ? 'success' : 'info'}">`;
+            html += `通過: ${passed}/${total}`;
+            html += '</div>';
+            
+            html += '<ul style="margin: 15px 0; line-height: 1.8;">';
+            html += `<li>環境檢查: ${getStatusIcon(testResults.envCheck)}</li>`;
+            html += `<li>API 測試: ${getStatusIcon(testResults.apiTest)}</li>`;
+            html += `<li>資料解析: ${getStatusIcon(testResults.parseTest)}</li>`;
+            html += '</ul>';
+            
+            if (passed === total && total === 3) {
+                html += '<div class="status success">🎉 所有測試通過!商品卡片顯示功能應該正常運作。</div>';
+            }
+            
+            summaryDiv.innerHTML = html;
+        }
+
+        function getStatusIcon(status) {
+            if (status === null) return '⚪ 未測試';
+            if (status === true) return '✅ 通過';
+            return '❌ 失敗';
+        }
+
+        async function runAllTests() {
+            await checkEnvironment();
+            await new Promise(r => setTimeout(r, 500));
+            await testChatAPI();
+            await new Promise(r => setTimeout(r, 500));
+            testDataParsing();
+        }
+
+        function openMainApp() {
+            window.open('http://localhost:5173/', '_blank');
+        }
+
+        // 自動運行環境檢查
+        window.addEventListener('load', () => {
+            checkEnvironment();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用者對話訊息的情緒分析 - 功能展示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .hero h1 {
+            color: #333;
+            font-size: 36px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto 25px;
+        }
+
+        .hero-badges {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .hero-badge {
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hero-badge.feature {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1976d2;
+        }
+
+        /* 統計卡片區 */
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .stat-label {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 42px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-card.anxiety .stat-value {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.urgency .stat-value {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.anger .stat-value {
+            background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-description {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        /* 對話範例區 */
+        .demo-section {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-header h2 {
+            color: #333;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* 訊息卡片 */
+        .message-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message-card {
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+            border-left: 5px solid #2196F3;
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+        }
+
+        .message-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .message-role {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            color: #1976D2;
+        }
+
+        .message-role .icon {
+            font-size: 24px;
+        }
+
+        /* 情緒標籤 */
+        .emotion-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .emotion-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            cursor: help;
+            transition: transform 0.2s;
+        }
+
+        .emotion-badge:hover {
+            transform: scale(1.1);
+        }
+
+        .emotion-badge.anxiety-high {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: white;
+        }
+
+        .emotion-badge.anxiety-medium {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffc107;
+        }
+
+        .emotion-badge.urgency-high {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            color: white;
+            animation: pulse-urgency 2s infinite;
+        }
+
+        .emotion-badge.urgency-medium {
+            background: #ffe0e0;
+            color: #cc0000;
+            border: 2px solid #ff4444;
+        }
+
+        .emotion-badge.anger-high {
+            background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+            color: white;
+        }
+
+        .emotion-badge.anger-medium {
+            background: #fce4ec;
+            color: #c2185b;
+            border: 2px solid #e91e63;
+        }
+
+        @keyframes pulse-urgency {
+            0%, 100% { opacity: 1; box-shadow: 0 2px 4px rgba(255, 68, 68, 0.3); }
+            50% { opacity: 0.85; box-shadow: 0 4px 12px rgba(255, 68, 68, 0.6); }
+        }
+
+        .message-content {
+            color: #333;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .message-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+            color: #999;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .message-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .keyword-tag {
+            padding: 2px 8px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            font-size: 11px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        /* 配置區 */
+        .config-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .config-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .config-panel h3 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .threshold-item {
+            margin-bottom: 25px;
+        }
+
+        .threshold-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .threshold-label {
+            font-weight: 600;
+            color: #555;
+            font-size: 15px;
+        }
+
+        .threshold-value {
+            font-size: 20px;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 8px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .threshold-value.anxiety {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: white;
+        }
+
+        .threshold-value.urgency {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            color: white;
+        }
+
+        .threshold-value.anger {
+            background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+            color: white;
+        }
+
+        .threshold-bar {
+            height: 12px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .threshold-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.3s;
+        }
+
+        .threshold-bar-fill.anxiety {
+            background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%);
+        }
+
+        .threshold-bar-fill.urgency {
+            background: linear-gradient(90deg, #ff4444 0%, #cc0000 100%);
+        }
+
+        .threshold-bar-fill.anger {
+            background: linear-gradient(90deg, #e91e63 0%, #c2185b 100%);
+        }
+
+        .threshold-description {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #999;
+            line-height: 1.4;
+        }
+
+        /* 程式碼區塊 */
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: 'JSON';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* 按鈕 */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* 通知 */
+        .notification {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10000;
+            transition: top 0.3s ease;
+            min-width: 300px;
+        }
+
+        .notification.show {
+            top: 20px;
+        }
+
+        .notification.success {
+            border-left: 4px solid #10b981;
+        }
+
+        .notification-icon {
+            font-size: 24px;
+        }
+
+        .notification-text {
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        /* 響應式 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .hero {
+                padding: 25px;
+            }
+
+            .hero h1 {
+                font-size: 28px;
+            }
+
+            .config-section {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-buttons {
+                flex-wrap: wrap;
+            }
+
+            .message-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* 高亮效果 */
+        .highlight {
+            animation: highlight 1s ease;
+        }
+
+        @keyframes highlight {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(102, 126, 234, 0.1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <h1>🧠 使用者對話訊息的情緒分析</h1>
+            <p>
+                透過 AI 智能分析使用者訊息中的情緒狀態，自動標記<strong>不安程度</strong>、<strong>急迫感</strong>和<strong>生氣指數</strong>。<br>
+                當情緒指數達到設定標準時，系統將記錄分析結果並可觸發自動通知，幫助客服團隊優先處理高風險對話。
+            </p>
+            <div class="hero-badges">
+                <span class="hero-badge feature">✨ AI 智能分析</span>
+                <span class="hero-badge feature">📊 即時情緒追蹤</span>
+                <span class="hero-badge feature">⚡ 自動優先排序</span>
+                <span class="hero-badge feature">🎛️ 彈性配置設定</span>
+            </div>
+        </div>
+
+        <!-- 統計卡片 -->
+        <div class="stats-section">
+            <div class="stat-card anxiety">
+                <span class="stat-icon">😰</span>
+                <div class="stat-label">不安程度</div>
+                <div class="stat-value">8<span style="font-size: 24px; opacity: 0.6;">/10</span></div>
+                <div class="stat-description">客戶感到焦慮、擔心或害怕，需要安撫語氣回應</div>
+            </div>
+
+            <div class="stat-card urgency">
+                <span class="stat-icon">⚡</span>
+                <div class="stat-label">急迫感</div>
+                <div class="stat-value">9<span style="font-size: 24px; opacity: 0.6;">/10</span></div>
+                <div class="stat-description">情況緊急需立即處理，建議優先接手對話</div>
+            </div>
+
+            <div class="stat-card anger">
+                <span class="stat-icon">😠</span>
+                <div class="stat-label">生氣指數</div>
+                <div class="stat-value">3<span style="font-size: 24px; opacity: 0.6;">/10</span></div>
+                <div class="stat-description">客戶情緒穩定，可繼續 AI 自動回覆</div>
+            </div>
+        </div>
+
+        <!-- 對話範例區 -->
+        <div class="demo-section">
+            <div class="section-header">
+                <h2>💬 對話訊息範例</h2>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" onclick="filterMessages('all')">全部</button>
+                    <button class="filter-btn" onclick="filterMessages('high')">高風險</button>
+                    <button class="filter-btn" onclick="filterMessages('medium')">中度</button>
+                    <button class="filter-btn" onclick="filterMessages('low')">低度</button>
+                </div>
+            </div>
+
+            <div class="message-list" id="messageList">
+                <!-- Message 1: 極高緊急 -->
+                <div class="message-card" data-level="high">
+                    <div class="message-header">
+                        <div class="message-role">
+                            <span class="icon">👤</span>
+                            <span>使用者訊息</span>
+                        </div>
+                        <div class="emotion-badges">
+                            <span class="emotion-badge anxiety-high" title="不安程度: 9/10">😰 不安 9</span>
+                            <span class="emotion-badge urgency-high" title="急迫感: 10/10">⚡ 緊急 10</span>
+                            <span class="emotion-badge anger-medium" title="生氣指數: 4/10">😠 不滿 4</span>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        瓦斯洩漏了！聞到很濃的臭味，怎麼辦？家裡有小孩很擔心會爆炸！
+                    </div>
+                    <div class="message-meta">
+                        <div class="message-meta-item">
+                            <span>🔍</span>
+                            <div class="keywords">
+                                <span class="keyword-tag">瓦斯</span>
+                                <span class="keyword-tag">洩漏</span>
+                                <span class="keyword-tag">臭味</span>
+                                <span class="keyword-tag">爆炸</span>
+                            </div>
+                        </div>
+                        <div class="message-meta-item">
+                            <span>💡</span>
+                            <span>判斷：包含立即危險關鍵字且使用多個驚嘆號</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 2: 高度不安 -->
+                <div class="message-card" data-level="high">
+                    <div class="message-header">
+                        <div class="message-role">
+                            <span class="icon">👤</span>
+                            <span>使用者訊息</span>
+                        </div>
+                        <div class="emotion-badges">
+                            <span class="emotion-badge anxiety-high" title="不安程度: 8/10">😰 不安 8</span>
+                            <span class="emotion-badge urgency-medium" title="急迫感: 7/10">⚡ 急 7</span>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        插座突然燒焦了，有煙霧冒出來，我很害怕會不會引發火災...
+                    </div>
+                    <div class="message-meta">
+                        <div class="message-meta-item">
+                            <span>🔍</span>
+                            <div class="keywords">
+                                <span class="keyword-tag">插座</span>
+                                <span class="keyword-tag">燒焦</span>
+                                <span class="keyword-tag">煙霧</span>
+                                <span class="keyword-tag">火災</span>
+                            </div>
+                        </div>
+                        <div class="message-meta-item">
+                            <span>💡</span>
+                            <span>判斷：包含「害怕」「會不會」等焦慮詞彙</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 3: 高度憤怒 -->
+                <div class="message-card" data-level="high">
+                    <div class="message-header">
+                        <div class="message-role">
+                            <span class="icon">👤</span>
+                            <span>使用者訊息</span>
+                        </div>
+                        <div class="emotion-badges">
+                            <span class="emotion-badge anger-high" title="生氣指數: 9/10">😠 憤怒 9</span>
+                            <span class="emotion-badge urgency-medium" title="急迫感: 6/10">⚡ 急 6</span>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        報修三天了都沒人來！漏水越來越嚴重，這服務品質太差了吧！我要投訴！
+                    </div>
+                    <div class="message-meta">
+                        <div class="message-meta-item">
+                            <span>🔍</span>
+                            <div class="keywords">
+                                <span class="keyword-tag">三天</span>
+                                <span class="keyword-tag">沒人來</span>
+                                <span class="keyword-tag">太差</span>
+                                <span class="keyword-tag">投訴</span>
+                            </div>
+                        </div>
+                        <div class="message-meta-item">
+                            <span>💡</span>
+                            <span>判斷：包含強烈不滿詞彙和投訴意圖</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 4: 中度緊急 -->
+                <div class="message-card" data-level="medium">
+                    <div class="message-header">
+                        <div class="message-role">
+                            <span class="icon">👤</span>
+                            <span>使用者訊息</span>
+                        </div>
+                        <div class="emotion-badges">
+                            <span class="emotion-badge urgency-medium" title="急迫感: 7/10">⚡ 急 7</span>
+                            <span class="emotion-badge anxiety-medium" title="不安程度: 5/10">😰 擔心 5</span>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        廁所一直滴水，聲音很吵影響睡眠，可以今天派人來看嗎？
+                    </div>
+                    <div class="message-meta">
+                        <div class="message-meta-item">
+                            <span>🔍</span>
+                            <div class="keywords">
+                                <span class="keyword-tag">滴水</span>
+                                <span class="keyword-tag">影響睡眠</span>
+                                <span class="keyword-tag">今天</span>
+                            </div>
+                        </div>
+                        <div class="message-meta-item">
+                            <span>💡</span>
+                            <span>判斷：有時間要求但非立即危險</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 5: 中度不安 -->
+                <div class="message-card" data-level="medium">
+                    <div class="message-header">
+                        <div class="message-role">
+                            <span class="icon">👤</span>
+                            <span>使用者訊息</span>
+                        </div>
+                        <div class="emotion-badges">
+                            <span class="emotion-badge anxiety-medium" title="不安程度: 6/10">😰 擔心 6</span>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        電燈一直閃爍不穩定，不知道是不是電路有問題？會不會有危險？
+                    </div>
+                    <div class="message-meta">
+                        <div class="message-meta-item">
+                            <span>🔍</span>
+                            <div class="keywords">
+                                <span class="keyword-tag">閃爍</span>
+                                <span class="keyword-tag">不知道</span>
+                                <span class="keyword-tag">會不會</span>
+                            </div>
+                        </div>
+                        <div class="message-meta-item">
+                            <span>💡</span>
+                            <span>判斷：疑問語氣顯示輕度不安</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 6: 低度情緒 -->
+                <div class="message-card" data-level="low">
+                    <div class="message-header">
+                        <div class="message-role">
+                            <span class="icon">👤</span>
+                            <span>使用者訊息</span>
+                        </div>
+                        <div class="emotion-badges">
+                            <span style="font-size: 12px; color: #999; padding: 4px 12px;">✅ 情緒穩定（未達記錄標準）</span>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        請問冷氣定期保養大概什麼時候方便安排？謝謝。
+                    </div>
+                    <div class="message-meta">
+                        <div class="message-meta-item">
+                            <span>🔍</span>
+                            <div class="keywords">
+                                <span class="keyword-tag">定期保養</span>
+                                <span class="keyword-tag">方便時</span>
+                            </div>
+                        </div>
+                        <div class="message-meta-item">
+                            <span>💡</span>
+                            <span>判斷：語氣禮貌平穩，無時間壓力</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 7: 低度情緒 -->
+                <div class="message-card" data-level="low">
+                    <div class="message-header">
+                        <div class="message-role">
+                            <span class="icon">👤</span>
+                            <span>使用者訊息</span>
+                        </div>
+                        <div class="emotion-badges">
+                            <span style="font-size: 12px; color: #999; padding: 4px 12px;">✅ 情緒穩定（未達記錄標準）</span>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        想了解一下更換水龍頭的費用，有價目表可以參考嗎？
+                    </div>
+                    <div class="message-meta">
+                        <div class="message-meta-item">
+                            <span>🔍</span>
+                            <div class="keywords">
+                                <span class="keyword-tag">了解</span>
+                                <span class="keyword-tag">費用</span>
+                            </div>
+                        </div>
+                        <div class="message-meta-item">
+                            <span>💡</span>
+                            <span>判斷：諮詢性質，無負面情緒</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 8: 複合情緒 -->
+                <div class="message-card" data-level="high">
+                    <div class="message-header">
+                        <div class="message-role">
+                            <span class="icon">👤</span>
+                            <span>使用者訊息</span>
+                        </div>
+                        <div class="emotion-badges">
+                            <span class="emotion-badge anxiety-high" title="不安程度: 7/10">😰 不安 7</span>
+                            <span class="emotion-badge urgency-high" title="急迫感: 8/10">⚡ 緊急 8</span>
+                            <span class="emotion-badge anger-medium" title="生氣指數: 6/10">😠 不滿 6</span>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        天花板突然滲水下來！地板都濕了，為什麼之前檢查都說沒問題？現在怎麼辦？
+                    </div>
+                    <div class="message-meta">
+                        <div class="message-meta-item">
+                            <span>🔍</span>
+                            <div class="keywords">
+                                <span class="keyword-tag">突然</span>
+                                <span class="keyword-tag">滲水</span>
+                                <span class="keyword-tag">為什麼</span>
+                                <span class="keyword-tag">怎麼辦</span>
+                            </div>
+                        </div>
+                        <div class="message-meta-item">
+                            <span>💡</span>
+                            <span>判斷：複合情緒，既緊急又帶有質疑和焦慮</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 配置區 -->
+        <div class="config-section">
+            <!-- 閾值設定 -->
+            <div class="config-panel">
+                <h3>⚙️ 閾值設定</h3>
+                <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
+                    設定情緒指數達到多少分時記錄到資料庫
+                </p>
+
+                <div class="threshold-item">
+                    <div class="threshold-header">
+                        <span class="threshold-label">😰 不安程度</span>
+                        <span class="threshold-value anxiety">7</span>
+                    </div>
+                    <div class="threshold-bar">
+                        <div class="threshold-bar-fill anxiety" style="width: 70%"></div>
+                    </div>
+                    <div class="threshold-description">
+                        ≥ 7 分：客戶感到焦慮擔心，需要安撫語氣回應
+                    </div>
+                </div>
+
+                <div class="threshold-item">
+                    <div class="threshold-header">
+                        <span class="threshold-label">⚡ 急迫感</span>
+                        <span class="threshold-value urgency">8</span>
+                    </div>
+                    <div class="threshold-bar">
+                        <div class="threshold-bar-fill urgency" style="width: 80%"></div>
+                    </div>
+                    <div class="threshold-description">
+                        ≥ 8 分：情況緊急，建議優先處理或自動接手
+                    </div>
+                </div>
+
+                <div class="threshold-item">
+                    <div class="threshold-header">
+                        <span class="threshold-label">😠 生氣指數</span>
+                        <span class="threshold-value anger">6</span>
+                    </div>
+                    <div class="threshold-bar">
+                        <div class="threshold-bar-fill anger" style="width: 60%"></div>
+                    </div>
+                    <div class="threshold-description">
+                        ≥ 6 分：客戶不滿，建議資深客服處理
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="downloadConfig()">
+                        📥 下載配置範本
+                    </button>
+                </div>
+            </div>
+
+            <!-- 配置文件預覽 -->
+            <div class="config-panel">
+                <h3>📄 配置文件範例</h3>
+                <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+                    emotion_analysis_config.json
+                </p>
+                <div class="code-block">
+{
+  "version": "1.0.0",
+  "thresholds": {
+    "anxiety": 7,
+    "urgency": 8,
+    "anger": 6
+  },
+  "scoring_criteria": {
+    "anxiety": {
+      "score_7_8": "包含「怎麼辦」「很擔心」",
+      "score_9_10": "包含「非常害怕」「恐慌」"
+    },
+    "urgency": {
+      "score_7_8": "包含「緊急」「馬上」",
+      "score_9_10": "包含「瓦斯洩漏」「火災」"
+    },
+    "anger": {
+      "score_7_8": "包含「不滿意」「太慢」",
+      "score_9_10": "包含「太扯」「投訴」"
+    }
+  },
+  "auto_actions": {
+    "urgency_9_10": {
+      "action": "notify_supervisor",
+      "message": "檢測到極高緊急度"
+    }
+  }
+}
+                </div>
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="viewFullDoc()">
+                        📚 查看完整文件
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能說明 -->
+        <div class="demo-section">
+            <div class="section-header">
+                <h2>✨ 核心特色</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                <div style="padding: 20px; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-radius: 12px;">
+                    <div style="font-size: 32px; margin-bottom: 10px;">🎯</div>
+                    <h4 style="color: #1976d2; margin-bottom: 8px;">智能分析</h4>
+                    <p style="color: #555; font-size: 14px; line-height: 1.6;">
+                        使用 GPT-4 模型分析訊息情緒，準確識別不安、急迫、憤怒等多維度情緒狀態
+                    </p>
+                </div>
+                <div style="padding: 20px; background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%); border-radius: 12px;">
+                    <div style="font-size: 32px; margin-bottom: 10px;">💾</div>
+                    <h4 style="color: #856404; margin-bottom: 8px;">選擇性記錄</h4>
+                    <p style="color: #555; font-size: 14px; line-height: 1.6;">
+                        只記錄達到閾值的訊息，節省 80% 儲存空間和 LLM 分析成本
+                    </p>
+                </div>
+                <div style="padding: 20px; background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); border-radius: 12px;">
+                    <div style="font-size: 32px; margin-bottom: 10px;">⚡</div>
+                    <h4 style="color: #c2185b; margin-bottom: 8px;">自動化動作</h4>
+                    <p style="color: #555; font-size: 14px; line-height: 1.6;">
+                        高緊急度自動通知、生氣客戶自動升級，提升客服反應速度
+                    </p>
+                </div>
+                <div style="padding: 20px; background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-radius: 12px;">
+                    <div style="font-size: 32px; margin-bottom: 10px;">🎛️</div>
+                    <h4 style="color: #2e7d32; margin-bottom: 8px;">彈性配置</h4>
+                    <p style="color: #555; font-size: 14px; line-height: 1.6;">
+                        外部配置文件熱更新，無需重啟服務即可調整評分標準和閾值
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知元件 -->
+    <div class="notification" id="notification">
+        <span class="notification-icon">✅</span>
+        <span class="notification-text">操作成功</span>
+    </div>
+
+    <script>
+        // 篩選訊息
+        function filterMessages(level) {
+            const cards = document.querySelectorAll('.message-card');
+            const buttons = document.querySelectorAll('.filter-btn');
+            
+            // 更新按鈕狀態
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 篩選卡片
+            cards.forEach(card => {
+                if (level === 'all') {
+                    card.style.display = 'block';
+                } else {
+                    const cardLevel = card.dataset.level;
+                    card.style.display = cardLevel === level ? 'block' : 'none';
+                }
+            });
+        }
+
+        // 下載配置範本
+        function downloadConfig() {
+            const config = {
+                "version": "1.0.0",
+                "updated_at": new Date().toISOString(),
+                "thresholds": {
+                    "anxiety": 7,
+                    "urgency": 8,
+                    "anger": 6,
+                    "description": "達到此分數才記錄到資料庫"
+                },
+                "llm_prompt_template": "分析以下住宅維修客戶訊息的情緒狀態，以 0-10 評分：\n\n訊息內容：「{message}」\n\n請以 JSON 格式回傳：\n{{\n  \"anxiety_level\": 0-10,\n  \"urgency_level\": 0-10,\n  \"anger_level\": 0-10,\n  \"keywords\": [\"關鍵字1\", \"關鍵字2\"],\n  \"reasoning\": \"判斷理由\"\n}}\n\n{criteria}",
+                "scoring_criteria": {
+                    "anxiety": {
+                        "score_0_3": "語氣平靜，無明顯焦慮",
+                        "score_4_6": "包含「擔心」「不知道」等詞，顯示輕度不安",
+                        "score_7_8": "包含「怎麼辦」「很擔心」「害怕」等詞，顯示中度焦慮",
+                        "score_9_10": "包含「非常害怕」「崩潰」「恐慌」等詞，顯示嚴重焦慮"
+                    },
+                    "urgency": {
+                        "score_0_3": "無時間壓力，語氣從容",
+                        "score_4_6": "包含「盡快」「方便時」等詞，有一定時間需求",
+                        "score_7_8": "包含「緊急」「馬上」「立刻」或多個驚嘆號",
+                        "score_9_10": "包含「瓦斯洩漏」「漏水嚴重」「火災」等立即危險"
+                    },
+                    "anger": {
+                        "score_0_3": "語氣禮貌，無負面情緒",
+                        "score_4_6": "包含「為什麼」「怎麼會」等疑問，顯示不解",
+                        "score_7_8": "包含「不滿意」「太慢」「不合理」等抱怨",
+                        "score_9_10": "包含「太扯」「投訴」「太差」等強烈不滿"
+                    }
+                },
+                "category_specific_keywords": {
+                    "瓦斯問題": {
+                        "urgency_boost": 2,
+                        "keywords": ["瓦斯", "洩漏", "臭味", "爆炸"]
+                    },
+                    "漏水問題": {
+                        "urgency_boost": 1,
+                        "keywords": ["漏水", "滲水", "水管破裂", "淹水"]
+                    },
+                    "電力問題": {
+                        "urgency_boost": 1,
+                        "keywords": ["停電", "跳電", "短路", "電線走火"]
+                    }
+                },
+                "auto_actions": {
+                    "urgency_9_10": {
+                        "action": "notify_supervisor",
+                        "message": "檢測到極高緊急度訊息，建議立即接手"
+                    },
+                    "anger_8_10": {
+                        "action": "assign_senior_agent",
+                        "message": "檢測到高度不滿情緒，建議資深客服處理"
+                    },
+                    "anxiety_9_10": {
+                        "action": "adjust_llm_tone",
+                        "message": "使用安撫語氣回覆"
+                    }
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'emotion_analysis_config.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showNotification('✅ 配置範本已下載');
+        }
+
+        // 查看完整文件
+        function viewFullDoc() {
+            // 在實際環境中，這裡會打開完整的文件頁面
+            window.open('../使用者對話訊息的情緒分析.md', '_blank');
+        }
+
+        // 顯示通知
+        function showNotification(text) {
+            const notification = document.getElementById('notification');
+            const textEl = notification.querySelector('.notification-text');
+            
+            textEl.textContent = text;
+            notification.classList.add('show', 'success');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 頁面載入動畫
+        window.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.message-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'all 0.5s ease';
+                    
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 50);
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

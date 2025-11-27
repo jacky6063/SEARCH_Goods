@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # 後端服務
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATA_PATH=/app/data/VIEW_GOODS_enhanced.csv
+      - USE_LLM_EXPAND=True
+      - USE_LLM_INTENT=True
+      - USE_LLM_RERANK=False
+      - OPENAI_MODEL=gpt-4o-mini
+    volumes:
+      - ./data:/app/data:ro
+      - ./backend:/app/backend:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - test-network
+
+  # 前端服務
+  frontend-test:
+    image: python:3.10-slim
+    working_dir: /app/frontend
+    command: python -m http.server 5173
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app/frontend:ro
+    depends_on:
+      backend-test:
+        condition: service_healthy
+    networks:
+      - test-network
+
+  # Playwright 測試執行器
+  playwright-test:
+    image: mcr.microsoft.com/playwright:v1.40.0-jammy
+    working_dir: /app
+    command: npx playwright test
+    environment:
+      - BACKEND_URL=http://backend-test:8000
+      - FRONTEND_URL=http://frontend-test:5173
+    volumes:
+      - ./tests:/app/tests:ro
+      - ./playwright.config.js:/app/playwright.config.js:ro
+      - ./package.json:/app/package.json:ro
+      - ./playwright-report:/app/playwright-report
+      - ./test-results:/app/test-results
+    depends_on:
+      - backend-test
+      - frontend-test
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge

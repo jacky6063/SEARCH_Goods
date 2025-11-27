@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompanyResponseFormatter 網頁測試工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .test-button:active {
+            transform: translateY(0);
+        }
+
+        .test-button .emoji {
+            font-size: 24px;
+        }
+
+        .result-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .result-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #495057;
+        }
+
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #5568d3;
+        }
+
+        .result-text {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-size: 15px;
+            line-height: 1.8;
+            color: #212529;
+            border: 1px solid #dee2e6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .result-json {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        .result-json .key {
+            color: #9cdcfe;
+        }
+
+        .result-json .string {
+            color: #ce9178;
+        }
+
+        .result-json .number {
+            color: #b5cea8;
+        }
+
+        .result-json .boolean {
+            color: #569cd6;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #c3e6cb;
+            margin-bottom: 15px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-card .label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .rich-content-preview {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #dee2e6;
+        }
+
+        .rich-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .rich-item .icon {
+            font-size: 24px;
+        }
+
+        .rich-item .content {
+            flex: 1;
+        }
+
+        .rich-item .label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .rich-item .value {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .rich-item .action {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .rich-item .action:hover {
+            background: #5568d3;
+        }
+
+        @media (max-width: 768px) {
+            .test-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 CompanyResponseFormatter 網頁測試工具</h1>
+            <p>測試公司簡介回應格式化功能 - 點擊下方按鈕開始測試</p>
+        </div>
+
+        <div class="content">
+            <div class="test-grid">
+                <button class="test-button" onclick="testContactInfo()">
+                    <span class="emoji">📞</span>
+                    <span>聯絡資訊</span>
+                </button>
+                <button class="test-button" onclick="testServices()">
+                    <span class="emoji">🛠️</span>
+                    <span>服務項目</span>
+                </button>
+                <button class="test-button" onclick="testOverview()">
+                    <span class="emoji">🏢</span>
+                    <span>公司介紹</span>
+                </button>
+                <button class="test-button" onclick="testBusinessHours()">
+                    <span class="emoji">⏰</span>
+                    <span>營業時間</span>
+                </button>
+                <button class="test-button" onclick="testFAQ()">
+                    <span class="emoji">❓</span>
+                    <span>常見問題</span>
+                </button>
+                <button class="test-button" onclick="testPromotion()">
+                    <span class="emoji">🎉</span>
+                    <span>促銷活動</span>
+                </button>
+                <button class="test-button" onclick="testEmpty()">
+                    <span class="emoji">🔍</span>
+                    <span>空資料測試</span>
+                </button>
+                <button class="test-button" onclick="testAll()">
+                    <span class="emoji">🚀</span>
+                    <span>全部測試</span>
+                </button>
+            </div>
+
+            <div id="result" class="result-section"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        function showLoading() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result-section show';
+            resultDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在測試中...</p>
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result-section show';
+            resultDiv.innerHTML = `
+                <div class="error">
+                    <strong>❌ 測試失敗</strong><br>
+                    ${message}
+                </div>
+            `;
+        }
+
+        function showSuccess(title, text, richContent) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result-section show';
+            
+            let richHtml = '';
+            if (richContent && richContent.items && richContent.items.length > 0) {
+                richHtml = `
+                    <div class="rich-content-preview">
+                        <h3 style="margin-bottom: 15px; color: #495057;">📦 Rich Content 預覽</h3>
+                        ${richContent.items.map(item => `
+                            <div class="rich-item">
+                                <span class="icon">${item.icon}</span>
+                                <div class="content">
+                                    <div class="label">${item.label}</div>
+                                    <div class="value">${item.value}</div>
+                                </div>
+                                ${item.action ? `<a href="${item.action}" class="action" target="_blank">${item.action_label || '開啟'}</a>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            resultDiv.innerHTML = `
+                <div class="success">✅ 測試成功</div>
+                <div class="result-header">
+                    <div class="result-title">${title}</div>
+                    <button class="copy-btn" onclick="copyToClipboard()">📋 複製結果</button>
+                </div>
+                <div class="result-text" id="resultText">${text}</div>
+                ${richHtml}
+                <div class="result-json">${syntaxHighlight(JSON.stringify({text, rich_content: richContent}, null, 2))}</div>
+            `;
+        }
+
+        function copyToClipboard() {
+            const text = document.getElementById('resultText').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ 已複製到剪貼簿！');
+            });
+        }
+
+        function syntaxHighlight(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
+        async function callAPI(endpoint, data) {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                showError(`API 呼叫失敗: ${error.message}<br><br>請確認:<br>1. 後端服務已啟動 (python3 test_formatter_api.py)<br>2. 服務運行在 http://localhost:8000`);
+                return null;
+            }
+        }
+
+        async function testContactInfo() {
+            const result = await callAPI('/test/contact', {
+                contacts: {
+                    company_phone_local: '04-27062295',
+                    customer_service_phone_local: '04-26062295',
+                    address: '台中市河南路二段 262 號 3 樓之 11',
+                    website: 'https://www.myqr.com.tw',
+                    service_hours: '週一至週五 09:00-18:00'
+                },
+                profile_page_url: 'https://www.myqr.com.tw',
+                introduction_video: 'https://youtu.be/E8RfyZoFixY'
+            });
+
+            if (result) {
+                showSuccess('📞 聯絡資訊測試', result.text, result.rich_content);
+            }
+        }
+
+        async function testServices() {
+            const result = await callAPI('/test/services', {
+                services: {
+                    core_services: [
+                        {
+                            category: '整體形象網站建置',
+                            description: '為企業形象、餐飲美食等領域量身打造網站'
+                        },
+                        {
+                            category: '電子商務系統',
+                            description: '提供完整的購物平台與後端管理系統'
+                        }
+                    ],
+                    smart_solutions: ['AI 整合應用教學', '智慧客服系統解決方案']
+                },
+                profile_page_url: 'https://www.myqr.com.tw'
+            });
+
+            if (result) {
+                showSuccess('🛠️ 服務項目測試', result.text, result.rich_content);
+            }
+        }
+
+        async function testOverview() {
+            const result = await callAPI('/test/overview', {
+                company_name: '傳啟資訊股份有限公司',
+                overview: '傳啟資訊股份有限公司成立於 1993 年 3 月，近三十年來專注於協助企業構建資訊系統與數位流程。',
+                established_year: '1993',
+                business_scope: ['資訊系統整合', '數位轉型顧問', 'AI 整合應用'],
+                milestones: [
+                    {year: '1993', event: '公司成立'},
+                    {year: '2012', event: '推出 Just MyQRcode 雲端服務平台'}
+                ],
+                profile_page_url: 'https://www.myqr.com.tw'
+            });
+
+            if (result) {
+                showSuccess('🏢 公司介紹測試', result.text, result.rich_content);
+            }
+        }
+
+        async function testBusinessHours() {
+            const result = await callAPI('/test/hours', {
+                service_hours: '週一至週五 09:00-18:00',
+                contacts: {
+                    customer_service_phone_local: '04-26062295',
+                    website: 'https://www.myqr.com.tw'
+                }
+            });
+
+            if (result) {
+                showSuccess('⏰ 營業時間測試', result.text, result.rich_content);
+            }
+        }
+
+        async function testFAQ() {
+            const result = await callAPI('/test/faq', {
+                faq: {
+                    question: '如何聯絡客服？',
+                    answer: '您可以撥打客服專線 04-26062295，或透過官網留言。',
+                    category: 'contact'
+                }
+            });
+
+            if (result) {
+                showSuccess('❓ FAQ 測試', result.text, result.rich_content);
+            }
+        }
+
+        async function testPromotion() {
+            const result = await callAPI('/test/promotion', {
+                promotion: {
+                    title: '新春限時優惠',
+                    description: '精選商品：筆記本、USB隨身碟、環保袋，全面八折優惠',
+                    url: 'https://www.myqr.com.tw/promotion',
+                    video: 'https://youtu.be/promo123'
+                }
+            });
+
+            if (result) {
+                showSuccess('🎉 促銷活動測試', result.text, result.rich_content);
+            }
+        }
+
+        async function testEmpty() {
+            const result = await callAPI('/test/contact', {
+                contacts: {}
+            });
+
+            if (result) {
+                showSuccess('🔍 空資料測試', result.text, result.rich_content);
+            }
+        }
+
+        async function testAll() {
+            const tests = [
+                { name: '聯絡資訊', fn: testContactInfo },
+                { name: '服務項目', fn: testServices },
+                { name: '公司介紹', fn: testOverview },
+                { name: '營業時間', fn: testBusinessHours },
+                { name: 'FAQ', fn: testFAQ },
+                { name: '促銷活動', fn: testPromotion }
+            ];
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result-section show';
+            resultDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在執行全部測試...</p>
+                </div>
+            `;
+
+            let passed = 0;
+            let failed = 0;
+
+            for (const test of tests) {
+                try {
+                    await test.fn();
+                    passed++;
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    failed++;
+                }
+            }
+
+            resultDiv.innerHTML = `
+                <div class="success">✅ 全部測試完成</div>
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="number">${tests.length}</div>
+                        <div class="label">總測試數</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number" style="color: #28a745;">${passed}</div>
+                        <div class="label">通過</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number" style="color: #dc3545;">${failed}</div>
+                        <div class="label">失敗</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number">${Math.round(passed / tests.length * 100)}%</div>
+                        <div class="label">通過率</div>
+                    </div>
+                </div>
+                <p style="text-align: center; color: #6c757d;">請點擊個別測試按鈕查看詳細結果</p>
+            `;
+        }
+
+        // 頁面載入時檢查 API 連線
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    console.log('✅ API 連線正常');
+                }
+            } catch (error) {
+                console.warn('⚠️ 無法連接到 API，請啟動測試伺服器');
+            }
+        });
+    </script>
+</body>
+</html>

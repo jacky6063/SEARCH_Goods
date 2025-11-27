@@ -1,0 +1,1362 @@
+[
+  {
+    "path": "📋_住宅維修雲端問題總結.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "README_Phase1_實施報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "聊天模式_維護指南.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "HOT_CATEGORY_L3_DIRECT_FILTER_EVALUATION.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "FOOD_PROTECTION_REPORT.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "DEPLOYMENT_SETUP.md",
+    "bad_routes": [
+      "/api/v1/sites/YOUR_SITE_ID/deploys"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "Phase_1+2_組合優化_完整總結.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "L3_OPTIMIZATION_DECISION_FORM.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "聊天模式_LLM判讀流程圖.md",
+    "bad_routes": [
+      "/api/chat-session/"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "QUICK_REFERENCE_CATEGORY_SEARCH.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "L3_QUERY_REQUIRES_HIERARCHY_FILTER.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "DEPLOYMENT_VERIFICATION_COMPLETE.md",
+    "bad_routes": [
+      "/api/category/navigate"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "CODE_REVIEW_商品聊天模式_20251116.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "PERFORMANCE_OPTIMIZATION_L3_CATEGORY_EVALUATION.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "QUICK_UPLOAD_GUIDE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "FRONTEND_MIGRATION_IMPLEMENTATION.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "LLM_CHAT_SETUP.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "LLM_OPTIMIZATION_PROGRESS.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "🏆_最終成果展示.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "LLM_MANDATORY_MODE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "🚑_快速診斷卡.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "PRODUCT_CARD_DISPLAY_DIAGNOSIS.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "FILTER_BY_HIERARCHY_CALL_PATHS.md",
+    "bad_routes": [
+      "/api/recommendations/"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "GITHUB_PUSH_REPORT.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "CATEGORY_BUTTON_FIX_GUIDE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "Phase_1_性能優化_測試結果.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "LOCAL_TEST_GUIDE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "聊天模式_快速流程.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "購買型搜尋_實施指南.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "CHAT_LLM_PROCESSING_FLOW.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "分類索引_構建時機_性能分析.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "CATEGORY_EXAMPLES_OPTIMIZATION_REPORT.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "START_HERE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "LLM_ANALYZE_QUERY_FLOW.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "商品查詢推薦模組-LLM功能評估.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "EXECUTION_TRACKING_DELIVERY.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "📊_生產部署儀表盤.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "FLOW_OVERVIEW.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "🎨_視覺化說明.md",
+    "bad_routes": [
+      "/api/repair",
+      "/api/repair/"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "CSV_UPLOAD_SOLUTION.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "UPLOAD_TROUBLESHOOTING.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "購買型搜尋_性能優化_快速版.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "購買型商品搜尋_性能優化建議.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "FILTER_BY_HIERARCHY_EXECUTION.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "EXECUTION_PATH_TRACKING_GUIDE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "✅_生產部署成功確認.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "ACTUAL_CATEGORY_HIERARCHY_FLOW.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "L3_分類搜尋加速_實施報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "🚨_住宅維修雲端未啟用診斷.md",
+    "bad_routes": [
+      "/api/health"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "deployment_summary_20251025_223605.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "商品過濾優化方案.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "CI_CD_COMPLETION_REPORT.md",
+    "bad_routes": [
+      "/api/v1/sites/"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "PRODUCT_CARD_FIX.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "GIT_SYNC_STRATEGY.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "欄位_快速參考表.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "CODE_REVIEW_2025_11_16.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "LLM商品推薦功能評估報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "EXECUTION_TRACKING_README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "SETUP_CLAUDE_DEV.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "🔧_住宅維修雲端修復步驟.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "PRODUCT_CARD_FIX_COMPLETE_REPORT.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "FINAL_COMPLETION_REPORT.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "README_住宅維修故障修復.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "FLOW_ANALYSIS_CATEGORY_SEARCH.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "FIELD_STANDARDIZATION_PLAN.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "後續開發原則_檢查清單.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "PHASE_3_4_COMPLETION_SUMMARY.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "CONFIDENCE_SCORE_DATA_FLOW.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "QUICK_TEST_REFERENCE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "FIELD_STANDARDIZATION_QUICK_START.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "CHAT_LLM_QUICK_REFERENCE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "LOCAL_TEST_REPORT.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "Phase_1_實施完成_快速總結.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "🚀_生產部署檢查清單.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "L3_OPTIMIZATION_SUMMARY.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "開發原則_快速清單.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "EVALUATION_L3_DIRECT_FILTER_IN_UI.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "重要提示摘要.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "GITHUB_PUSH_REPORT_20251112.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "CHANGELOG_20241030.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "欄位使用記錄_中英文對照_標準化指南.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "✅_住宅維修雲端部署檢查.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "JSON_SERIALIZATION_FIX.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "RENDER_UPGRADE_GUIDE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "CHAT_SEARCH_INTEGRATION_REPORT.md",
+    "bad_routes": [
+      "/api/chat-session/"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "L3_QUICK_FILTER_COMPLETE_FIX.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "GIT_SYNC_GUIDE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "OPTIMIZATION_L3_DIRECT_FILTER_EVALUATION.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "BUTTON_ERROR_DIAGNOSIS.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "CHAT_QUERY_BUG_DIAGNOSIS.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "CONVERSATION_CORE_架構說明.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "GITHUB_SECRETS_SETUP.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "ADMIN_GUIDE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "FRONTEND_MIGRATION_EVALUATION.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "商品過濾優化方案_v2_基於現有系統.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "AUTO_DEPLOYMENT_COMPLETE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "HOT_CATEGORIES_UI_FLOW.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "Phase_2_性能優化_測試結果.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "GIT_SYNC_QUICK_CARD.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "CLARIFICATION_LLM_ANALYZE_QUERY.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "GIT_SYNC_COMPLETE_REPORT.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "REFACTOR_CSV_PATH_DETECTION.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "LOCAL_TEST_REPORT_20251112.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "QUICK_FIX_GUIDE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "聊天意圖模式優化紀錄.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "DEPLOYMENT_CHECKLIST.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "商品過濾優化_實施記錄與修改標註.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "CONFIGURATION_SEPARATION.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": ".pytest_cache/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/@types/phoenix/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/@types/node/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/@types/ws/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/@playwright/test/README.md",
+    "bad_routes": [
+      "/api/class-playwright",
+      "/api/class-playwright/"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/playwright-core/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/dotenv/CHANGELOG.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/dotenv/README.md",
+    "bad_routes": [
+      "/api/cli.html",
+      "/api/process.html"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/dotenv/README-es.md",
+    "bad_routes": [
+      "/api/cli.html",
+      "/api/process.html"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/dotenv/SECURITY.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/tslib/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/tslib/SECURITY.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/undici-types/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/playwright/README.md",
+    "bad_routes": [
+      "/api/class-playwright",
+      "/api/class-playwright/"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/playwright/lib/agents/healer.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/playwright/lib/agents/generator.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/playwright/lib/agents/planner.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/@supabase/functions-js/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/@supabase/auth-js/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/@supabase/supabase-js/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/@supabase/realtime-js/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/@supabase/storage-js/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/@supabase/postgrest-js/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/husky/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/fsevents/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "node_modules/ws/README.md",
+    "bad_routes": [
+      "/api/buffer.html",
+      "/api/zlib.html"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "backend/REPAIR_SERVICE_README.md",
+    "bad_routes": [
+      "/api/repair/"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "backend/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "backend/.pytest_cache/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "backend/.venv/lib/python3.9/site-packages/starlette-0.38.6.dist-info/licenses/LICENSE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "backend/.venv/lib/python3.9/site-packages/idna-3.11.dist-info/licenses/LICENSE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "backend/.venv/lib/python3.9/site-packages/httpcore-1.0.9.dist-info/licenses/LICENSE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "backend/.venv/lib/python3.9/site-packages/numpy/random/LICENSE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "backend/.venv/lib/python3.9/site-packages/uvicorn-0.30.6.dist-info/licenses/LICENSE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "backend/.venv/lib/python3.9/site-packages/httpx-0.27.0.dist-info/licenses/LICENSE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/LLM_提示詞模板.md",
+    "bad_routes": [
+      "/api/line/index.php"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/聊天意圖模式_程式碼審查報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/網址不能點選問題診斷報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/📄_最終部署成功報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/Phase1_ETL工具完成報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/公司介紹整合_評估與建議.md",
+    "bad_routes": [
+      "/api/admin/reload-company-profile"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/API接口規範.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/MCP_架構規劃建議.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/FRONTEND-OPTIMIZATION-GUIDE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/UPDATE-SUMMARY.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統功能架構圖.md",
+    "bad_routes": [
+      "/api/admin/"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/LOCAL_TEST_ENVIRONMENT.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/universal_chat_system_review.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/LLM增強商品描述生成功能實作總結.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/女用包包價格查詢流程圖.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/部署完成檢查清單.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/價格過濾功能優化報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/Phase3_4_實作完成報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/後端維修服務實作完成總結.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/如何寫入chat_messages.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/住宅維修客服系統設計規劃.md",
+    "bad_routes": [
+      "/api/line/index.php",
+      "/api/repair/item/",
+      "/api/repair/list"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/意圖切換問題_連續維修查詢錯誤分析.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/field_standardization_optimization_report.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/YOUTUBE_PREVIEW_FIX_REPORT.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/推薦套件資料需求與流程.md",
+    "bad_routes": [
+      "/api/recommendations/"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/意圖切換優化實作總結.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/CI_WORKFLOW_FIX_SUMMARY.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/CHANGELOG-2025-10-26.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/🎊_生產部署總結.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統資訊流程.md",
+    "bad_routes": [
+      "/api/admin/"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/維修項目中英文對照表.md",
+    "bad_routes": [
+      "/api/repair/item/",
+      "/api/repair/list"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/開發環境設置指南.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/LOCAL_DEV_TROUBLESHOOTING.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/聊天意圖切換優化_修改記錄.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/連續維修第二筆失敗_問題診斷.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/公司介紹_Rich_Content_完整覆蓋報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/推薦端點測試與前端整合設計.md",
+    "bad_routes": [
+      "/api/recommendations/",
+      "/api/recommendations/abcd1234"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/chat_flow_refactor_tasks.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/聊天意圖判讀問題_分析與修復.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/CI_WORKFLOW_AUDIT_REPORT.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/對話區模型路由設計方案.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/公司資料更新與轉換策略.md",
+    "bad_routes": [
+      "/api/admin/reload-company-profile"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/分類索引_性能演示.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/生產環境測試指南.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/價格區間過濾問題分析報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/連續維修查詢問題_深度診斷.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/搜尋判斷式說明.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/TEST_ENVIRONMENT_SETUP_REPORT.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/SEARCH_Goods_TaskCard.md",
+    "bad_routes": [
+      "/api/chat-search",
+      "/api/healthz",
+      "/api/searchClient.ts",
+      "/api/upload-csv"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/本地開發環境問題排查.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/連續維修查詢_修復驗證.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/資料欄位更新總結.md",
+    "bad_routes": [
+      "/api/line/index.php"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/iteration_log.md",
+    "bad_routes": [
+      "/api/chat-search"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/服務項目查詢_Rich_Content_更新.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/聊天模式流程.md",
+    "bad_routes": [
+      "/api/chat-search"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/公司簡介查詢模板設計.md",
+    "bad_routes": [
+      "/api/admin/reload-company-profile",
+      "/api/admin/upload-company-profile"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/可點擊連結測試指南.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/extended_api_contract_v2.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/YOUTUBE_PREVIEW_BEHAVIOR_UPDATE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/ai_programming_design_standards.md",
+    "bad_routes": [
+      "/api/products/",
+      "/api/v1/search",
+      "/api/v2/search"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/方案A實施完成報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/GitHub更新完成報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/生日聚會商品推薦功能診斷報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/YOUTUBE_PREVIEW_UPDATE_REPORT.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/聊天對話及商品查詢系統設計規格書.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/部署架構總結.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/商品編號搜尋優化報告.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/徹底排查連結問題指南.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/部署說明.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/HOT_CHIPS_CATEGORIES_SESSION.md",
+    "bad_routes": [
+      "/api/admin/upload-categories"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/分類索引_快速參考卡.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/連續維修快速診斷指南.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/價格篩選解析指南.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/README_聊天流程文檔.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/field_mapping_reference.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/購物客服架構調整任務紀錄.md",
+    "bad_routes": [
+      "/api/recommendations/"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統開發/語音模式整合設計.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統開發/系統架構設計.md",
+    "bad_routes": [
+      "/api/admin/"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統開發/部署與運維指南.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統開發/聊天紀錄資料表設計.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統開發/快速開始指南.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統開發/商品查詢模式_資訊作業流程.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統開發/正確開發流程指南.md",
+    "bad_routes": [
+      "/api/v1/...",
+      "/api/v2/..."
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統開發/語音模式整合修改計劃.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統開發/LLM_搜尋優化_完整實現指南.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統開發/API_參考文檔.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統開發/架構改進建議與計劃.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統開發/任務清單與PR計劃.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/系統開發/聊天資訊流規範.md",
+    "bad_routes": [
+      "/api/chat-session"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/quality/SUPABASE_安全性問題緊急修復指南.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/quality/P0_安全性問題修復進度追蹤.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/quality/SUPABASE_整合複查摘要.md",
+    "bad_routes": [
+      "/api/METADATA_SCHEMA.md"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/quality/SUPABASE_整合品管審查報告_v2.md",
+    "bad_routes": [
+      "/api/METADATA_SCHEMA.md",
+      "/api/SUPABASE_LOGGING_API.md"
+    ],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/setup/SUPABASE_整合開發計劃.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/setup/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "docs/setup/SUPABASE_RLS指南.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": ".venv/lib/python3.9/site-packages/pip-25.2.dist-info/licenses/src/pip/_vendor/idna/LICENSE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": ".venv/lib/python3.9/site-packages/starlette-0.38.6.dist-info/licenses/LICENSE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": ".venv/lib/python3.9/site-packages/idna-3.11.dist-info/licenses/LICENSE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": ".venv/lib/python3.9/site-packages/httpcore-1.0.9.dist-info/licenses/LICENSE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": ".venv/lib/python3.9/site-packages/numpy/random/LICENSE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": ".venv/lib/python3.9/site-packages/uvicorn-0.30.6.dist-info/licenses/LICENSE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": ".venv/lib/python3.9/site-packages/httpx-0.27.0.dist-info/licenses/LICENSE.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "scripts/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": ".github/copilot-instructions.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "修改記錄_按1建議功能修復/程式碼對比.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "修改記錄_按1建議功能修復/README.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "修改記錄_按1建議功能修復/修改說明.md",
+    "bad_routes": [],
+    "bad_envs": []
+  },
+  {
+    "path": "修改記錄_按1建議功能修復/完整修改檔案.md",
+    "bad_routes": [],
+    "bad_envs": []
+  }
+]

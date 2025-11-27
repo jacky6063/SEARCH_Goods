@@ -1,0 +1,57 @@
+name: Smoke Test (Prod)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE: ${{ secrets.PROD_BASE_URL }}
+      TOKEN: ${{ secrets.ADMIN_TOKEN }}
+    steps:
+      - name: Install deps
+        run: sudo apt-get update && sudo apt-get install -y jq curl
+
+      - name: Admin info
+        run: |
+          curl -sf "$BASE/api/admin/info" | jq .
+
+      - name: Taxonomy
+        run: |
+          curl -sf "$BASE/api/catalog/taxonomy" | jq .
+
+      - name: Search basic
+        run: |
+          curl -sf -X POST "$BASE/api/search" -H "Content-Type: application/json" \
+            -d '{"query":"橄欖油","page_size":5}' | jq '.items | length'
+
+      - name: Chat overview
+        run: |
+          RES=$(curl -sf -X POST "$BASE/api/chat" -H "Content-Type: application/json" \
+            -d '{"message":"你們有賣什麼類型東西？","history":[]}')
+          echo "$RES" | jq .
+          echo "$RES" | jq -r '.intent' | grep -qi information
+          echo "$RES" | jq -r '.action.type' | grep -qi none
+
+      - name: Chat OOS (3C)
+        run: |
+          RES=$(curl -sf -X POST "$BASE/api/chat" -H "Content-Type: application/json" \
+            -d '{"message":"我要 3C 耳機","history":[]}')
+          echo "$RES" | jq .
+          echo "$RES" | jq '.meta.oos_category' | grep -q true
+          echo "$RES" | jq -r '.action.type' | grep -qi none
+
+      - name: Chat product search
+        run: |
+          RES=$(curl -sf -X POST "$BASE/api/chat" -H "Content-Type: application/json" \
+            -d '{"message":"我要 橄欖油","history":[]}')
+          echo "$RES" | jq .
+          echo "$RES" | jq -e '.suggestion_ids | length>0' >/dev/null 2>&1 || \
+            echo "$RES" | jq -r '.action.type' | grep -qi switch_to_search
+
+      - name: Clear cache (admin)
+        if: always()
+        run: |
+          curl -sf -X POST "$BASE/api/admin/clear-cache" -H "x-admin-token: $TOKEN" | jq .

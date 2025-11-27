@@ -1,0 +1,1317 @@
+[
+  {
+    "path": "📋_住宅維修雲端問題總結.md",
+    "title": "🎯 住宅維修雲端問題總結",
+    "last_modified_unix": 1762844369
+  },
+  {
+    "path": "README_Phase1_實施報告.md",
+    "title": "📊 Phase 1 實施完成總結報告",
+    "last_modified_unix": 1762586026
+  },
+  {
+    "path": "聊天模式_維護指南.md",
+    "title": "聊天模式 LLM 流程 - 開發維護指南",
+    "last_modified_unix": 1762579312
+  },
+  {
+    "path": "HOT_CATEGORY_L3_DIRECT_FILTER_EVALUATION.md",
+    "title": "🚀 熱門分類 UI L3 直接過濾優化 - 評估與實現",
+    "last_modified_unix": 1762493714
+  },
+  {
+    "path": "FOOD_PROTECTION_REPORT.md",
+    "title": "食品防護機制實現報告",
+    "last_modified_unix": 1762242696
+  },
+  {
+    "path": "DEPLOYMENT_SETUP.md",
+    "title": "自動部署設定指南",
+    "last_modified_unix": 1762359138
+  },
+  {
+    "path": "Phase_1+2_組合優化_完整總結.md",
+    "title": "🎉 Phase 1 + Phase 2 組合優化 - 完整總結",
+    "last_modified_unix": 1762586475
+  },
+  {
+    "path": "L3_OPTIMIZATION_DECISION_FORM.md",
+    "title": "🚀 L3 分類搜尋加速方案 - 執行確認表",
+    "last_modified_unix": 1762512809
+  },
+  {
+    "path": "聊天模式_LLM判讀流程圖.md",
+    "title": "聊天模式 LLM 判讀與商品搜尋流程",
+    "last_modified_unix": 1762579041
+  },
+  {
+    "path": "QUICK_REFERENCE_CATEGORY_SEARCH.md",
+    "title": "米類搜尋流程 - 快速參考卡",
+    "last_modified_unix": 1762485749
+  },
+  {
+    "path": "L3_QUERY_REQUIRES_HIERARCHY_FILTER.md",
+    "title": "L3 米類查詢時是否要經過分類層級過濾？",
+    "last_modified_unix": 1762485749
+  },
+  {
+    "path": "DEPLOYMENT_VERIFICATION_COMPLETE.md",
+    "title": "🚀 SEARCH_Goods 自動部署驗證完成報告",
+    "last_modified_unix": 1762406773
+  },
+  {
+    "path": "CODE_REVIEW_商品聊天模式_20251116.md",
+    "title": "商品聊天模式優化 - 程式碼審查報告",
+    "last_modified_unix": null
+  },
+  {
+    "path": "PERFORMANCE_OPTIMIZATION_L3_CATEGORY_EVALUATION.md",
+    "title": "📊 L3 熱門分類點擊搜尋加速方案評估報告",
+    "last_modified_unix": 1762512745
+  },
+  {
+    "path": "QUICK_UPLOAD_GUIDE.md",
+    "title": "📤 快速上傳指南",
+    "last_modified_unix": 1762245445
+  },
+  {
+    "path": "FRONTEND_MIGRATION_IMPLEMENTATION.md",
+    "title": "前端遷移至 Render - 實施完成記錄",
+    "last_modified_unix": 1762511888
+  },
+  {
+    "path": "LLM_CHAT_SETUP.md",
+    "title": "啟用 LLM 聊天模式設定指南",
+    "last_modified_unix": 1761704600
+  },
+  {
+    "path": "LLM_OPTIMIZATION_PROGRESS.md",
+    "title": "LLM 搜尋優化實施進度",
+    "last_modified_unix": 1762254611
+  },
+  {
+    "path": "🏆_最終成果展示.md",
+    "title": "🏆 Phase 1 + Phase 2 性能優化 - 最終成果展示",
+    "last_modified_unix": 1762586708
+  },
+  {
+    "path": "LLM_MANDATORY_MODE.md",
+    "title": "強制 LLM 互動模式修改方案",
+    "last_modified_unix": 1761813710
+  },
+  {
+    "path": "🚑_快速診斷卡.md",
+    "title": "🚑 住宅維修雲端故障快速診斷卡",
+    "last_modified_unix": 1762844369
+  },
+  {
+    "path": "PRODUCT_CARD_DISPLAY_DIAGNOSIS.md",
+    "title": "商品資料卡無法顯示 - 診斷報告",
+    "last_modified_unix": 1762933071
+  },
+  {
+    "path": "FILTER_BY_HIERARCHY_CALL_PATHS.md",
+    "title": "📍 _filter_by_hierarchy 的所有調用路徑",
+    "last_modified_unix": 1762486556
+  },
+  {
+    "path": "GITHUB_PUSH_REPORT.md",
+    "title": "✅ GitHub 代碼推送 - 完整報告",
+    "last_modified_unix": 1762412538
+  },
+  {
+    "path": "CATEGORY_BUTTON_FIX_GUIDE.md",
+    "title": "分類按鈕錯誤修復指南",
+    "last_modified_unix": 1762508916
+  },
+  {
+    "path": "Phase_1_性能優化_測試結果.md",
+    "title": "Phase 1 性能優化 - 測試結果報告",
+    "last_modified_unix": 1762585920
+  },
+  {
+    "path": "LOCAL_TEST_GUIDE.md",
+    "title": "🎯 本地測試 - 完整指南",
+    "last_modified_unix": 1762412170
+  },
+  {
+    "path": "聊天模式_快速流程.md",
+    "title": "聊天模式 LLM 判讀流程 - 快速版 (1 分鐘版)",
+    "last_modified_unix": 1762579084
+  },
+  {
+    "path": "購買型搜尋_實施指南.md",
+    "title": "🔧 購買型搜尋性能優化 - 實施指南",
+    "last_modified_unix": 1762580280
+  },
+  {
+    "path": "CHAT_LLM_PROCESSING_FLOW.md",
+    "title": "聊天系統 LLM 處理流程詳解",
+    "last_modified_unix": 1762497929
+  },
+  {
+    "path": "分類索引_構建時機_性能分析.md",
+    "title": "🚀 分類索引構建時機與性能分析",
+    "last_modified_unix": 1762573331
+  },
+  {
+    "path": "CATEGORY_EXAMPLES_OPTIMIZATION_REPORT.md",
+    "title": "分類範例優化實施報告",
+    "last_modified_unix": 1762943111
+  },
+  {
+    "path": "START_HERE.md",
+    "title": "✨ 執行路徑追蹤 - 快速入門",
+    "last_modified_unix": 1762494601
+  },
+  {
+    "path": "LLM_ANALYZE_QUERY_FLOW.md",
+    "title": "llm_analyze_query 執行流程",
+    "last_modified_unix": 1762485749
+  },
+  {
+    "path": "商品查詢推薦模組-LLM功能評估.md",
+    "title": "商品查詢推薦模組 - LLM 功能評估報告",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": "EXECUTION_TRACKING_DELIVERY.md",
+    "title": "📊 執行路徑追蹤 - 完整交付清單",
+    "last_modified_unix": 1762494562
+  },
+  {
+    "path": "📊_生產部署儀表盤.md",
+    "title": "📊 生產部署儀表盤 - 實時狀態",
+    "last_modified_unix": 1762586892
+  },
+  {
+    "path": "FLOW_OVERVIEW.md",
+    "title": "SEARCH_Goods — 專案流程總覽",
+    "last_modified_unix": 1761191684
+  },
+  {
+    "path": "🎨_視覺化說明.md",
+    "title": "🎨 住宅維修故障視覺化說明",
+    "last_modified_unix": 1762844369
+  },
+  {
+    "path": "CSV_UPLOAD_SOLUTION.md",
+    "title": "管理版面 CSV 上傳 - 解決方案",
+    "last_modified_unix": 1762245425
+  },
+  {
+    "path": "UPLOAD_TROUBLESHOOTING.md",
+    "title": "🔍 上傳失敗診斷報告",
+    "last_modified_unix": 1762245771
+  },
+  {
+    "path": "購買型搜尋_性能優化_快速版.md",
+    "title": "🚀 購買型搜尋性能優化 - 5 分鐘版",
+    "last_modified_unix": 1762580099
+  },
+  {
+    "path": "購買型商品搜尋_性能優化建議.md",
+    "title": "🚀 購買型商品搜尋性能優化建議",
+    "last_modified_unix": 1762579896
+  },
+  {
+    "path": "FILTER_BY_HIERARCHY_EXECUTION.md",
+    "title": "L3 查米類時 _filter_by_hierarchy 的完整執行程序",
+    "last_modified_unix": 1762485749
+  },
+  {
+    "path": "EXECUTION_PATH_TRACKING_GUIDE.md",
+    "title": "執行路徑追蹤指南",
+    "last_modified_unix": 1762494412
+  },
+  {
+    "path": "✅_生產部署成功確認.md",
+    "title": "✅ 生產部署成功確認",
+    "last_modified_unix": 1762586840
+  },
+  {
+    "path": "ACTUAL_CATEGORY_HIERARCHY_FLOW.md",
+    "title": "🔍 實際 category_hierarchy 資料流分析",
+    "last_modified_unix": 1762491112
+  },
+  {
+    "path": "L3_分類搜尋加速_實施報告.md",
+    "title": "🚀 L3 熱門分類搜尋加速 - 完整實施報告",
+    "last_modified_unix": 1762517381
+  },
+  {
+    "path": "🚨_住宅維修雲端未啟用診斷.md",
+    "title": "🚨 住宅維修模組雲端未啟用診斷報告",
+    "last_modified_unix": 1762844369
+  },
+  {
+    "path": "deployment_summary_20251025_223605.md",
+    "title": "SEARCH_Goods 系統重新部署報告",
+    "last_modified_unix": 1761403964
+  },
+  {
+    "path": "README.md",
+    "title": "SEARCH_Goods",
+    "last_modified_unix": 1761312592
+  },
+  {
+    "path": "商品過濾優化方案.md",
+    "title": "商品過濾程式優化建議",
+    "last_modified_unix": 1762943111
+  },
+  {
+    "path": "CI_CD_COMPLETION_REPORT.md",
+    "title": "GitHub Actions CI/CD 完成報告",
+    "last_modified_unix": 1762364842
+  },
+  {
+    "path": "PRODUCT_CARD_FIX.md",
+    "title": "商品資料卡顯示問題 - 快速修復指南",
+    "last_modified_unix": 1762933071
+  },
+  {
+    "path": "GIT_SYNC_STRATEGY.md",
+    "title": "🔄 雲端程式同步策略指南",
+    "last_modified_unix": 1762415746
+  },
+  {
+    "path": "欄位_快速參考表.md",
+    "title": "📋 商品欄位 快速查詢表",
+    "last_modified_unix": 1762573864
+  },
+  {
+    "path": "CODE_REVIEW_2025_11_16.md",
+    "title": "程式碼審查報告 - 商品搜尋系統優化",
+    "last_modified_unix": null
+  },
+  {
+    "path": "LLM商品推薦功能評估報告.md",
+    "title": "商品查詢推薦模組 - LLM 功能評估報告",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": "EXECUTION_TRACKING_README.md",
+    "title": "🎯 程式執行路徑追蹤",
+    "last_modified_unix": 1762494500
+  },
+  {
+    "path": "SETUP_CLAUDE_DEV.md",
+    "title": "SEARCH_Goods 開發環境設定指南 - Claude 4 Sonnet",
+    "last_modified_unix": 1762176374
+  },
+  {
+    "path": "🔧_住宅維修雲端修復步驟.md",
+    "title": "🔧 住宅維修雲端快速修復",
+    "last_modified_unix": 1762844369
+  },
+  {
+    "path": "PRODUCT_CARD_FIX_COMPLETE_REPORT.md",
+    "title": "商品資料卡顯示問題 - 修復完成報告",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": "FINAL_COMPLETION_REPORT.md",
+    "title": "🏆 SEARCH_Goods 自動部署系統 - 完成報告",
+    "last_modified_unix": 1762409169
+  },
+  {
+    "path": "README_住宅維修故障修復.md",
+    "title": "住宅維修雲端故障診斷與修復套件",
+    "last_modified_unix": 1762844369
+  },
+  {
+    "path": "FLOW_ANALYSIS_CATEGORY_SEARCH.md",
+    "title": "熱門小分類搜尋資料流分析",
+    "last_modified_unix": 1762485749
+  },
+  {
+    "path": "FIELD_STANDARDIZATION_PLAN.md",
+    "title": "欄位標準化重構計畫 (方案 C: FieldAccessor)",
+    "last_modified_unix": 1762501894
+  },
+  {
+    "path": "後續開發原則_檢查清單.md",
+    "title": "🏛️ 後續開發原則 & 檢查清單",
+    "last_modified_unix": 1762675784
+  },
+  {
+    "path": "PHASE_3_4_COMPLETION_SUMMARY.md",
+    "title": "欄位標準化重構 - 階段 3-4 完成總結",
+    "last_modified_unix": 1762503592
+  },
+  {
+    "path": "CONFIDENCE_SCORE_DATA_FLOW.md",
+    "title": "商品卡「信心度」資料流程分析",
+    "last_modified_unix": 1762508916
+  },
+  {
+    "path": "QUICK_TEST_REFERENCE.md",
+    "title": "🧪 本地測試環境 - 快速參考",
+    "last_modified_unix": 1762775650
+  },
+  {
+    "path": "FIELD_STANDARDIZATION_QUICK_START.md",
+    "title": "FieldAccessor 方案 C - 快速實施指南",
+    "last_modified_unix": 1762502985
+  },
+  {
+    "path": "CHAT_LLM_QUICK_REFERENCE.md",
+    "title": "聊天系統 LLM 處理流程 - 快速查看卡片",
+    "last_modified_unix": 1762500410
+  },
+  {
+    "path": "LOCAL_TEST_REPORT.md",
+    "title": "地端測試報告 - 商品卡片顯示修復驗證",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": "Phase_1_實施完成_快速總結.md",
+    "title": "🎉 Phase 1 實施完成 - 快速總結",
+    "last_modified_unix": 1762585973
+  },
+  {
+    "path": "🚀_生產部署檢查清單.md",
+    "title": "🚀 生產部署檢查清單 - Phase 1 + Phase 2 優化",
+    "last_modified_unix": 1762586788
+  },
+  {
+    "path": "L3_OPTIMIZATION_SUMMARY.md",
+    "title": "📊 L3 熱門分類搜尋加速方案 - 評估摘要",
+    "last_modified_unix": 1762512861
+  },
+  {
+    "path": "開發原則_快速清單.md",
+    "title": "✅ 開發原則快速清單",
+    "last_modified_unix": 1762675784
+  },
+  {
+    "path": "EVALUATION_L3_DIRECT_FILTER_IN_UI.md",
+    "title": "🔍 評估：熱門分類 UI L3 點擊時直接過濾 L3 分類",
+    "last_modified_unix": 1762493714
+  },
+  {
+    "path": "重要提示摘要.md",
+    "title": "重要提示摘要",
+    "last_modified_unix": null
+  },
+  {
+    "path": "GITHUB_PUSH_REPORT_20251112.md",
+    "title": "🚀 GitHub 更新完成報告",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": "CHANGELOG_20241030.md",
+    "title": "SEARCH_Goods 程式修改記錄 - 2024/10/30",
+    "last_modified_unix": 1761812132
+  },
+  {
+    "path": "欄位使用記錄_中英文對照_標準化指南.md",
+    "title": "📋 商品資料欄位 中英文對照表 & 標準化指南",
+    "last_modified_unix": 1762573795
+  },
+  {
+    "path": "✅_住宅維修雲端部署檢查.md",
+    "title": "🚀 住宅維修雲端部署檢查清單",
+    "last_modified_unix": 1762844369
+  },
+  {
+    "path": "JSON_SERIALIZATION_FIX.md",
+    "title": "🔧 L3 查詢 JSON 序列化錯誤修復",
+    "last_modified_unix": 1762495640
+  },
+  {
+    "path": "RENDER_UPGRADE_GUIDE.md",
+    "title": "🚀 Render 付費方案升級指南",
+    "last_modified_unix": 1763027627
+  },
+  {
+    "path": "CHAT_SEARCH_INTEGRATION_REPORT.md",
+    "title": "🎊 SEARCH_Goods 聊天-搜索整合開發完成報告",
+    "last_modified_unix": 1761405661
+  },
+  {
+    "path": "L3_QUICK_FILTER_COMPLETE_FIX.md",
+    "title": "✅ L3 快速過濾 JSON 序列化完整修復",
+    "last_modified_unix": 1762496187
+  },
+  {
+    "path": "GIT_SYNC_GUIDE.md",
+    "title": "🔄 Git 同步指南 - 本地與雲端比對更新",
+    "last_modified_unix": 1762413948
+  },
+  {
+    "path": "OPTIMIZATION_L3_DIRECT_FILTER_EVALUATION.md",
+    "title": "優化方案評估：L3 米類直接過濾 vs 逐層過濾",
+    "last_modified_unix": 1762485749
+  },
+  {
+    "path": "BUTTON_ERROR_DIAGNOSIS.md",
+    "title": "商品卡按鈕錯誤診斷報告",
+    "last_modified_unix": 1762508916
+  },
+  {
+    "path": "CHAT_QUERY_BUG_DIAGNOSIS.md",
+    "title": "「女用包包 3000~4000 元」查詢失敗 - 完整診斷報告",
+    "last_modified_unix": 1762498901
+  },
+  {
+    "path": "CONVERSATION_CORE_架構說明.md",
+    "title": "Conversation Core 對話核心框架 - 架構說明",
+    "last_modified_unix": null
+  },
+  {
+    "path": "GITHUB_SECRETS_SETUP.md",
+    "title": "GitHub Secrets 配置指南",
+    "last_modified_unix": 1762364300
+  },
+  {
+    "path": "ADMIN_GUIDE.md",
+    "title": "管理版面使用指南",
+    "last_modified_unix": 1762244010
+  },
+  {
+    "path": "FRONTEND_MIGRATION_EVALUATION.md",
+    "title": "前端遷移評估：Netlify → Render",
+    "last_modified_unix": 1762511728
+  },
+  {
+    "path": "商品過濾優化方案_v2_基於現有系統.md",
+    "title": "商品過濾優化方案 v2.0 - 基於現有系統架構",
+    "last_modified_unix": 1762943111
+  },
+  {
+    "path": "AUTO_DEPLOYMENT_COMPLETE.md",
+    "title": "自動部署設定完成報告",
+    "last_modified_unix": 1762359866
+  },
+  {
+    "path": "HOT_CATEGORIES_UI_FLOW.md",
+    "title": "🎯 熱門分類 UI 點擊流程完整分析",
+    "last_modified_unix": 1762491638
+  },
+  {
+    "path": "Phase_2_性能優化_測試結果.md",
+    "title": "Phase 2 性能優化 - 測試結果報告",
+    "last_modified_unix": 1762586412
+  },
+  {
+    "path": "GIT_SYNC_QUICK_CARD.md",
+    "title": "⚡ 雲端同步 - 快速決策卡",
+    "last_modified_unix": 1762415778
+  },
+  {
+    "path": "CLARIFICATION_LLM_ANALYZE_QUERY.md",
+    "title": "llm_analyze_query 的真正功能",
+    "last_modified_unix": 1762485749
+  },
+  {
+    "path": "GIT_SYNC_COMPLETE_REPORT.md",
+    "title": "✅ Git 同步 - 完整報告",
+    "last_modified_unix": 1762414010
+  },
+  {
+    "path": "REFACTOR_CSV_PATH_DETECTION.md",
+    "title": "📁 CSV 路徑偵測重構方案",
+    "last_modified_unix": 1762929795
+  },
+  {
+    "path": "LOCAL_TEST_REPORT_20251112.md",
+    "title": "🧪 本地測試報告 - 木茸查詢優化驗證 (2025-11-12)",
+    "last_modified_unix": 1762943111
+  },
+  {
+    "path": "QUICK_FIX_GUIDE.md",
+    "title": "快速修復指南",
+    "last_modified_unix": 1762499660
+  },
+  {
+    "path": "聊天意圖模式優化紀錄.md",
+    "title": "聊天意圖模式優化紀錄",
+    "last_modified_unix": 1763031696
+  },
+  {
+    "path": "DEPLOYMENT_CHECKLIST.md",
+    "title": "✅ 前端遷移至 Render - 部署檢查清單",
+    "last_modified_unix": 1762511928
+  },
+  {
+    "path": "商品過濾優化_實施記錄與修改標註.md",
+    "title": "商品過濾優化實施記錄",
+    "last_modified_unix": 1762943111
+  },
+  {
+    "path": "CONFIGURATION_SEPARATION.md",
+    "title": "搜索與聊天功能 LLM 配置分離",
+    "last_modified_unix": 1761465358
+  },
+  {
+    "path": ".pytest_cache/README.md",
+    "title": "pytest cache directory #",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/@types/phoenix/README.md",
+    "title": "Installation",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/@types/node/README.md",
+    "title": "Installation",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/@types/ws/README.md",
+    "title": "Installation",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/@playwright/test/README.md",
+    "title": "🎭 Playwright",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/playwright-core/README.md",
+    "title": "playwright-core",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/dotenv/CHANGELOG.md",
+    "title": "Changelog",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/dotenv/README.md",
+    "title": "dotenv [![NPM version](https://img.shields.io/npm/v/dotenv.svg?style=flat-square)](https://www.npmjs.com/package/dotenv)",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/dotenv/README-es.md",
+    "title": "dotenv [![NPM version](https://img.shields.io/npm/v/dotenv.svg?style=flat-square)](https://www.npmjs.com/package/dotenv)",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/dotenv/SECURITY.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/tslib/README.md",
+    "title": "tslib",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/tslib/SECURITY.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/undici-types/README.md",
+    "title": "undici-types",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/playwright/README.md",
+    "title": "🎭 Playwright",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/playwright/lib/agents/healer.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/playwright/lib/agents/generator.md",
+    "title": "For each test you generate",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/playwright/lib/agents/planner.md",
+    "title": "TodoMVC Application - Comprehensive Test Plan",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/@supabase/functions-js/README.md",
+    "title": "Complete build (from monorepo root)",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/@supabase/auth-js/README.md",
+    "title": "Complete build (from monorepo root)",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/@supabase/supabase-js/README.md",
+    "title": "From the monorepo root",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/@supabase/realtime-js/README.md",
+    "title": "Overview",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/@supabase/storage-js/README.md",
+    "title": "From the monorepo root",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/@supabase/postgrest-js/README.md",
+    "title": "Complete build (from monorepo root)",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/husky/README.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/fsevents/README.md",
+    "title": "fsevents [![NPM](https://nodei.co/npm/fsevents.png)](https://nodei.co/npm/fsevents/)",
+    "last_modified_unix": null
+  },
+  {
+    "path": "node_modules/ws/README.md",
+    "title": "ws: a Node.js WebSocket library",
+    "last_modified_unix": null
+  },
+  {
+    "path": "backend/REPAIR_SERVICE_README.md",
+    "title": "🔧 住宅維修服務 - 後端開發文件",
+    "last_modified_unix": 1762833701
+  },
+  {
+    "path": "backend/README.md",
+    "title": "backend",
+    "last_modified_unix": 1761191684
+  },
+  {
+    "path": "backend/.pytest_cache/README.md",
+    "title": "pytest cache directory #",
+    "last_modified_unix": null
+  },
+  {
+    "path": "backend/.venv/lib/python3.9/site-packages/starlette-0.38.6.dist-info/licenses/LICENSE.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": "backend/.venv/lib/python3.9/site-packages/idna-3.11.dist-info/licenses/LICENSE.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": "backend/.venv/lib/python3.9/site-packages/httpcore-1.0.9.dist-info/licenses/LICENSE.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": "backend/.venv/lib/python3.9/site-packages/numpy/random/LICENSE.md",
+    "title": "NCSA Open Source License",
+    "last_modified_unix": null
+  },
+  {
+    "path": "backend/.venv/lib/python3.9/site-packages/uvicorn-0.30.6.dist-info/licenses/LICENSE.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": "backend/.venv/lib/python3.9/site-packages/httpx-0.27.0.dist-info/licenses/LICENSE.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": "docs/LLM_提示詞模板.md",
+    "title": "LLM 提示詞模板設計",
+    "last_modified_unix": 1762831998
+  },
+  {
+    "path": "docs/聊天意圖模式_程式碼審查報告.md",
+    "title": "聊天意圖模式優化 - 程式碼審查報告",
+    "last_modified_unix": 1763033615
+  },
+  {
+    "path": "docs/網址不能點選問題診斷報告.md",
+    "title": "網址不能點選問題診斷報告",
+    "last_modified_unix": 1762674428
+  },
+  {
+    "path": "docs/📄_最終部署成功報告.md",
+    "title": "🎊 最終部署成功報告",
+    "last_modified_unix": 1762677877
+  },
+  {
+    "path": "docs/Phase1_ETL工具完成報告.md",
+    "title": "Phase 1 完成報告：公司簡介 ETL 工具",
+    "last_modified_unix": 1762663358
+  },
+  {
+    "path": "docs/公司介紹整合_評估與建議.md",
+    "title": "公司介紹整合 - 評估與建議",
+    "last_modified_unix": 1762663358
+  },
+  {
+    "path": "docs/API接口規範.md",
+    "title": "API 接口規範",
+    "last_modified_unix": 1761729066
+  },
+  {
+    "path": "docs/MCP_架構規劃建議.md",
+    "title": "SEARCH_Goods MCP 架構規劃建議",
+    "last_modified_unix": 1763107984
+  },
+  {
+    "path": "docs/FRONTEND-OPTIMIZATION-GUIDE.md",
+    "title": "前端 UI/UX 優化技術文檔",
+    "last_modified_unix": 1761484246
+  },
+  {
+    "path": "docs/UPDATE-SUMMARY.md",
+    "title": "🎉 SEARCH_Goods UI/UX 重大更新 (2025.10.26)",
+    "last_modified_unix": 1761484246
+  },
+  {
+    "path": "docs/系統功能架構圖.md",
+    "title": "SEARCH_Goods 功能架構圖",
+    "last_modified_unix": 1762504856
+  },
+  {
+    "path": "docs/LOCAL_TEST_ENVIRONMENT.md",
+    "title": "🧪 本地測試環境使用指南",
+    "last_modified_unix": 1762775650
+  },
+  {
+    "path": "docs/universal_chat_system_review.md",
+    "title": "通用對話系統程式審核結果",
+    "last_modified_unix": 1761806734
+  },
+  {
+    "path": "docs/LLM增強商品描述生成功能實作總結.md",
+    "title": "LLM 增強商品描述生成功能實作總結",
+    "last_modified_unix": 1761732981
+  },
+  {
+    "path": "docs/女用包包價格查詢流程圖.md",
+    "title": "女用包包 3000~4000 元查詢流程圖說明",
+    "last_modified_unix": 1762500410
+  },
+  {
+    "path": "docs/部署完成檢查清單.md",
+    "title": "🚀 部署完成檢查清單",
+    "last_modified_unix": 1762669112
+  },
+  {
+    "path": "docs/價格過濾功能優化報告.md",
+    "title": "價格過濾功能問題分析與優化報告",
+    "last_modified_unix": 1761790687
+  },
+  {
+    "path": "docs/Phase3_4_實作完成報告.md",
+    "title": "Phase 3 & 4 實作完成報告",
+    "last_modified_unix": 1762663358
+  },
+  {
+    "path": "docs/後端維修服務實作完成總結.md",
+    "title": "🔧 住宅維修服務 - 後端實作完成總結",
+    "last_modified_unix": 1762833701
+  },
+  {
+    "path": "docs/如何寫入chat_messages.md",
+    "title": "如何把交談資料寫入 chat_messages",
+    "last_modified_unix": 1763029173
+  },
+  {
+    "path": "docs/住宅維修客服系統設計規劃.md",
+    "title": "住宅維修問題回覆客服系統 - 設計規劃書",
+    "last_modified_unix": 1762831998
+  },
+  {
+    "path": "docs/意圖切換問題_連續維修查詢錯誤分析.md",
+    "title": "意圖切換問題分析 - 連續維修查詢錯誤",
+    "last_modified_unix": 1763042942
+  },
+  {
+    "path": "docs/field_standardization_optimization_report.md",
+    "title": "SEARCH_Goods 欄位標準化優化報告",
+    "last_modified_unix": 1761402409
+  },
+  {
+    "path": "docs/YOUTUBE_PREVIEW_FIX_REPORT.md",
+    "title": "YouTube 預覽功能修復報告",
+    "last_modified_unix": 1762682825
+  },
+  {
+    "path": "docs/推薦套件資料需求與流程.md",
+    "title": "推薦套件（Recommendation Bundle）資料需求與存取流程",
+    "last_modified_unix": 1762053977
+  },
+  {
+    "path": "docs/意圖切換優化實作總結.md",
+    "title": "意圖切換優化實作總結",
+    "last_modified_unix": 1762842951
+  },
+  {
+    "path": "docs/CI_WORKFLOW_FIX_SUMMARY.md",
+    "title": "CI Workflow 修復總結",
+    "last_modified_unix": 1763044849
+  },
+  {
+    "path": "docs/CHANGELOG-2025-10-26.md",
+    "title": "SEARCH_Goods 更新日誌 - 2025年10月26日",
+    "last_modified_unix": 1761484246
+  },
+  {
+    "path": "docs/🎊_生產部署總結.md",
+    "title": "🎊 生產部署總結 - Phase 1 + Phase 2 性能優化",
+    "last_modified_unix": 1762677877
+  },
+  {
+    "path": "docs/系統資訊流程.md",
+    "title": "SEARCH_Goods 系統資訊流程文檔",
+    "last_modified_unix": 1762677877
+  },
+  {
+    "path": "docs/維修項目中英文對照表.md",
+    "title": "維修項目中英文對照表",
+    "last_modified_unix": 1762831998
+  },
+  {
+    "path": "docs/開發環境設置指南.md",
+    "title": "開發環境設置指南",
+    "last_modified_unix": 1761729066
+  },
+  {
+    "path": "docs/LOCAL_DEV_TROUBLESHOOTING.md",
+    "title": "本地開發環境常見問題排除指南",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": "docs/聊天意圖切換優化_修改記錄.md",
+    "title": "聊天意圖切換優化 - 修改記錄",
+    "last_modified_unix": 1763033906
+  },
+  {
+    "path": "docs/連續維修第二筆失敗_問題診斷.md",
+    "title": "連續維修第二筆失敗 - 問題診斷與修復",
+    "last_modified_unix": 1763049464
+  },
+  {
+    "path": "docs/公司介紹_Rich_Content_完整覆蓋報告.md",
+    "title": "公司介紹 Rich Content 完整覆蓋報告",
+    "last_modified_unix": 1762687594
+  },
+  {
+    "path": "docs/推薦端點測試與前端整合設計.md",
+    "title": "`/api/recommendations/{token}` 測試與前端整合設計",
+    "last_modified_unix": 1762053977
+  },
+  {
+    "path": "docs/chat_flow_refactor_tasks.md",
+    "title": "聊天流程優化修改任務清單",
+    "last_modified_unix": 1761883636
+  },
+  {
+    "path": "docs/聊天意圖判讀問題_分析與修復.md",
+    "title": "聊天意圖判讀問題 - 分析與修復方案",
+    "last_modified_unix": 1763033615
+  },
+  {
+    "path": "docs/CI_WORKFLOW_AUDIT_REPORT.md",
+    "title": "CI/CD Workflow 全面審查報告",
+    "last_modified_unix": 1763044753
+  },
+  {
+    "path": "docs/對話區模型路由設計方案.md",
+    "title": "對話區模型路由設計方案",
+    "last_modified_unix": 1762833701
+  },
+  {
+    "path": "docs/README.md",
+    "title": "SEARCH_Goods 系統架構文件",
+    "last_modified_unix": 1762831998
+  },
+  {
+    "path": "docs/公司資料更新與轉換策略.md",
+    "title": "公司資料更新與轉換策略",
+    "last_modified_unix": 1762663358
+  },
+  {
+    "path": "docs/分類索引_性能演示.md",
+    "title": "📊 分類索引性能演示",
+    "last_modified_unix": 1762677877
+  },
+  {
+    "path": "docs/生產環境測試指南.md",
+    "title": "🎯 生產環境測試指南 - 可點擊連結功能",
+    "last_modified_unix": 1762672520
+  },
+  {
+    "path": "docs/價格區間過濾問題分析報告.md",
+    "title": "價格區間過濾問題分析報告",
+    "last_modified_unix": 1761790687
+  },
+  {
+    "path": "docs/連續維修查詢問題_深度診斷.md",
+    "title": "連續維修查詢問題 - 深度診斷報告",
+    "last_modified_unix": 1763044125
+  },
+  {
+    "path": "docs/搜尋判斷式說明.md",
+    "title": "搜尋判斷式說明",
+    "last_modified_unix": 1763112728
+  },
+  {
+    "path": "docs/TEST_ENVIRONMENT_SETUP_REPORT.md",
+    "title": "🎉 本地測試環境建構完成報告",
+    "last_modified_unix": 1762777503
+  },
+  {
+    "path": "docs/SEARCH_Goods_TaskCard.md",
+    "title": "SEARCH_Goods --- 整合式技術文件（v1.0）",
+    "last_modified_unix": 1761277606
+  },
+  {
+    "path": "docs/本地開發環境問題排查.md",
+    "title": "本地開發環境問題排查指南",
+    "last_modified_unix": 1763107984
+  },
+  {
+    "path": "docs/連續維修查詢_修復驗證.md",
+    "title": "連續維修查詢問題 - 修復驗證報告",
+    "last_modified_unix": 1763049464
+  },
+  {
+    "path": "docs/資料欄位更新總結.md",
+    "title": "資料欄位更新總結",
+    "last_modified_unix": 1762831998
+  },
+  {
+    "path": "docs/iteration_log.md",
+    "title": "SEARCH_Goods Iteration Log",
+    "last_modified_unix": 1761380627
+  },
+  {
+    "path": "docs/服務項目查詢_Rich_Content_更新.md",
+    "title": "服務項目查詢 Rich Content 更新報告",
+    "last_modified_unix": 1762686933
+  },
+  {
+    "path": "docs/聊天模式流程.md",
+    "title": "Chat Mode Flow Audit (2025-10-23)",
+    "last_modified_unix": 1762744706
+  },
+  {
+    "path": "docs/公司簡介查詢模板設計.md",
+    "title": "公司簡介資料庫查詢模板 — 架構設計",
+    "last_modified_unix": 1762684867
+  },
+  {
+    "path": "docs/可點擊連結測試指南.md",
+    "title": "可點擊連結功能測試指南",
+    "last_modified_unix": 1762670902
+  },
+  {
+    "path": "docs/extended_api_contract_v2.md",
+    "title": "SEARCH_Goods 擴展 API 合約規格 v2.0",
+    "last_modified_unix": 1761405661
+  },
+  {
+    "path": "docs/YOUTUBE_PREVIEW_BEHAVIOR_UPDATE.md",
+    "title": "YouTube 預覽行為更新說明",
+    "last_modified_unix": 1762683246
+  },
+  {
+    "path": "docs/ai_programming_design_standards.md",
+    "title": "SEARCH_Goods AI 程式設計規範",
+    "last_modified_unix": 1761402409
+  },
+  {
+    "path": "docs/方案A實施完成報告.md",
+    "title": "方案A實施完成報告",
+    "last_modified_unix": 1763043135
+  },
+  {
+    "path": "docs/GitHub更新完成報告.md",
+    "title": "GitHub 更新完成報告",
+    "last_modified_unix": 1761792194
+  },
+  {
+    "path": "docs/生日聚會商品推薦功能診斷報告.md",
+    "title": "生日聚會商品推薦功能問題診斷報告",
+    "last_modified_unix": 1761792787
+  },
+  {
+    "path": "docs/YOUTUBE_PREVIEW_UPDATE_REPORT.md",
+    "title": "聊天室 YouTube 點擊預覽改版報告",
+    "last_modified_unix": 1762682825
+  },
+  {
+    "path": "docs/聊天對話及商品查詢系統設計規格書.md",
+    "title": "SEARCH_Goods 聊天對話及商品查詢系統設計規格書",
+    "last_modified_unix": 1761729066
+  },
+  {
+    "path": "docs/部署架構總結.md",
+    "title": "📋 部署架構總結",
+    "last_modified_unix": 1762672573
+  },
+  {
+    "path": "docs/商品編號搜尋優化報告.md",
+    "title": "商品編號搜尋優化報告",
+    "last_modified_unix": 1761791893
+  },
+  {
+    "path": "docs/徹底排查連結問題指南.md",
+    "title": "🔍 徹底排查「連結無法點選」問題指南",
+    "last_modified_unix": 1762670983
+  },
+  {
+    "path": "docs/部署說明.md",
+    "title": "部署說明",
+    "last_modified_unix": 1762672520
+  },
+  {
+    "path": "docs/HOT_CHIPS_CATEGORIES_SESSION.md",
+    "title": "Hot Chips + Categories CSV 延續開發備忘錄",
+    "last_modified_unix": 1762410037
+  },
+  {
+    "path": "docs/分類索引_快速參考卡.md",
+    "title": "⚡ 分類索引快速參考卡",
+    "last_modified_unix": 1762677877
+  },
+  {
+    "path": "docs/連續維修快速診斷指南.md",
+    "title": "連續維修第二筆失敗 - 快速診斷指南",
+    "last_modified_unix": 1763049464
+  },
+  {
+    "path": "docs/價格篩選解析指南.md",
+    "title": "價格篩選解析指南",
+    "last_modified_unix": 1762740572
+  },
+  {
+    "path": "docs/README_聊天流程文檔.md",
+    "title": "📊 聊天模式 LLM 判讀流程 - 交付總結",
+    "last_modified_unix": 1762677877
+  },
+  {
+    "path": "docs/field_mapping_reference.md",
+    "title": "SEARCH_Goods 欄位對照表",
+    "last_modified_unix": 1761400617
+  },
+  {
+    "path": "docs/購物客服架構調整任務紀錄.md",
+    "title": "購物客服架構調整任務紀錄",
+    "last_modified_unix": 1762053977
+  },
+  {
+    "path": "docs/系統開發/語音模式整合設計.md",
+    "title": "語音模式整合設計（僅限商品查詢 / 公司資料查詢）",
+    "last_modified_unix": 1762756582
+  },
+  {
+    "path": "docs/系統開發/系統架構設計.md",
+    "title": "LLM 搜尋優化 - 架構與設計文檔",
+    "last_modified_unix": 1762255397
+  },
+  {
+    "path": "docs/系統開發/部署與運維指南.md",
+    "title": "LLM 搜尋優化 - 部署與運維指南",
+    "last_modified_unix": 1762255397
+  },
+  {
+    "path": "docs/系統開發/聊天紀錄資料表設計.md",
+    "title": "聊天紀錄資料表設計",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": "docs/系統開發/快速開始指南.md",
+    "title": "LLM 搜尋優化 - 快速開始指南",
+    "last_modified_unix": 1762255397
+  },
+  {
+    "path": "docs/系統開發/商品查詢模式_資訊作業流程.md",
+    "title": "商品查詢模式_資訊作業流程",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": "docs/系統開發/正確開發流程指南.md",
+    "title": "SEARCH_Goods 系統開發正確流程指南",
+    "last_modified_unix": 1762314115
+  },
+  {
+    "path": "docs/系統開發/語音模式整合修改計劃.md",
+    "title": "語音模式整合修改計劃",
+    "last_modified_unix": 1762778885
+  },
+  {
+    "path": "docs/系統開發/LLM_搜尋優化_完整實現指南.md",
+    "title": "LLM 搜尋優化 - 完整實現指南",
+    "last_modified_unix": 1762255397
+  },
+  {
+    "path": "docs/系統開發/API_參考文檔.md",
+    "title": "LLM 搜尋優化 - API 參考文檔",
+    "last_modified_unix": 1762255397
+  },
+  {
+    "path": "docs/系統開發/架構改進建議與計劃.md",
+    "title": "SEARCH_Goods 架構改進建議與實施計劃",
+    "last_modified_unix": 1762314115
+  },
+  {
+    "path": "docs/系統開發/任務清單與PR計劃.md",
+    "title": "任務清單與 PR 分支計劃",
+    "last_modified_unix": 1762315015
+  },
+  {
+    "path": "docs/系統開發/聊天資訊流規範.md",
+    "title": "聊天資訊流規範",
+    "last_modified_unix": 1762152913
+  },
+  {
+    "path": "docs/archive/2025-11/NETLIFY_REMOVAL_SUMMARY.md",
+    "title": "Netlify 部署移除總結",
+    "last_modified_unix": 1763346596
+  },
+  {
+    "path": "docs/archive/2025-11/FIX_NETLIFY_404_RETRY_LOGIC.md",
+    "title": "🔧 Netlify 404 問題修復 - Smoke Test 重試邏輯",
+    "last_modified_unix": 1763346596
+  },
+  {
+    "path": "docs/archive/2025-11/NETLIFY_QUICK_FIX_GUIDE.md",
+    "title": "⚡ Netlify 404 快速修復指南",
+    "last_modified_unix": 1763346596
+  },
+  {
+    "path": "docs/archive/2025-11/NETLIFY_404_PHASE2_DIAGNOSIS.md",
+    "title": "🔍 Netlify 404 持續 - 第二階段診斷與修復指南",
+    "last_modified_unix": 1763346596
+  },
+  {
+    "path": "docs/archive/2025-11/NETLIFY_404_ROOT_CAUSE_ANALYSIS.md",
+    "title": "Netlify 404 根本原因分析 & 完整修復指南",
+    "last_modified_unix": 1763346596
+  },
+  {
+    "path": "docs/archive/2025-11/NETLIFY_404_TROUBLESHOOTING.md",
+    "title": "Netlify 404 錯誤診斷與修復指南",
+    "last_modified_unix": 1763346596
+  },
+  {
+    "path": "docs/archive/2025-11/NETLIFY_404_STATUS_REPORT.md",
+    "title": "🔍 Netlify 404 問題 - 完整狀態報告",
+    "last_modified_unix": 1763346596
+  },
+  {
+    "path": "docs/archive/2025-11/NETLIFY_FALLBACK_UPGRADE.md",
+    "title": "Netlify 部署觸發機制升級 - Hook → API Fallback",
+    "last_modified_unix": 1763346596
+  },
+  {
+    "path": "docs/archive/2025-11/NETLIFY_QUICK_ACTION.md",
+    "title": "🚨 Netlify 404 問題 - 立即行動指南",
+    "last_modified_unix": 1763346596
+  },
+  {
+    "path": "docs/quality/SUPABASE_安全性問題緊急修復指南.md",
+    "title": "Supabase 安全性問題緊急修復指南",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": "docs/quality/P0_安全性問題修復進度追蹤.md",
+    "title": "P0 安全性問題修復進度追蹤",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": "docs/quality/SUPABASE_整合複查摘要.md",
+    "title": "Supabase 整合複查摘要",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": "docs/quality/SUPABASE_整合品管審查報告_v2.md",
+    "title": "Supabase 整合品管審查報告（複查更新版）",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": "docs/setup/SUPABASE_整合開發計劃.md",
+    "title": "Supabase 整合開發計劃",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": "docs/setup/README.md",
+    "title": "Supabase 連線設定（Task SG-DB-001）",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": "docs/setup/SUPABASE_RLS指南.md",
+    "title": "Supabase RLS 與權限設定指南",
+    "last_modified_unix": 1763022768
+  },
+  {
+    "path": ".venv/lib/python3.9/site-packages/pip-25.2.dist-info/licenses/src/pip/_vendor/idna/LICENSE.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": ".venv/lib/python3.9/site-packages/starlette-0.38.6.dist-info/licenses/LICENSE.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": ".venv/lib/python3.9/site-packages/idna-3.11.dist-info/licenses/LICENSE.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": ".venv/lib/python3.9/site-packages/httpcore-1.0.9.dist-info/licenses/LICENSE.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": ".venv/lib/python3.9/site-packages/numpy/random/LICENSE.md",
+    "title": "NCSA Open Source License",
+    "last_modified_unix": null
+  },
+  {
+    "path": ".venv/lib/python3.9/site-packages/uvicorn-0.30.6.dist-info/licenses/LICENSE.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": ".venv/lib/python3.9/site-packages/httpx-0.27.0.dist-info/licenses/LICENSE.md",
+    "title": "",
+    "last_modified_unix": null
+  },
+  {
+    "path": "scripts/README.md",
+    "title": "自動部署腳本使用指南",
+    "last_modified_unix": 1761282464
+  },
+  {
+    "path": ".github/copilot-instructions.md",
+    "title": "Copilot Instructions for SEARCH_Goods",
+    "last_modified_unix": 1761191684
+  },
+  {
+    "path": "修改記錄_按1建議功能修復/程式碼對比.md",
+    "title": "統一處理回傳格式",
+    "last_modified_unix": 1761995579
+  },
+  {
+    "path": "修改記錄_按1建議功能修復/README.md",
+    "title": "📁 修改記錄：按1建議功能修復",
+    "last_modified_unix": 1761995579
+  },
+  {
+    "path": "修改記錄_按1建議功能修復/修改說明.md",
+    "title": "按1建議功能修復 - 修改記錄",
+    "last_modified_unix": 1761995579
+  },
+  {
+    "path": "修改記錄_按1建議功能修復/完整修改檔案.md",
+    "title": "修改後的完整 app.py 檔案",
+    "last_modified_unix": 1761995579
+  }
+]

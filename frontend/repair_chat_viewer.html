@@ -1,0 +1,2419 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>住宅維修客服資料查詢</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .query-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .query-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .query-controls label {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .query-controls input[type="date"] {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #333;
+            transition: border-color 0.3s;
+        }
+
+        .query-controls input[type="date"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .emotion-filter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .emotion-filter label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .emotion-filter select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .emotion-filter select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-search {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-search:active {
+            transform: translateY(0);
+        }
+
+        .stats-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card .label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-header {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .message-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .session-group {
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 2px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .session-header {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+        }
+
+        .session-header .session-id {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+
+        .session-header .session-time {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .message-card {
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .message-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .message-card.user {
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+            border-left: 5px solid #2196F3;
+            margin-left: 20px;
+        }
+
+        .message-card.llm {
+            background: linear-gradient(135deg, #F5F5F5 0%, #EEEEEE 100%);
+            border-left: 5px solid #9E9E9E;
+            margin-right: 20px;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .message-role {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .message-role .icon {
+            font-size: 24px;
+        }
+
+        .message-card.user .message-role {
+            color: #1976D2;
+        }
+
+        .message-card.llm .message-role {
+            color: #616161;
+        }
+
+        .message-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .message-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .message-content {
+            color: #333;
+            font-size: 15px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* 接手對話按鈕 */
+        .btn-takeover {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-left: auto;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-takeover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-release {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: white;
+        }
+
+        .session-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .session-status.ai-mode {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .session-status.manual-mode {
+            background: rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        /* Modal 對話視窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 900px;
+            height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 對話標題列 */
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .chat-header-left h3 {
+            margin-bottom: 4px;
+            font-size: 18px;
+        }
+
+        .session-info-text {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .chat-header-right {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .mode-toggle {
+            padding: 8px 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mode-toggle:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .mode-toggle.active {
+            background: #4caf50;
+            border-color: #4caf50;
+        }
+
+        .btn-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .btn-close:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* 接手狀態橫幅 */
+        .status-banner {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .status-banner.active {
+            display: flex;
+        }
+
+        .operator-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .operator-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            color: #4caf50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .operator-details strong {
+            display: block;
+            font-size: 15px;
+        }
+
+        .operator-details span {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .btn-release-small {
+            padding: 6px 14px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-release-small:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* 訊息區域（LINE 風格） */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #e5ddd5;
+        }
+
+        .chat-message {
+            margin-bottom: 16px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-message.user-msg {
+            justify-content: flex-start;
+        }
+
+        .chat-message.ai-msg,
+        .chat-message.operator-msg {
+            justify-content: flex-end;
+        }
+
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            background: white;
+        }
+
+        .chat-message-content {
+            max-width: 60%;
+        }
+
+        .chat-sender-name {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+            padding: 0 4px;
+        }
+
+        .chat-bubble {
+            padding: 10px 14px;
+            border-radius: 8px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .chat-message.ai-msg .chat-bubble {
+            background: white;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .chat-message.user-msg .chat-bubble {
+            background: #dcf8c6;
+        }
+
+        .chat-message.operator-msg .chat-bubble {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+        }
+
+        .chat-message.operator-msg .chat-sender-name {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .chat-timestamp {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .chat-message.operator-msg .chat-timestamp {
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* 系統通知 */
+        .system-message {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .system-content {
+            display: inline-block;
+            background: rgba(0,0,0,0.08);
+            padding: 8px 16px;
+            border-radius: 16px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .system-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-left: 8px;
+        }
+
+        /* 輸入區域 */
+        .input-area {
+            padding: 16px 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .input-area.disabled {
+            background: #f5f5f5;
+        }
+
+        .disabled-hint {
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            padding: 8px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-area textarea {
+            flex: 1;
+            min-height: 50px;
+            max-height: 120px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .input-area textarea:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+            color: #999;
+        }
+
+        .input-area textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-send {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .btn-send:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+
+        .btn-send:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* 通知提示 */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.show {
+            display: flex;
+        }
+
+        .notification.success {
+            border-left: 4px solid #4caf50;
+        }
+
+        .notification.error {
+            border-left: 4px solid #f44336;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .query-section {
+                padding: 20px;
+            }
+
+            .query-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-search {
+                width: 100%;
+            }
+
+            .message-card.user,
+            .message-card.llm {
+                margin-left: 0;
+                margin-right: 0;
+            }
+
+            .stat-card .value {
+                font-size: 24px;
+            }
+
+            .modal-content {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .chat-message-content {
+                max-width: 80%;
+            }
+        }
+
+        /* 通知元件 */
+        .notification {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 10001;
+            transition: top 0.3s ease;
+        }
+
+        .notification.show {
+            top: 20px;
+        }
+
+        .notification.success {
+            border-left: 4px solid #10b981;
+        }
+
+        .notification.error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .notification-icon {
+            font-size: 20px;
+        }
+
+        .notification-text {
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* Loading 狀態 */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            gap: 16px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 全頁遮罩（客服視窗開啟時鎖定背景） */
+        .global-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(2px);
+            z-index: 900; /* 低於 modal(1000) */
+            display: none;
+        }
+
+        .global-overlay.active {
+            display: block;
+        }
+
+        body.modal-locked {
+            overflow: hidden;
+        }
+
+        /* ==================== 情緒分析樣式 ==================== */
+
+        /* 情緒標籤容器 */
+        .emotion-badges {
+            display: inline-flex;
+            gap: 6px;
+            margin-left: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* 情緒標籤基礎樣式 */
+        .emotion-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            cursor: help;
+            transition: transform 0.2s;
+            white-space: nowrap;
+        }
+
+        .emotion-badge:hover {
+            transform: scale(1.05);
+        }
+
+        /* 不安程度樣式 */
+        .emotion-badge.anxiety-high {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: white;
+        }
+
+        .emotion-badge.anxiety-medium {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffc107;
+        }
+
+        /* 急迫感樣式 */
+        .emotion-badge.urgency-high {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            color: white;
+            animation: pulse-urgency 2s infinite;
+        }
+
+        .emotion-badge.urgency-medium {
+            background: #ffe0e0;
+            color: #cc0000;
+            border: 2px solid #ff4444;
+        }
+
+        @keyframes pulse-urgency {
+            0%, 100% {
+                opacity: 1;
+                box-shadow: 0 2px 4px rgba(255, 68, 68, 0.3);
+            }
+            50% {
+                opacity: 0.85;
+                box-shadow: 0 4px 12px rgba(255, 68, 68, 0.6);
+            }
+        }
+
+        /* 生氣指數樣式 */
+        .emotion-badge.anger-high {
+            background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+            color: white;
+        }
+
+        .emotion-badge.anger-medium {
+            background: #fce4ec;
+            color: #c2185b;
+            border: 2px solid #e91e63;
+        }
+
+        /* 情緒統計卡片特殊樣式（預留，Phase1 先加入樣式） */
+        .stat-card.emotion-stat {
+            background: white;
+        }
+
+        .stat-card.emotion-stat .label {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 10px;
+        }
+
+        .stat-card.emotion-stat .value {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .stat-card.emotion-stat.anxiety .value {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.emotion-stat.urgency .value {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.emotion-stat.anger .value {
+            background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.emotion-stat .description {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        /* 響應式調整 */
+        @media (max-width: 768px) {
+            .emotion-badges {
+                margin-left: 0;
+                margin-top: 8px;
+            }
+
+            .emotion-badge {
+                font-size: 11px;
+                padding: 3px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 頁面標題 -->
+        <div class="header">
+            <h1>🏠 住宅維修客服資料查詢</h1>
+            <p>查詢指定日期的維修諮詢對話記錄</p>
+        </div>
+
+        <!-- 查詢條件區 -->
+        <div class="query-section">
+            <div class="query-controls">
+                <label for="queryDate">📅 查詢日期：</label>
+                <input type="date" id="queryDate" value="2025-11-21">
+                <div class="emotion-filter">
+                    <label for="emotionFilter">🎭 情緒篩選：</label>
+                    <select id="emotionFilter" onchange="filterByEmotion(this.value)">
+                        <option value="all">全部訊息</option>
+                        <option value="high">高風險 (≥8)</option>
+                        <option value="urgent">極緊急 (=10)</option>
+                        <option value="angry">生氣客戶 (≥7)</option>
+                    </select>
+                </div>
+                <button class="btn-search" onclick="searchMessages()">🔍 查詢</button>
+            </div>
+        </div>
+
+        <!-- 統計資訊區 -->
+        <div class="stats-section" id="statsSection" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="label">總訊息數</div>
+                    <div class="value" id="totalCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">使用者訊息</div>
+                    <div class="value" id="userCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">系統回覆</div>
+                    <div class="value" id="llmCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">涉及會話</div>
+                    <div class="value" id="sessionCount">0</div>
+                </div>
+                
+                <!-- 情緒統計卡片 -->
+                <div class="stat-card emotion-stat anxiety">
+                    <div class="label">😰 平均不安</div>
+                    <div class="value" id="avgAnxiety">-</div>
+                    <div class="description">分析 <span id="analyzedCount">0</span> 則訊息</div>
+                </div>
+                <div class="stat-card emotion-stat urgency">
+                    <div class="label">⚡ 平均急迫</div>
+                    <div class="value" id="avgUrgency">-</div>
+                    <div class="description">高風險 <span id="highEmotionCount">0</span> 則</div>
+                </div>
+                <div class="stat-card emotion-stat anger">
+                    <div class="label">😠 平均生氣</div>
+                    <div class="value" id="avgAnger">-</div>
+                    <div class="description">最高值 <span id="maxAnger">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 結果顯示區 -->
+        <div class="results-section">
+            <div class="results-header">📝 對話記錄</div>
+            <div id="messageList">
+                <!-- 初始狀態 -->
+                <div class="empty-state">
+                    <div class="icon">💬</div>
+                    <h3>請選擇日期並點擊查詢</h3>
+                    <p>系統將顯示該日期的所有住宅維修對話記錄</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 對話 Modal -->
+    <div class="modal" id="conversation-modal">
+        <div class="modal-content">
+            <!-- 標題列 -->
+            <div class="chat-header">
+                <div class="chat-header-left">
+                    <h3>💬 即時對話</h3>
+                    <span class="session-info-text" id="modal-session-id">Session: ---</span>
+                </div>
+
+                <div class="chat-header-right">
+                    <button class="mode-toggle" id="mode-toggle-btn" onclick="toggleManualMode()">
+                        <span id="mode-icon">🤖</span>
+                        <span id="mode-text">切換為真人客服</span>
+                    </button>
+                    <button class="btn-close" onclick="closeConversationModal()">✕</button>
+                </div>
+            </div>
+
+            <!-- 接手狀態橫幅 -->
+            <div class="status-banner" id="status-banner">
+                <div class="operator-info">
+                    <div class="operator-avatar" id="operator-avatar-icon">客</div>
+                    <div class="operator-details">
+                        <strong id="operator-takeover-text">您已接手此對話</strong>
+                        <span>客戶將看到真人客服回覆</span>
+                    </div>
+                </div>
+                <button class="btn-release-small" onclick="releaseManualMode()">
+                    結束接手
+                </button>
+            </div>
+
+            <!-- 訊息區域 -->
+            <div class="messages-container" id="chat-messages-list">
+                <!-- 動態載入訊息 -->
+            </div>
+
+            <!-- 輸入區域 -->
+            <div class="input-area" id="chat-input-area">
+                <div class="disabled-hint">請先接手對話才能回覆</div>
+                <div class="input-wrapper" style="display: none;" id="chat-input-wrapper">
+                    <textarea id="chat-reply-input" 
+                              placeholder="輸入您的回覆..."
+                              disabled></textarea>
+                    <button class="btn-ai-optimize" 
+                            id="chat-ai-optimize-btn" 
+                            onclick="optimizeReplyWithAI()" 
+                            disabled
+                            title="使用 AI 優化您的回覆內容">
+                        ✨ AI優化
+                    </button>
+                    <button class="btn-send" id="chat-send-btn" onclick="sendOperatorReply()" disabled>
+                        發送 →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知提示 -->
+    <div class="notification" id="notification">
+        <span id="notification-icon"></span>
+        <span id="notification-text"></span>
+    </div>
+
+    <script>
+        // API 配置
+        function getApiBaseUrl() {
+            const hostname = window.location.hostname;
+            if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.')) {
+                return 'http://localhost:8000';
+            }
+            // 生產環境使用相對路徑（透過 Nginx 反向代理）
+            return '';
+        }
+        
+        const API_BASE = getApiBaseUrl();
+        
+        // 設定今天日期為預設值
+        document.getElementById('queryDate').valueAsDate = new Date();
+
+        // 模擬資料（示範用）
+        const mockData = {
+            "2025-11-21": [
+                {
+                    message_id: 662,
+                    session_id: "4aedad0c-04fc-4d6b-a28b-3679fea64c90",
+                    role: "llm",
+                    content: "您好！我很抱歉聽到您遇到插座發熱的情況，這確實是一個需要引起重視的問題，您一定感到擔心。\n\n插座發熱的原因可能包括插頭接觸不良、過載或插座本身的老化損壞。這樣的情況可能會導致更嚴重的問題，例如電線過熱，甚至引發火災，因此我們必須小心處理。\n\n我建議您立即停止使用該插座，並請專業的電工來檢查和更換合格的插座，確保線路的安全性和穩定性。這樣可以有效地避免進一步的風險。",
+                    created_at: "2025-11-21T07:38:55.796832+00:00"
+                },
+                {
+                    message_id: 661,
+                    session_id: "4aedad0c-04fc-4d6b-a28b-3679fea64c90",
+                    role: "user",
+                    content: "插座發熱",
+                    created_at: "2025-11-21T07:38:46.41587+00:00"
+                },
+                {
+                    message_id: 660,
+                    session_id: "4aedad0c-04fc-4d6b-a28b-3679fea64c90",
+                    role: "llm",
+                    content: "您好！首先，我很抱歉聽到您遇到了瓦斯洩漏的問題，這樣的情況確實令人擔心，安全是我們最重要的考量。\n\n瓦斯洩漏的可能原因通常是由於瓦斯管線的老化、鏽蝕或損壞所引起的。當您注意到有異味或發現總開關處出現鏽蝕、異音等情況時，這些都是需要立即引起重視的警訊。\n\n在此情況下，我建議您立即通報當地的瓦斯公司，讓專業人員來處理這個問題，切勿嘗試自行拆卸或修理任何設備，以免發生危險。",
+                    created_at: "2025-11-21T07:37:16.19854+00:00"
+                },
+                {
+                    message_id: 659,
+                    session_id: "4aedad0c-04fc-4d6b-a28b-3679fea64c90",
+                    role: "user",
+                    content: "瓦斯洩漏",
+                    created_at: "2025-11-21T07:37:07.721406+00:00"
+                },
+                {
+                    message_id: 658,
+                    session_id: "ebd46e38-a6c0-4486-b3f3-1d07a63a977a",
+                    role: "llm",
+                    content: "您好！我非常理解瓦斯洩漏的情況可能讓您感到不安，這確實是一個需要立即關注的問題。\n\n瓦斯洩漏的原因可能包括瓦斯管線的損壞、鏽蝕或接頭處的問題。特別是如果您聞到異味或發現總開關處有鏽蝕或異音，這都可能是洩漏的跡象。\n\n在這種情況下，我強烈建議您立即通報瓦斯公司進行專業處理，並且切勿自行拆卸或檢查任何設備，以免造成危險。",
+                    created_at: "2025-11-21T07:19:11.579581+00:00"
+                },
+                {
+                    message_id: 657,
+                    session_id: "ebd46e38-a6c0-4486-b3f3-1d07a63a977a",
+                    role: "user",
+                    content: "瓦斯洩漏",
+                    created_at: "2025-11-21T07:19:03.26767+00:00"
+                }
+            ]
+        };
+
+        function formatTime(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleString('zh-TW', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // ==================== 情緒分析輔助函數 ====================
+
+        /**
+         * 渲染情緒標籤
+         * @param {Object} emotionData
+         * @returns {String}
+         */
+        function renderEmotionBadges(emotionData) {
+            if (!emotionData || typeof emotionData !== 'object') return '';
+
+            // 容錯：缺欄位時當作 0
+            const anxiety_level = Number(emotionData.anxiety_level) || 0;
+            const urgency_level = Number(emotionData.urgency_level) || 0;
+            const anger_level = Number(emotionData.anger_level) || 0;
+
+            // 若三值皆為 0 則不渲染
+            if (anxiety_level === 0 && urgency_level === 0 && anger_level === 0) {
+                return '';
+            }
+
+            const badges = [];
+
+            // 不安程度標籤（≥7 顯示）
+            if (anxiety_level >= 7) {
+                const level = anxiety_level >= 9 ? 'high' : 'medium';
+                badges.push(`
+                    <span class="emotion-badge anxiety-${level}" 
+                          title="不安程度: ${anxiety_level}/10&#13;${emotionData.reasoning || ''}">
+                        😰 不安 ${anxiety_level}
+                    </span>
+                `);
+            }
+
+            // 急迫感標籤（≥8 顯示）
+            if (urgency_level >= 8) {
+                const level = urgency_level >= 9 ? 'high' : 'medium';
+                badges.push(`
+                    <span class="emotion-badge urgency-${level}" 
+                          title="急迫感: ${urgency_level}/10&#13;${emotionData.reasoning || ''}">
+                        ⚡ 緊急 ${urgency_level}
+                    </span>
+                `);
+            }
+
+            // 生氣指數標籤（≥6 顯示）
+            if (anger_level >= 6) {
+                const level = anger_level >= 8 ? 'high' : 'medium';
+                badges.push(`
+                    <span class="emotion-badge anger-${level}" 
+                          title="生氣指數: ${anger_level}/10&#13;${emotionData.reasoning || ''}">
+                        😠 不滿 ${anger_level}
+                    </span>
+                `);
+            }
+
+            return badges.length > 0
+                ? `<div class="emotion-badges">${badges.join('')}</div>`
+                : '';
+        }
+
+        /**
+         * 安全編碼 emotion_data 供 data-* 使用（避免換行/引號破壞 DOM）
+         * @param {Object} emotionData
+         * @returns {String}
+         */
+        function encodeEmotionData(emotionData) {
+            try {
+                return encodeURIComponent(JSON.stringify(emotionData));
+            } catch (e) {
+                return '';
+            }
+        }
+
+        /**
+         * 還原 data-* 中的 emotion_data
+         * @param {String} encoded
+         * @returns {Object|null}
+         */
+        function decodeEmotionData(encoded) {
+            if (!encoded) return null;
+            try {
+                return JSON.parse(decodeURIComponent(encoded));
+            } catch (e) {
+                return null;
+            }
+        }
+
+        /**
+         * 情緒篩選（列表用）
+         * @param {String} filterType
+         */
+        function filterByEmotion(filterType) {
+            const messageCards = document.querySelectorAll('.message-card.user');
+
+            messageCards.forEach(card => {
+                const emotionDataAttr = card.dataset.emotion;
+
+                if (filterType === 'all') {
+                    card.style.display = 'block';
+                    return;
+                }
+
+                if (!emotionDataAttr) {
+                    card.style.display = 'none';
+                    return;
+                }
+
+                const emotionData = decodeEmotionData(emotionDataAttr);
+                if (!emotionData) {
+                    card.style.display = 'none';
+                    return;
+                }
+
+                let shouldShow = false;
+                switch (filterType) {
+                    case 'high':
+                        shouldShow = (
+                            emotionData.anxiety_level >= 8 ||
+                            emotionData.urgency_level >= 8 ||
+                            emotionData.anger_level >= 8
+                        );
+                        break;
+                    case 'urgent':
+                        shouldShow = emotionData.urgency_level === 10;
+                        break;
+                    case 'angry':
+                        shouldShow = emotionData.anger_level >= 7;
+                        break;
+                    default:
+                        shouldShow = true;
+                }
+
+                card.style.display = shouldShow ? 'block' : 'none';
+            });
+        }
+
+        /**
+         * 計算情緒統計資料（僅計算具有 emotion_data 的使用者訊息）
+         * @param {Array} messages
+         * @returns {Object}
+         */
+        function calculateEmotionStats(messages) {
+            const userMessages = (messages || []).filter(m => m.role === 'user' && m.emotion_data);
+
+            if (userMessages.length === 0) {
+                return {
+                    avg_anxiety: '-',
+                    avg_urgency: '-',
+                    avg_anger: '-',
+                    high_emotion_count: 0,
+                    max_anxiety: 0,
+                    max_urgency: 0,
+                    max_anger: 0,
+                    analyzed_count: 0
+                };
+            }
+
+            let totalAnxiety = 0;
+            let totalUrgency = 0;
+            let totalAnger = 0;
+            let maxAnxiety = 0;
+            let maxUrgency = 0;
+            let maxAnger = 0;
+            let highEmotionCount = 0;
+
+            userMessages.forEach(msg => {
+                const { anxiety_level = 0, urgency_level = 0, anger_level = 0 } = msg.emotion_data;
+
+                totalAnxiety += anxiety_level;
+                totalUrgency += urgency_level;
+                totalAnger += anger_level;
+
+                if (anxiety_level > maxAnxiety) maxAnxiety = anxiety_level;
+                if (urgency_level > maxUrgency) maxUrgency = urgency_level;
+                if (anger_level > maxAnger) maxAnger = anger_level;
+
+                if (anxiety_level >= 8 || urgency_level >= 8 || anger_level >= 8) {
+                    highEmotionCount += 1;
+                }
+            });
+
+            const count = userMessages.length;
+
+            return {
+                avg_anxiety: (totalAnxiety / count).toFixed(1),
+                avg_urgency: (totalUrgency / count).toFixed(1),
+                avg_anger: (totalAnger / count).toFixed(1),
+                high_emotion_count: highEmotionCount,
+                max_anxiety: maxAnxiety,
+                max_urgency: maxUrgency,
+                max_anger: maxAnger,
+                analyzed_count: count
+            };
+        }
+
+        /**
+         * 更新情緒統計卡片
+         * @param {Object} stats
+         */
+        function updateEmotionStats(stats) {
+            const anxietyEl = document.getElementById('avgAnxiety');
+            const urgencyEl = document.getElementById('avgUrgency');
+            const angerEl = document.getElementById('avgAnger');
+            const analyzedEl = document.getElementById('analyzedCount');
+            const highEmotionEl = document.getElementById('highEmotionCount');
+            const maxAngerEl = document.getElementById('maxAnger');
+
+            if (anxietyEl) anxietyEl.textContent = stats.avg_anxiety;
+            if (urgencyEl) urgencyEl.textContent = stats.avg_urgency;
+            if (angerEl) angerEl.textContent = stats.avg_anger;
+            if (analyzedEl) analyzedEl.textContent = stats.analyzed_count;
+            if (highEmotionEl) highEmotionEl.textContent = stats.high_emotion_count;
+            if (maxAngerEl) maxAngerEl.textContent = stats.max_anger;
+        }
+
+        function searchMessages() {
+            const dateInput = document.getElementById('queryDate').value;
+            const messageList = document.getElementById('messageList');
+            const statsSection = document.getElementById('statsSection');
+
+            // 顯示載入中
+            messageList.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在查詢資料...</p>
+                </div>
+            `;
+
+            // 模擬 API 呼叫延遲
+            setTimeout(() => {
+                // 取得模擬資料
+                const data = mockData[dateInput] || [];
+
+                if (data.length === 0) {
+                    // 無資料狀態
+                    messageList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📭</div>
+                            <h3>查無資料</h3>
+                            <p>${dateInput} 沒有住宅維修對話記錄</p>
+                        </div>
+                    `;
+                    statsSection.style.display = 'none';
+                } else {
+                    // 計算統計資訊
+                    const userCount = data.filter(m => m.role === 'user').length;
+                    const llmCount = data.filter(m => m.role === 'llm').length;
+                    const sessionCount = new Set(data.map(m => m.session_id)).size;
+
+                    // 更新統計
+                    document.getElementById('totalCount').textContent = data.length;
+                    document.getElementById('userCount').textContent = userCount;
+                    document.getElementById('llmCount').textContent = llmCount;
+                    document.getElementById('sessionCount').textContent = sessionCount;
+                    statsSection.style.display = 'block';
+
+                    // 排序資料：先按 session_id DESC，再按 created_at ASC
+                    const sortedData = data.sort((a, b) => {
+                        // 先比較 session_id (降冪)
+                        if (a.session_id > b.session_id) return -1;
+                        if (a.session_id < b.session_id) return 1;
+                        
+                        // session_id 相同時，按時間升冪排序
+                        return new Date(a.created_at) - new Date(b.created_at);
+                    });
+
+                    // 按 session_id 分組
+                    const sessionGroups = {};
+                    sortedData.forEach(msg => {
+                        if (!sessionGroups[msg.session_id]) {
+                            sessionGroups[msg.session_id] = [];
+                        }
+                        sessionGroups[msg.session_id].push(msg);
+                    });
+
+                    // 渲染訊息列表（按會話分組）
+                    messageList.innerHTML = Object.entries(sessionGroups).map(([sessionId, messages]) => {
+                        const firstMsg = messages[0];
+                        const lastMsg = messages[messages.length - 1];
+                        
+                        const messagesHtml = messages.map(msg => {
+                            // ✅ 支援新格式：直接檢查 role === 'Humans'
+                            // 📦 向下相容：檢查內容前綴（舊格式）
+                            let isOperatorReply = (msg.role === 'Humans');  // 新格式
+                            if (!isOperatorReply && msg.content) {  // 舊格式
+                                isOperatorReply = (
+                                    msg.content.startsWith('[OPERATOR:') ||
+                                    msg.content.startsWith('[HUMAN_REPLY]') ||
+                                    msg.content.startsWith('[客服')
+                                );
+                            }
+                            
+                            // 提取客服名稱（優先 [OPERATOR:name]）
+                            let operatorName = '客服人員';
+                            if (msg.content && msg.content.startsWith('[OPERATOR:')) {
+                                const match = msg.content.match(/^\[OPERATOR:([^\]]+)\]/);
+                                if (match) operatorName = match[1];
+                            } else if (msg.content && msg.content.startsWith('[客服')) {
+                                const match = msg.content.match(/^\[客服\s+([^\]]+)\]/);
+                                if (match) operatorName = match[1];
+                            }
+                            
+                            const displayRole = msg.role === 'user' ? 'user' : (isOperatorReply ? 'Humans' : 'llm');
+                            const roleIcon = displayRole === 'user' ? '👤' : (displayRole === 'Humans' ? '👩‍💼' : '🤖');
+                            const roleText = displayRole === 'user' ? '使用者' : (displayRole === 'Humans' ? operatorName : '系統回覆');
+                            
+                            // 情緒標籤與資料（僅使用者訊息）
+                            const emotionBadges = (displayRole === 'user' && msg.emotion_data)
+                                ? renderEmotionBadges(msg.emotion_data)
+                                : '';
+                            const emotionDataAttr = msg.emotion_data ? encodeEmotionData(msg.emotion_data) : '';
+                            
+                            // 移除所有前綴標記
+                            let cleanContent = msg.content || '';
+                            cleanContent = cleanContent
+                                .replace(/^\[OPERATOR:[^\]]+\]\s*/, '')  // [OPERATOR:xxx]
+                                .replace(/^\[HUMAN_REPLY\]\s*/, '')        // [HUMAN_REPLY]
+                                .replace(/^\[客服\s+[^\]]+\]\s*/, '');     // [客服 xxx]
+                            const displayContent = escapeHtml(cleanContent);
+                            
+                            return `
+                            <div class="message-card ${msg.role}" 
+                                 data-emotion='${emotionDataAttr}'>
+                                <div class="message-header">
+                                    <div class="message-role">
+                                        <span class="icon">${roleIcon}</span>
+                                        <span>${roleText}</span>
+                                        ${emotionBadges}
+                                    </div>
+                                    <div class="message-meta">
+                                        <span>🆔 #${msg.message_id}</span>
+                                        <span>⏰ ${formatTime(msg.created_at)}</span>
+                                    </div>
+                                </div>
+                                <div class="message-content">${displayContent}</div>
+                            </div>
+                        `;
+                        }).join('');
+                        
+                        return `
+                            <div class="session-group" data-session-id="${sessionId}">
+                                <div class="session-header">
+                                    <div class="session-id">
+                                        <span>🔗</span>
+                                        <span>會話 ${sessionId.substring(0, 8)}</span>
+                                        <span class="session-status ai-mode">🤖 AI 模式</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div class="session-time">
+                                            ${formatTime(firstMsg.created_at).split(' ')[1]} ~ ${formatTime(lastMsg.created_at).split(' ')[1]}
+                                        </div>
+                                        <button class="btn-takeover" onclick="takeoverSession('${sessionId}')">
+                                            💬 接手對話
+                                        </button>
+                                    </div>
+                                </div>
+                                ${messagesHtml}
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                // 重置篩選器
+                const filterSelect = document.getElementById('emotionFilter');
+                if (filterSelect) filterSelect.value = 'all';
+            }, 500);
+        }
+
+        // 實際使用時的 API 呼叫
+        async function searchMessagesReal() {
+            const dateInput = document.getElementById('queryDate').value;
+            const messageList = document.getElementById('messageList');
+            const statsSection = document.getElementById('statsSection');
+
+            messageList.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在查詢資料...</p>
+                </div>
+            `;
+
+            try {
+                // 呼叫後端 API（使用相對路徑，自動適配開發/生產環境）
+                const apiUrl = `${API_BASE}/api/repair/chat_logs?date=${dateInput}`;
+                const response = await fetch(apiUrl);
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.detail || '查詢失敗');
+                }
+
+                const data = result.messages || [];
+
+                if (data.length === 0) {
+                    messageList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📭</div>
+                            <h3>查無資料</h3>
+                            <p>${dateInput} 沒有住宅維修對話記錄</p>
+                        </div>
+                    `;
+                    statsSection.style.display = 'none';
+                } else {
+                    // 更新統計資訊
+                    document.getElementById('totalCount').textContent = result.total_count || data.length;
+                    document.getElementById('userCount').textContent = result.user_count || 0;
+                    document.getElementById('llmCount').textContent = result.llm_count || 0;
+                    document.getElementById('sessionCount').textContent = result.session_count || 0;
+
+                    // 計算並更新情緒統計
+                    const emotionStats = calculateEmotionStats(data);
+                    updateEmotionStats(emotionStats);
+                    statsSection.style.display = 'block';
+
+                    // 按 session_id 分組
+                    const sessionGroups = {};
+                    data.forEach(msg => {
+                        if (!sessionGroups[msg.session_id]) {
+                            sessionGroups[msg.session_id] = [];
+                        }
+                        sessionGroups[msg.session_id].push(msg);
+                    });
+
+                    // 對每個會話內的訊息按時間排序（早→晚），然後按會話最後訊息時間排序（新→舊）
+                    const sortedSessions = Object.entries(sessionGroups)
+                        .map(([sessionId, messages]) => {
+                            // 會話內訊息按時間升序排列（對話順序）
+                            messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                            return [sessionId, messages];
+                        })
+                        .sort((a, b) => {
+                            // 會話按最後訊息時間降序排列（最新會話在前）
+                            const lastTimeA = new Date(a[1][a[1].length - 1].created_at);
+                            const lastTimeB = new Date(b[1][b[1].length - 1].created_at);
+                            return lastTimeB - lastTimeA;
+                        });
+
+                    // 渲染訊息列表
+                    messageList.innerHTML = sortedSessions.map(([sessionId, messages]) => {
+                        const firstMsg = messages[0];
+                        const lastMsg = messages[messages.length - 1];
+                        
+                        const messagesHtml = messages.map(msg => {
+                            // ✅ 支援新格式：直接檢查 role === 'Humans'
+                            // 📦 向下相容：檢查內容前綴（舊格式）
+                            let isOperatorReply = (msg.role === 'Humans');  // 新格式
+                            if (!isOperatorReply && msg.content) {  // 舊格式
+                                isOperatorReply = (
+                                    msg.content.startsWith('[OPERATOR:') ||
+                                    msg.content.startsWith('[HUMAN_REPLY]') ||
+                                    msg.content.startsWith('[客服')
+                                );
+                            }
+                            
+                            // 提取客服名稱（優先 [OPERATOR:name]）
+                            let operatorName = '客服人員';
+                            if (msg.content && msg.content.startsWith('[OPERATOR:')) {
+                                const match = msg.content.match(/^\[OPERATOR:([^\]]+)\]/);
+                                if (match) operatorName = match[1];
+                            } else if (msg.content && msg.content.startsWith('[客服')) {
+                                const match = msg.content.match(/^\[客服\s+([^\]]+)\]/);
+                                if (match) operatorName = match[1];
+                            }
+                            
+                            const displayRole = msg.role === 'user' ? 'user' : (isOperatorReply ? 'Humans' : 'llm');
+                            const roleIcon = displayRole === 'user' ? '👤' : (displayRole === 'Humans' ? '👩‍💼' : '🤖');
+                            const roleText = displayRole === 'user' ? '使用者' : (displayRole === 'Humans' ? operatorName : '系統回覆');
+                            
+                            // 情緒標籤與資料（僅使用者訊息）
+                            const emotionBadges = (displayRole === 'user' && msg.emotion_data)
+                                ? renderEmotionBadges(msg.emotion_data)
+                                : '';
+                            const emotionDataAttr = msg.emotion_data ? encodeEmotionData(msg.emotion_data) : '';
+                            
+                            // 移除所有前綴標記
+                            let cleanContent = msg.content || '';
+                            cleanContent = cleanContent
+                                .replace(/^\[OPERATOR:[^\]]+\]\s*/, '')  // [OPERATOR:xxx]
+                                .replace(/^\[HUMAN_REPLY\]\s*/, '')        // [HUMAN_REPLY]
+                                .replace(/^\[客服\s+[^\]]+\]\s*/, '');     // [客服 xxx]
+                            const displayContent = escapeHtml(cleanContent);
+                            
+                            return `
+                            <div class="message-card ${msg.role}" 
+                                 data-emotion='${emotionDataAttr}'>
+                                <div class="message-header">
+                                    <div class="message-role">
+                                        <span class="icon">${roleIcon}</span>
+                                        <span>${roleText}</span>
+                                        ${emotionBadges}
+                                    </div>
+                                    <div class="message-meta">
+                                        <span>🆔 #${msg.message_id}</span>
+                                        <span>⏰ ${formatTime(msg.created_at)}</span>
+                                    </div>
+                                </div>
+                                <div class="message-content">${displayContent}</div>
+                            </div>
+                        `;
+                        }).join('');
+                        
+                        return `
+                            <div class="session-group" data-session-id="${sessionId}">
+                                <div class="session-header">
+                                    <div class="session-id">
+                                        <span>🔗</span>
+                                        <span>會話 ${sessionId.substring(0, 8)}</span>
+                                        <span class="session-status ai-mode">🤖 AI 模式</span>
+                                    </div>
+                                    <div class="session-time">
+                                        ${formatTime(firstMsg.created_at).split(' ')[1]} ~ ${formatTime(lastMsg.created_at).split(' ')[1]}
+                                    </div>
+                                    <button class="btn-takeover" onclick="takeoverSession('${sessionId}')">
+                                        💬 接手對話
+                                    </button>
+                                </div>
+                                ${messagesHtml}
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                // 重置篩選器
+                const filterSelect = document.getElementById('emotionFilter');
+                if (filterSelect) filterSelect.value = 'all';
+            } catch (error) {
+                messageList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">❌</div>
+                        <h3>查詢錯誤</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                statsSection.style.display = 'none';
+            }
+        }
+
+        // 使用真實 API
+        function searchMessages() {
+            searchMessagesReal();
+        }
+
+        // ==================== 對話視窗功能 ====================
+        
+        let currentSessionId = '';
+        let currentMode = 'ai'; // 'ai' or 'manual'
+        let operatorName = localStorage.getItem('operator_name') || '客服人員';
+        let operatorId = localStorage.getItem('operator_id') || 'admin';
+        let pollingInterval = null;
+        let lastMessageCount = 0; // 記錄上次訊息數量
+
+        // 接手對話
+        async function takeoverSession(sessionId) {
+            if (!confirm('確定要接手此對話嗎？\n接手後客戶將看到真人客服回覆。')) {
+                return;
+            }
+
+            currentSessionId = sessionId;
+
+            try {
+                // 呼叫 API 切換為人工模式
+                const response = await fetch(`${API_BASE}/api/repair/manual_mode`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        manual_mode: true,
+                        operator_id: operatorId,
+                        operator_name: operatorName
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || '接手失敗');
+                }
+
+                // 更新列表狀態
+                updateSessionCardStatus(sessionId, true);
+
+                // 開啟對話視窗
+                await openConversationModal(sessionId);
+
+                // 設定為人工模式
+                setManualMode();
+
+                // 開始輪詢新訊息
+                startPolling(sessionId);
+
+                showNotification('success', '✅ 已成功接手對話');
+
+            } catch (error) {
+                console.error('Takeover failed:', error);
+                showNotification('error', '❌ 接手失敗: ' + error.message);
+            }
+        }
+
+        // 開啟對話視窗
+        async function openConversationModal(sessionId) {
+            currentSessionId = sessionId;
+            document.getElementById('modal-session-id').textContent = `Session: ${sessionId.substring(0, 16)}`;
+
+            // 顯示 modal
+            document.getElementById('conversation-modal').classList.add('active');
+            showOverlay();
+
+            // 載入訊息
+            await loadChatMessages(sessionId);
+        }
+
+        // 載入聊天訊息（支援靜默更新）
+        async function loadChatMessages(sessionId, silent = false) {
+            const messagesList = document.getElementById('chat-messages-list');
+            
+            // 首次載入顯示 loading，輪詢更新不顯示
+            if (!silent) {
+                messagesList.innerHTML = '<div class="loading"><div class="spinner"></div><p>載入訊息中...</p></div>';
+            }
+
+            try {
+                // 呼叫 API 取得訊息
+                const response = await fetch(`${API_BASE}/api/repair/session/${sessionId}/messages?limit=100`);
+                
+                if (!response.ok) {
+                    throw new Error('載入訊息失敗');
+                }
+
+                const data = await response.json();
+                const messages = data.messages || [];
+
+                // 靜默模式：只在訊息數量改變時更新
+                if (silent && messages.length === lastMessageCount) {
+                    return; // 沒有新訊息，不更新 DOM
+                }
+
+                lastMessageCount = messages.length;
+
+                if (messages.length === 0) {
+                    messagesList.innerHTML = '<div class="empty-state"><div class="icon">💬</div><p>尚無訊息</p></div>';
+                    return;
+                }
+
+                // 保存當前滾動位置
+                const wasScrolledToBottom = messagesList.scrollHeight - messagesList.scrollTop <= messagesList.clientHeight + 50;
+
+                // 渲染訊息
+                renderChatMessages(messages);
+
+                // 如果之前在底部，保持滾動到底部
+                if (wasScrolledToBottom || !silent) {
+                    setTimeout(() => {
+                        messagesList.scrollTop = messagesList.scrollHeight;
+                    }, 50);
+                }
+
+            } catch (error) {
+                console.error('Load messages failed:', error);
+                if (!silent) {
+                    messagesList.innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>載入失敗: ${error.message}</p></div>`;
+                }
+            }
+        }
+
+        // 渲染聊天訊息
+        function renderChatMessages(messages) {
+            const messagesList = document.getElementById('chat-messages-list');
+            
+            messagesList.innerHTML = messages.map(msg => {
+                if (msg.role === 'user') {
+                    const emotionBadgesHtml = msg.emotion_data
+                        ? renderEmotionBadges(msg.emotion_data)
+                        : '';
+
+                    return `
+                        <div class="chat-message user-msg">
+                            <div class="chat-message-content">
+                                ${emotionBadgesHtml ? `<div style="margin-bottom: 8px;">${emotionBadgesHtml}</div>` : ''}
+                                <div class="chat-bubble">${escapeHtml(msg.content)}</div>
+                                <div class="chat-timestamp">${formatTimeShort(msg.created_at)}</div>
+                            </div>
+                        </div>
+                    `;
+                } else if (msg.role === 'operator' || msg.role === 'Humans') {
+                    // 真人客服回覆
+                    const opName = msg.payload?.operator_name || '客服人員';
+                    return `
+                        <div class="chat-message operator-msg">
+                            <div class="chat-avatar">👩‍💼</div>
+                            <div class="chat-message-content">
+                                <div class="chat-sender-name" style="color: #000;">${escapeHtml(opName)}</div>
+                                <div class="chat-bubble">${escapeHtml(msg.content)}</div>
+                                <div class="chat-timestamp">${formatTimeShort(msg.created_at)}</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // llm 角色：檢查是否為客服回覆（有 [OPERATOR:] 標記）
+                    const isOperatorReply = msg.content && msg.content.startsWith('[OPERATOR:');
+                    
+                    if (isOperatorReply) {
+                        // 真人客服回覆 - 提取客服名稱並移除標記
+                        const match = msg.content.match(/^\[OPERATOR:([^\]]+)\]/);
+                        const opName = match ? match[1] : '客服人員';
+                        const contentWithoutMarker = msg.content.replace(/^\[OPERATOR:[^\]]+\]/, '').trim();
+                        
+                        return `
+                            <div class="chat-message operator-msg">
+                                <div class="chat-avatar">👩‍💼</div>
+                                <div class="chat-message-content">
+                                    <div class="chat-sender-name" style="color: #000;">${escapeHtml(opName)}</div>
+                                    <div class="chat-bubble">${escapeHtml(contentWithoutMarker)}</div>
+                                    <div class="chat-timestamp">${formatTimeShort(msg.created_at)}</div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // AI 助手回覆
+                        return `
+                            <div class="chat-message ai-msg">
+                                <div class="chat-avatar">🤖</div>
+                                <div class="chat-message-content">
+                                    <div class="chat-sender-name">AI 助手</div>
+                                    <div class="chat-bubble">${escapeHtml(msg.content)}</div>
+                                    <div class="chat-timestamp">${formatTimeShort(msg.created_at)}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            }).join('');
+
+            // 滾動到底部
+            scrollChatToBottom();
+        }
+
+        // 切換人工模式
+        async function toggleManualMode() {
+            if (currentMode === 'ai') {
+                if (confirm('確定要切換為真人客服模式嗎？')) {
+                    await takeoverSession(currentSessionId);
+                }
+            } else {
+                await releaseManualMode();
+            }
+        }
+
+        // 結束接手
+        async function releaseManualMode() {
+            if (!confirm('確定要結束接手嗎？\n對話將恢復為 AI 自動回覆。')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/repair/manual_mode`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: currentSessionId,
+                        manual_mode: false
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('結束接手失敗');
+                }
+
+                // 更新狀態
+                setAIMode();
+                updateSessionCardStatus(currentSessionId, false);
+
+                // 停止輪詢
+                stopPolling();
+
+                // 插入系統通知
+                insertSystemMessage('對話已恢復為 AI 自動回覆');
+
+                showNotification('success', '✅ 已結束接手');
+
+            } catch (error) {
+                console.error('Release failed:', error);
+                showNotification('error', '❌ 結束接手失敗: ' + error.message);
+            }
+        }
+
+        // 設定為 AI 模式
+        function setAIMode() {
+            currentMode = 'ai';
+            
+            const toggleBtn = document.getElementById('mode-toggle-btn');
+            toggleBtn.classList.remove('active');
+            document.getElementById('mode-icon').textContent = '🤖';
+            document.getElementById('mode-text').textContent = '切換為真人客服';
+            
+            document.getElementById('status-banner').classList.remove('active');
+            
+            document.querySelector('.disabled-hint').style.display = 'block';
+            document.getElementById('chat-input-wrapper').style.display = 'none';
+            document.getElementById('chat-reply-input').disabled = true;
+            document.getElementById('chat-ai-optimize-btn').disabled = true;
+            document.getElementById('chat-send-btn').disabled = true;
+        }
+
+        // 設定為人工模式
+        function setManualMode() {
+            currentMode = 'manual';
+            
+            const toggleBtn = document.getElementById('mode-toggle-btn');
+            toggleBtn.classList.add('active');
+            document.getElementById('mode-icon').textContent = '🟢';
+            document.getElementById('mode-text').textContent = '真人客服中';
+            
+            document.getElementById('status-banner').classList.add('active');
+            
+            document.querySelector('.disabled-hint').style.display = 'none';
+            document.getElementById('chat-input-wrapper').style.display = 'flex';
+            document.getElementById('chat-reply-input').disabled = false;
+            document.getElementById('chat-ai-optimize-btn').disabled = false;
+            document.getElementById('chat-send-btn').disabled = false;
+        }
+
+        // AI 優化回覆
+        async function optimizeReplyWithAI() {
+            const textarea = document.getElementById('chat-reply-input');
+            const originalContent = textarea.value.trim();
+            
+            if (!originalContent) {
+                showNotification('error', '❌ 請先輸入回覆內容');
+                return;
+            }
+
+            const optimizeBtn = document.getElementById('chat-ai-optimize-btn');
+            const sendBtn = document.getElementById('chat-send-btn');
+            
+            try {
+                // 設定 loading 狀態
+                optimizeBtn.disabled = true;
+                optimizeBtn.classList.add('loading');
+                sendBtn.disabled = true;
+                textarea.disabled = true;
+
+                // 呼叫 API
+                const response = await fetch(`${API_BASE}/api/repair/optimize_reply`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        original_text: originalContent,
+                        context: 'repair_customer_service'
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'AI 優化失敗');
+                }
+
+                const data = await response.json();
+                
+                // 取代文字
+                textarea.value = data.optimized_text;
+                
+                // 自動調整高度
+                textarea.style.height = 'auto';
+                textarea.style.height = textarea.scrollHeight + 'px';
+
+                showNotification('success', '✨ AI 優化完成');
+
+            } catch (error) {
+                console.error('AI optimize failed:', error);
+                showNotification('error', '❌ AI 優化失敗: ' + error.message);
+                
+            } finally {
+                // 恢復狀態
+                optimizeBtn.disabled = false;
+                optimizeBtn.classList.remove('loading');
+                sendBtn.disabled = false;
+                textarea.disabled = false;
+                textarea.focus();
+            }
+        }
+
+        // 發送客服回覆
+        async function sendOperatorReply() {
+            const textarea = document.getElementById('chat-reply-input');
+            const content = textarea.value.trim();
+            
+            if (!content) {
+                alert('請輸入回覆內容');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('reply', content);
+                formData.append('operator_id', operatorId);
+                formData.append('operator_name', operatorName);
+
+                const response = await fetch(`${API_BASE}/api/repair/session/${currentSessionId}/reply`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || '發送失敗');
+                }
+
+                // 清空輸入框
+                textarea.value = '';
+
+                // 立即重新載入訊息
+                await loadChatMessages(currentSessionId);
+
+                showNotification('success', '✅ 回覆已送出');
+
+            } catch (error) {
+                console.error('Send reply failed:', error);
+                showNotification('error', '❌ 發送失敗: ' + error.message);
+            }
+        }
+
+        // 更新 session 卡片狀態
+        function updateSessionCardStatus(sessionId, isManual) {
+            const card = document.querySelector(`[data-session-id="${sessionId}"]`);
+            if (!card) return;
+
+            const statusBadge = card.querySelector('.session-status');
+            const button = card.querySelector('.btn-takeover');
+
+            if (isManual) {
+                statusBadge.className = 'session-status manual-mode';
+                statusBadge.textContent = `🟢 真人客服中 (${operatorName})`;
+                
+                button.textContent = '🔄 結束接手';
+                button.className = 'btn-takeover btn-release';
+                button.onclick = () => releaseManualMode();
+            } else {
+                statusBadge.className = 'session-status ai-mode';
+                statusBadge.textContent = '🤖 AI 模式';
+                
+                button.textContent = '💬 接手對話';
+                button.className = 'btn-takeover';
+                button.onclick = () => takeoverSession(sessionId);
+            }
+        }
+
+        // 插入系統訊息
+        function insertSystemMessage(text) {
+            const messagesList = document.getElementById('chat-messages-list');
+            const systemMsg = document.createElement('div');
+            systemMsg.className = 'chat-message system-message';
+            systemMsg.innerHTML = `
+                <div class="system-content">
+                    ${text}
+                    <span class="system-time">${getCurrentTimeShort()}</span>
+                </div>
+            `;
+            messagesList.appendChild(systemMsg);
+            scrollChatToBottom();
+        }
+
+        // 開始輪詢新訊息
+        function startPolling(sessionId) {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            
+            pollingInterval = setInterval(async () => {
+                try {
+                    await loadChatMessages(sessionId, true); // 靜默更新
+                } catch (error) {
+                    console.error('Polling failed:', error);
+                }
+            }, 3000); // 每 3 秒檢查一次
+        }
+
+        // 停止輪詢
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        }
+
+        // 關閉 Modal
+        function closeConversationModal() {
+            document.getElementById('conversation-modal').classList.remove('active');
+            stopPolling();
+            hideOverlay();
+        }
+
+        // 顯示通知
+        function showNotification(type, text) {
+            const notification = document.getElementById('notification');
+            const icon = document.getElementById('notification-icon');
+            const textEl = document.getElementById('notification-text');
+            
+            notification.className = `notification ${type} show`;
+            icon.textContent = type === 'success' ? '✅' : '❌';
+            textEl.textContent = text;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 工具函數
+        function formatTimeShort(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getCurrentTimeShort() {
+            const now = new Date();
+            return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function scrollChatToBottom() {
+            const container = document.getElementById('chat-messages-list');
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 100);
+        }
+
+        // ==================== 簡易開發測試（手動呼叫用） ====================
+        // 這些函數不會自動執行，僅供開發者在 console 手動驗證。
+        function testRenderEmotionBadges() {
+            const result1 = renderEmotionBadges({
+                anxiety_level: 9,
+                urgency_level: 10,
+                anger_level: 3,
+                reasoning: '含緊急關鍵字'
+            });
+            console.assert(result1.includes('不安 9'), 'Render badge 不安 9 應存在');
+            console.assert(result1.includes('緊急 10'), 'Render badge 緊急 10 應存在');
+
+            const result2 = renderEmotionBadges(null);
+            console.assert(result2 === '', 'null 不應渲染徽章');
+
+            const result3 = renderEmotionBadges({ anxiety_level: 0, urgency_level: 0, anger_level: 0 });
+            console.assert(result3 === '', '三項為 0 不應渲染徽章');
+            console.log('✅ testRenderEmotionBadges 通過');
+        }
+
+        function testCalculateEmotionStats() {
+            const messages = [
+                { role: 'user', emotion_data: { anxiety_level: 9, urgency_level: 10, anger_level: 3 } },
+                { role: 'user', emotion_data: { anxiety_level: 5, urgency_level: 6, anger_level: 2 } },
+                { role: 'llm', content: '系統回覆' }
+            ];
+            const stats = calculateEmotionStats(messages);
+            console.assert(stats.analyzed_count === 2, '分析數應為 2');
+            console.assert(stats.avg_anxiety === '7.0', '平均不安應為 7.0');
+            console.assert(stats.high_emotion_count === 1, '高情緒應為 1');
+            console.log('✅ testCalculateEmotionStats 通過');
+        }
+
+        function testFilterByEmotion() {
+            // 建立簡易 DOM
+            const container = document.createElement('div');
+            container.innerHTML = `
+                <div class="message-card user" data-emotion='${encodeEmotionData({ anxiety_level: 9, urgency_level: 10, anger_level: 3 })}'>高風險</div>
+                <div class="message-card user" data-emotion='${encodeEmotionData({ anxiety_level: 3, urgency_level: 5, anger_level: 2 })}'>低風險</div>
+            `;
+            document.body.appendChild(container);
+
+            filterByEmotion('high');
+            const cards = container.querySelectorAll('.message-card.user');
+            console.assert(cards[0].style.display === 'block', '高風險應顯示');
+            console.assert(cards[1].style.display === 'none', '低風險應隱藏');
+
+            // 清理
+            document.body.removeChild(container);
+            console.log('✅ testFilterByEmotion 通過');
+        }
+
+        // 鍵盤事件
+        document.addEventListener('keydown', function(e) {
+            // Esc 關閉 modal
+            if (e.key === 'Escape') {
+                closeConversationModal();
+            }
+            
+            // Ctrl/Cmd + Enter 發送
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                const textarea = document.getElementById('chat-reply-input');
+                if (!textarea.disabled && textarea.value.trim()) {
+                    sendOperatorReply();
+                }
+            }
+        });
+
+        // 點擊背景關閉 modal
+        document.getElementById('conversation-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeConversationModal();
+            }
+        });
+
+        // 點擊遮罩不關閉（防止點擊其他區域）
+        const overlayEl = document.getElementById('global-overlay');
+        if (overlayEl) {
+            overlayEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
+
+        // 設定客服名稱（可從 localStorage 讀取）
+        function setOperatorName(name) {
+            operatorName = name;
+            localStorage.setItem('operator_name', name);
+        }
+        
+        // 🆕 載入聊天記錄（自動載入今天的資料）
+        async function loadChatLogs() {
+            // 設定日期為今天
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('queryDate');
+            if (dateInput) {
+                dateInput.value = today;
+            }
+            
+            // 呼叫搜尋函數
+            if (typeof searchMessagesReal === 'function') {
+                await searchMessagesReal();
+            } else {
+                console.error('❌ searchMessagesReal 函數不存在');
+            }
+        }
+        
+        // 🆕 頁面載入時自動查詢今天的對話記錄
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('🔍 自動載入今天的對話記錄...');
+            loadChatLogs();
+        });
+
+        // ===== 全頁遮罩控制（客服視窗開啟時鎖定背景） =====
+        const globalOverlay = document.getElementById('global-overlay');
+        const pageContainer = document.querySelector('.container');
+
+        function showOverlay() {
+            if (globalOverlay) globalOverlay.classList.add('active');
+            document.body.classList.add('modal-locked');
+            if (pageContainer) {
+                pageContainer.setAttribute('aria-hidden', 'true');
+                pageContainer.setAttribute('inert', '');
+            }
+        }
+
+        function hideOverlay() {
+            if (globalOverlay) globalOverlay.classList.remove('active');
+            document.body.classList.remove('modal-locked');
+            if (pageContainer) {
+                pageContainer.removeAttribute('aria-hidden');
+                pageContainer.removeAttribute('inert');
+            }
+        }
+    </script>
+
+    <!-- 通知元件 -->
+    <div id="notification" class="notification">
+        <span id="notification-icon" class="notification-icon"></span>
+        <span id="notification-text" class="notification-text"></span>
+    </div>
+
+    <!-- 全頁遮罩：客服對話視窗開啟時鎖定背景 -->
+    <div class="global-overlay" id="global-overlay"></div>
+</body>
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>實際流程測試 - 意圖檢測</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-case {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            margin: 10px 0;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .log-line {
+            margin: 3px 0;
+            padding: 2px 0;
+        }
+        .success { color: #89d185; }
+        .error { color: #f48771; }
+        .info { color: #6fb3d2; }
+        .warn { color: #dcdcaa; }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a9e;
+        }
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .result.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        .result.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 實際流程測試 - 意圖檢測</h1>
+    
+    <div class="test-case">
+        <h2>測試場景：瓦斯洩漏 → 公司地址 → 瓦斯洩漏 → 插座發熱</h2>
+        <button onclick="runFullTest()">▶ 執行完整測試</button>
+        <button onclick="clearLog()">🗑 清除日誌</button>
+        <div id="result"></div>
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        // 關鍵字定義（與實際系統一致）
+        const REPAIR_KEYWORDS = [
+            '水龍頭', '滴水', '漏水', '滲水', '馬桶', '堵塞', '不通', '塞住',
+            '熱水器', '點火', '點不著', '忽冷忽熱', '瓦斯', '洩漏', '異味', '鏽蝕',
+            '跳電', '斷電', '漏電', '沒電', '電源', '插座', '發熱',
+            '電燈', '燈泡', '燈管', '嵌燈', '閃爍', '照明',
+            '冷氣', '空調', '不冷', '太冷', '噪音', '震動',
+            '維修', '修理', '報修', '故障', '壞掉', '不能用', '異常'
+        ];
+        
+        const SHOPPING_KEYWORDS = [
+            '買', '購買', '訂購', '下單', '選購',
+            '價格', '多少錢', '費用', '預算',
+            '優惠', '特價', '折扣', '促銷',
+            '推薦', '介紹', '建議',
+            '商品', '產品', '貨', '款式'
+        ];
+        
+        const COMPANY_KEYWORDS = [
+            '公司', '地址', '電話', '聯絡', '營業時間', '服務時間'
+        ];
+        
+        // 模擬系統狀態
+        let currentIntentMode = 'auto';
+        let intentModeLock = 'auto'; // 'auto', 'system', 'manual'
+        const VALID_INTENT_MODES = new Set(['auto', 'shopping', 'repair']);
+        
+        function log(message, type = 'info') {
+            const logEl = document.getElementById('log');
+            const line = document.createElement('div');
+            line.className = `log-line ${type}`;
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            document.getElementById('result').innerHTML = '';
+        }
+        
+        function setIntentMode(mode, reason = '', source = 'system') {
+            if (!mode || !VALID_INTENT_MODES.has(mode)) {
+                mode = 'auto';
+            }
+            const prevMode = currentIntentMode;
+            const prevLock = intentModeLock;
+            
+            const manualLocked = prevLock === 'manual' && prevMode !== 'auto';
+            if (manualLocked && source !== 'manual' && mode !== 'auto') {
+                log(`🔒 [Intent] 手動鎖定 ${prevMode}，忽略切換至 ${mode}`, 'warn');
+                return;
+            }
+            
+            if (mode === 'auto') {
+                currentIntentMode = 'auto';
+                intentModeLock = 'auto';
+                log(`🔓 [Intent] 解除鎖定，切換至 auto 模式`, 'info');
+                return;
+            }
+            
+            if (source === 'manual') {
+                intentModeLock = 'manual';
+            } else if (intentModeLock !== 'manual') {
+                intentModeLock = 'system';
+            }
+            
+            currentIntentMode = mode;
+            log(`🔒 [Intent] setIntentMode: ${mode} (lock: ${intentModeLock}, reason: ${reason})`, 'info');
+        }
+        
+        function detectIntentPure(message) {
+            if (!message) return 'shopping';
+            
+            let repairScore = 0;
+            let shoppingScore = 0;
+            let companyScore = 0;
+            
+            REPAIR_KEYWORDS.forEach(keyword => {
+                if (message.includes(keyword)) repairScore++;
+            });
+            
+            SHOPPING_KEYWORDS.forEach(keyword => {
+                if (message.includes(keyword)) shoppingScore++;
+            });
+            
+            COMPANY_KEYWORDS.forEach(keyword => {
+                if (message.includes(keyword)) companyScore++;
+            });
+            
+            if (companyScore > 0 && companyScore >= repairScore && companyScore >= shoppingScore) {
+                return 'company';
+            } else if (repairScore > shoppingScore && repairScore > 0) {
+                return 'repair';
+            } else if (shoppingScore > 0) {
+                return 'shopping';
+            }
+            
+            return 'shopping';
+        }
+        
+        function detectIntent(message) {
+            const manualLocked = intentModeLock === 'manual' && currentIntentMode !== 'auto';
+            if (manualLocked) {
+                log(`🔒 [detectIntent] 手動鎖定，返回: ${currentIntentMode}`, 'warn');
+                return currentIntentMode;
+            }
+            
+            // 計算意圖分數
+            let repairScore = 0;
+            let shoppingScore = 0;
+            let companyScore = 0;
+            
+            REPAIR_KEYWORDS.forEach(keyword => {
+                if (message.includes(keyword)) repairScore++;
+            });
+            
+            SHOPPING_KEYWORDS.forEach(keyword => {
+                if (message.includes(keyword)) shoppingScore++;
+            });
+            
+            COMPANY_KEYWORDS.forEach(keyword => {
+                if (message.includes(keyword)) companyScore++;
+            });
+            
+            // 判定檢測到的意圖
+            let detectedIntent = 'shopping';
+            if (companyScore > 0 && companyScore >= repairScore && companyScore >= shoppingScore) {
+                detectedIntent = 'company';
+            } else if (repairScore > shoppingScore && repairScore > 0) {
+                detectedIntent = 'repair';
+            } else if (shoppingScore > repairScore && shoppingScore > 0) {
+                detectedIntent = 'shopping';
+            }
+            
+            log(`🎯 [detectIntent] "${message}" | R:${repairScore} S:${shoppingScore} C:${companyScore} → ${detectedIntent} | current:${currentIntentMode} lock:${intentModeLock}`, 'info');
+            
+            // ✅ 系統鎖定時的意圖處理邏輯
+            if (intentModeLock === 'system' && currentIntentMode !== 'auto') {
+                const hasExplicitIntent = 
+                    (detectedIntent === 'repair' && repairScore >= 1) ||
+                    (detectedIntent === 'shopping' && shoppingScore >= 1) ||
+                    (detectedIntent === 'company' && companyScore >= 1);
+                
+                if (hasExplicitIntent) {
+                    if (detectedIntent !== currentIntentMode) {
+                        log(`🔄 [detectIntent] 意圖切換: ${currentIntentMode} → ${detectedIntent}`, 'success');
+                    } else {
+                        log(`✅ [detectIntent] 意圖持續: ${detectedIntent}`, 'success');
+                    }
+                    setIntentMode(detectedIntent, 'explicit-intent', 'system');
+                    return detectedIntent;
+                }
+                
+                log(`🔒 [detectIntent] 保持鎖定: ${currentIntentMode} (無明確關鍵字)`, 'warn');
+                return currentIntentMode;
+            }
+            
+            // auto 模式首次檢測並鎖定
+            if (currentIntentMode === 'auto' && (repairScore > 0 || shoppingScore > 0 || companyScore > 0)) {
+                log(`🆕 [detectIntent] auto 模式首次檢測: ${detectedIntent}`, 'success');
+                setIntentMode(detectedIntent, 'auto-detect', 'system');
+            }
+            
+            return detectedIntent;
+        }
+        
+        function testMessage(message, expectedIntent) {
+            log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, 'info');
+            log(`📝 測試訊息: "${message}"`, 'info');
+            log(`📝 預期意圖: ${expectedIntent}`, 'info');
+            log(`📝 當前狀態: mode=${currentIntentMode}, lock=${intentModeLock}`, 'info');
+            
+            const result = detectIntent(message);
+            const passed = result === expectedIntent;
+            
+            log(`📝 檢測結果: ${result}`, passed ? 'success' : 'error');
+            log(`📝 測試結果: ${passed ? '✅ PASS' : '❌ FAIL'}`, passed ? 'success' : 'error');
+            
+            return passed;
+        }
+        
+        function runFullTest() {
+            clearLog();
+            log('🚀 開始完整測試...', 'info');
+            log('', 'info');
+            
+            // 重置狀態
+            currentIntentMode = 'auto';
+            intentModeLock = 'auto';
+            
+            const results = [];
+            
+            // 測試 1
+            log('═══════════════════════════════════════════', 'info');
+            log('測試 1: 瓦斯洩漏或鏽蝕', 'info');
+            results.push(testMessage('瓦斯洩漏或鏽蝕', 'repair'));
+            
+            // 測試 2
+            log('\n═══════════════════════════════════════════', 'info');
+            log('測試 2: 公司地址', 'info');
+            results.push(testMessage('公司地址', 'company'));
+            
+            // 測試 3
+            log('\n═══════════════════════════════════════════', 'info');
+            log('測試 3: 瓦斯洩漏或鏽蝕（第二次）', 'info');
+            results.push(testMessage('瓦斯洩漏或鏽蝕', 'repair'));
+            
+            // 測試 4 - 關鍵測試
+            log('\n═══════════════════════════════════════════', 'info');
+            log('測試 4: 插座發熱（關鍵測試）', 'info');
+            results.push(testMessage('插座發熱', 'repair'));
+            
+            log('\n', 'info');
+            log('═══════════════════════════════════════════', 'info');
+            log('📊 測試總結', 'info');
+            
+            const passed = results.filter(r => r).length;
+            const total = results.length;
+            const rate = Math.round((passed / total) * 100);
+            
+            log(`總測試數: ${total}`, 'info');
+            log(`通過: ${passed}`, passed === total ? 'success' : 'warn');
+            log(`失敗: ${total - passed}`, total - passed === 0 ? 'success' : 'error');
+            log(`成功率: ${rate}%`, rate === 100 ? 'success' : 'error');
+            
+            const resultEl = document.getElementById('result');
+            if (passed === total) {
+                resultEl.innerHTML = `<div class="result pass">✅ 所有測試通過！(${passed}/${total})</div>`;
+            } else {
+                resultEl.innerHTML = `<div class="result fail">❌ 部分測試失敗！(${passed}/${total})</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

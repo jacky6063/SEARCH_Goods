@@ -1,0 +1,182 @@
+{
+  "company_id": "chuanchi",
+  "locale": "zh-TW",
+  "company_name": "傳啟資訊股份有限公司",
+  "company_name_en": "ChuanChi Information Co., Ltd.",
+  "profile_page_url": "https://www.myqr.com.tw",
+  "established_year": "1993",
+  "overview": "傳啟資訊股份有限公司成立於 1993 年 3 月，近三十年來專注於協助企業構建資訊系統與數位流程，是眾多企業邁向智慧化與整合化的重要夥伴。 公司擁有深厚的軟硬體整合經驗及專業技術團隊，致力於提供完整的解決方案，協助企業提升品牌價值、優化營運效率，達成永續成長的目標。 自創立以來，傳啟資訊從形象網站、物流管理系統與票券系統起家，逐步拓展至會員管理、資安防護、通路與倉儲整合及雲端服務等多元領域。...",
+  "business_scope": [
+    "資訊系統整合",
+    "數位轉型顧問",
+    "智慧化企業方案",
+    "AI 整合應用",
+    "雲端服務平台",
+    "O2O 行銷",
+    "形象網站建置",
+    "電子商務系統",
+    "響應式網站設計 (RWD)",
+    "系統設計與開發",
+    "流程管理系統",
+    "資訊安全整合"
+  ],
+  "services": {
+    "core_services": [
+      {
+        "category": "整體形象網站建置",
+        "description": "為企業形象、餐飲美食、休閒產業、工業產品、工商團體等不同領域量身打造網站，協助建立一致且專業的品牌形象。"
+      },
+      {
+        "category": "電子商務系統",
+        "description": "提供完整的購物平台與後端管理系統，支援線上訂購、金流串接、庫存及物流管理，助企業拓展電商營運版圖。"
+      },
+      {
+        "category": "輔助行銷系統",
+        "description": "整合行動會員、點數與優惠券模組，結合 QRcode 與行動應用，串聯線上線下行銷，強化客戶互動與回流。"
+      },
+      {
+        "category": "系統設計與應用開發",
+        "description": "依據企業需求量身打造軟體，涵蓋資料庫架構、流程管理、資訊安全整合，建立專屬的數位營運工具。"
+      },
+      {
+        "category": "響應式網站設計 (RWD)",
+        "description": "自動適應桌機、平板與手機等裝置，提升載入速度與 SEO 成效，提供使用者流暢的一致體驗。 整合服務項目"
+      }
+    ],
+    "smart_solutions": [
+      "AI 整合應用教學",
+      "形象影音數位創作服務",
+      "智慧客服系統解決方案"
+    ]
+  },
+  "media": {
+    "company_logo": "https://pshop.myqr.com.tw/qrssimage/GoodsPublicImage/4/4685.jpg?46",
+    "introduction_video": "https://youtu.be/E8RfyZoFixY"
+  },
+  "milestones": [
+    {
+      "year": "1993",
+      "event": "公司成立，從形象網站、物流管理系統與票券系統起家"
+    },
+    {
+      "year": "2012",
+      "event": "推出 Just MyQRcode 雲端服務平台，結合條碼會員與行動應用"
+    }
+  ],
+  "keywords": [
+    "傳啟資訊",
+    "資訊系統整合",
+    "數位轉型顧問",
+    "智慧化企業方案",
+    "AI 整合應用",
+    "雲端服務平台",
+    "O2O 行銷",
+    "形象網站建置",
+    "電子商務系統",
+    "響應式網站設計 (RWD)",
+    "系統設計與開發",
+    "流程管理系統",
+    "資訊安全整合",
+    "QRcode 行銷平台",
+    "行動會員系統",
+    "點數與優惠券模組",
+    "金流串接",
+    "庫存與物流管理",
+    "品牌形象設計",
+    "影音數位創作",
+    "智慧客服系統",
+    "數位行銷整合",
+    "客戶關係經營 (CRM)",
+    "使用者體驗優化 (UX/UI)",
+    "網站 SEO 優化",
+    "多裝置操作介面",
+    "智能解決方案"
+  ],
+  "metadata": {
+    "created_at": "2025-11-09",
+    "updated_at": "2025-11-09",
+    "version": "1.0",
+    "data_source": "公司介紹.csv"
+  },
+  "contacts": {
+    "company_phone": "+886-04-27062295",
+    "company_phone_local": "04-27062295",
+    "customer_service_phone": "+886-04-26062295",
+    "customer_service_phone_local": "04-26062295",
+    "address": "台中市河南路二段 262 號 3 樓之 11",
+    "website": "https://www.myqr.com.tw",
+    "service_hours": "週一至週五 09:00-18:00",
+    "service_hours_en": "Monday to Friday 09:00-18:00"
+  },
+  "promotions": [
+    {
+      "title": "聖誕節促銷方案",
+      "description": "女用皮件優惠特價：經典魚兒吊飾實用後背包，前扣式日系簡約後背包，日系耐用前拉鍊後背包，多夾層素雅韓風後背包，手工菱格車線小香風格小方包，小巧可愛風格多拉鍊後背包",
+      "keywords": [
+        "折扣區",
+        "特惠價",
+        "優惠卷"
+      ],
+      "url": "https://s1.myqr.com.tw/NewShop/177/TypeGoods?typeHot=531",
+      "video": "https://youtube.com/shorts/KibeHnMBW1Q?feature=share",
+      "image": "https://pshop.myqr.com.tw/qrssimage/GoodsPublicImage/4/4685.jpg?46"
+    }
+  ],
+  "faq": [
+    {
+      "question": "公司的主要服務項目是什麼？",
+      "answer": "傳啟資訊提供資訊系統整合、數位轉型顧問、電子商務系統、網站建置、智慧客服系統等完整解決方案。",
+      "category": "service",
+      "keywords": [
+        "服務項目",
+        "主要業務",
+        "做什麼",
+        "提供什麼"
+      ]
+    },
+    {
+      "question": "客服電話是幾號？",
+      "answer": "客服電話是 04-26062295，服務時間為週一至週五 09:00-18:00。",
+      "category": "contact",
+      "keywords": [
+        "客服電話",
+        "聯絡電話",
+        "電話",
+        "怎麼聯絡"
+      ]
+    },
+    {
+      "question": "公司地址在哪裡？",
+      "answer": "公司位於台中市河南路二段 262 號 3 樓之 11。",
+      "category": "contact",
+      "keywords": [
+        "地址",
+        "位置",
+        "在哪",
+        "怎麼去"
+      ]
+    },
+    {
+      "question": "公司什麼時候成立的？",
+      "answer": "傳啟資訊成立於 1993 年 3 月，已有超過 30 年的資訊系統整合經驗。",
+      "category": "about",
+      "keywords": [
+        "成立",
+        "歷史",
+        "多久",
+        "什麼時候"
+      ]
+    },
+    {
+      "question": "公司官網在哪裡？",
+      "answer": "公司官網：https://www.myqr.com.tw",
+      "category": "contact",
+      "keywords": [
+        "官網",
+        "網站",
+        "網址",
+        "線上"
+      ]
+    }
+  ]
+}

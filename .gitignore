@@ -1,0 +1,23 @@
+__pycache__/
+.venv/
+.env
+*.pyc
+*.log
+node_modules/
+dist/
+backend/.env
+rewrite.txt
+# 測試和除錯檔案
+backend/debug_*.py
+backend/test_*.py
+backend/backup_test_files/
+backend/server.log
+backend/nohup.out
+playwright-report/
+test-results/
+
+# 測試環境日誌
+logs/*.log
+!logs/.gitkeep
+.env.dev
+backend/.env.dev

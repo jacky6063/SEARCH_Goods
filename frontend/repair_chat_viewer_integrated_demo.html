@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>住宅維修客服資料查詢 - 整合情緒分析 (展示版)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 頁面標題 */
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        /* 查詢條件區 */
+        .query-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .query-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .query-controls label {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .query-controls input[type="date"] {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #333;
+            transition: border-color 0.3s;
+        }
+
+        .query-controls input[type="date"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* ✨ 新增：情緒篩選器 */
+        .emotion-filter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .emotion-filter label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .emotion-filter select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .emotion-filter select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-search {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 統計資訊區 */
+        .stats-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-card .label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        /* ✨ 新增：情緒統計卡片 */
+        .stat-card.emotion-stat {
+            background: white;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+
+        .stat-card.emotion-stat .label {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .stat-card.emotion-stat .value {
+            font-size: 36px;
+            margin-bottom: 5px;
+        }
+
+        .stat-card.emotion-stat.anxiety .value {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.emotion-stat.urgency .value {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.emotion-stat.anger .value {
+            background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.emotion-stat .description {
+            font-size: 11px;
+            color: #999;
+        }
+
+        /* 對話記錄區 */
+        .results-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-header {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        /* 會話分組 */
+        .session-group {
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .session-header {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .session-id {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+
+        .session-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .session-time {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .btn-takeover {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-takeover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        /* 訊息卡片 */
+        .message-card {
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .message-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .message-card.user {
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+            border-left: 5px solid #2196F3;
+        }
+
+        .message-card.llm {
+            background: linear-gradient(135deg, #F5F5F5 0%, #EEEEEE 100%);
+            border-left: 5px solid #9E9E9E;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .message-role {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .message-card.user .message-role {
+            color: #1976D2;
+        }
+
+        .message-card.llm .message-role {
+            color: #616161;
+        }
+
+        .message-role .icon {
+            font-size: 24px;
+        }
+
+        /* ✨ 新增：情緒標籤 */
+        .emotion-badges {
+            display: inline-flex;
+            gap: 6px;
+            margin-left: 10px;
+            flex-wrap: wrap;
+        }
+
+        .emotion-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            cursor: help;
+            transition: transform 0.2s;
+            white-space: nowrap;
+        }
+
+        .emotion-badge:hover {
+            transform: scale(1.05);
+        }
+
+        .emotion-badge.anxiety-high {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: white;
+        }
+
+        .emotion-badge.anxiety-medium {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffc107;
+        }
+
+        .emotion-badge.urgency-high {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            color: white;
+            animation: pulse-urgency 2s infinite;
+        }
+
+        .emotion-badge.urgency-medium {
+            background: #ffe0e0;
+            color: #cc0000;
+            border: 2px solid #ff4444;
+        }
+
+        @keyframes pulse-urgency {
+            0%, 100% { 
+                opacity: 1; 
+                box-shadow: 0 2px 4px rgba(255, 68, 68, 0.3); 
+            }
+            50% { 
+                opacity: 0.85; 
+                box-shadow: 0 4px 12px rgba(255, 68, 68, 0.6); 
+            }
+        }
+
+        .emotion-badge.anger-high {
+            background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+            color: white;
+        }
+
+        .emotion-badge.anger-medium {
+            background: #fce4ec;
+            color: #c2185b;
+            border: 2px solid #e91e63;
+        }
+
+        .message-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .message-content {
+            color: #333;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* 響應式 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .query-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-search {
+                width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .emotion-badges {
+                margin-left: 0;
+                margin-top: 8px;
+            }
+
+            .emotion-badge {
+                font-size: 11px;
+                padding: 3px 10px;
+            }
+
+            .session-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* 功能說明區 */
+        .feature-highlight {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left: 4px solid #2196F3;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .feature-highlight h3 {
+            color: #1976D2;
+            font-size: 16px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-highlight ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .feature-highlight li {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.8;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .feature-highlight li:before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 頁面標題 -->
+        <div class="header">
+            <h1>🏠 住宅維修客服資料查詢<span class="badge">✨ 整合情緒分析</span></h1>
+            <p>查詢指定日期的維修諮詢對話記錄，並自動顯示情緒分析結果</p>
+        </div>
+
+        <!-- 功能說明 -->
+        <div class="feature-highlight">
+            <h3>🎯 整合功能展示</h3>
+            <ul>
+                <li>訊息卡片顯示情緒標籤（不安/急迫/生氣）</li>
+                <li>新增 3 個情緒統計卡片（平均不安/平均急迫/平均生氣）</li>
+                <li>情緒篩選器（可快速篩選高風險訊息）</li>
+                <li>保留所有原有功能（接手對話、AI 優化等）</li>
+            </ul>
+        </div>
+
+        <!-- 查詢條件區 -->
+        <div class="query-section">
+            <div class="query-controls">
+                <label for="queryDate">📅 查詢日期：</label>
+                <input type="date" id="queryDate" value="2025-11-27">
+                
+                <!-- ✨ 新增：情緒篩選器 -->
+                <div class="emotion-filter">
+                    <label for="emotionFilter">🎭 情緒篩選：</label>
+                    <select id="emotionFilter" onchange="filterByEmotion(this.value)">
+                        <option value="all">全部訊息</option>
+                        <option value="high">高風險 (≥8)</option>
+                        <option value="urgent">極緊急 (=10)</option>
+                        <option value="angry">生氣客戶 (≥7)</option>
+                    </select>
+                </div>
+                
+                <button class="btn-search" onclick="showDemo()">🔍 查詢</button>
+            </div>
+        </div>
+
+        <!-- 統計資訊區 -->
+        <div class="stats-section" id="statsSection">
+            <div class="stats-grid">
+                <!-- 原有統計卡片 -->
+                <div class="stat-card">
+                    <div class="label">總訊息數</div>
+                    <div class="value" id="totalCount">8</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">使用者訊息</div>
+                    <div class="value" id="userCount">8</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">系統回覆</div>
+                    <div class="value" id="llmCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">涉及會話</div>
+                    <div class="value" id="sessionCount">2</div>
+                </div>
+                
+                <!-- ✨ 新增：情緒統計卡片 -->
+                <div class="stat-card emotion-stat anxiety">
+                    <div class="label">😰 平均不安</div>
+                    <div class="value" id="avgAnxiety">6.8</div>
+                    <div class="description">分析 <span id="analyzedCount">5</span> 則</div>
+                </div>
+                <div class="stat-card emotion-stat urgency">
+                    <div class="label">⚡ 平均急迫</div>
+                    <div class="value" id="avgUrgency">7.4</div>
+                    <div class="description">高風險 <span id="highEmotionCount">3</span> 則</div>
+                </div>
+                <div class="stat-card emotion-stat anger">
+                    <div class="label">😠 平均生氣</div>
+                    <div class="value" id="avgAnger">4.2</div>
+                    <div class="description">最高值 <span id="maxAnger">9</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 結果顯示區 -->
+        <div class="results-section">
+            <div class="results-header">📝 對話記錄</div>
+            <div id="messageList">
+                <!-- Session 1 -->
+                <div class="session-group">
+                    <div class="session-header">
+                        <div class="session-id">
+                            <span>🔗</span>
+                            <span>會話 abc-1234</span>
+                            <span class="session-status">🤖 AI 模式</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="session-time">10:30 ~ 10:35</div>
+                            <button class="btn-takeover">💬 接手對話</button>
+                        </div>
+                    </div>
+
+                    <!-- Message 1: 極高緊急 -->
+                    <div class="message-card user" data-emotion='{"anxiety_level":9,"urgency_level":10,"anger_level":4}'>
+                        <div class="message-header">
+                            <div class="message-role">
+                                <span class="icon">👤</span>
+                                <span>使用者</span>
+                                <!-- ✨ 情緒標籤 -->
+                                <div class="emotion-badges">
+                                    <span class="emotion-badge anxiety-high" title="不安程度: 9/10">😰 不安 9</span>
+                                    <span class="emotion-badge urgency-high" title="急迫感: 10/10">⚡ 緊急 10</span>
+                                </div>
+                            </div>
+                            <div class="message-meta">
+                                <span>🆔 #1001</span>
+                                <span>⏰ 10:30:15</span>
+                            </div>
+                        </div>
+                        <div class="message-content">
+                            瓦斯洩漏了！聞到很濃的臭味，怎麼辦？家裡有小孩很擔心會爆炸！
+                        </div>
+                    </div>
+
+                    <!-- Message 2: 高度不安 -->
+                    <div class="message-card user" data-emotion='{"anxiety_level":8,"urgency_level":7,"anger_level":2}'>
+                        <div class="message-header">
+                            <div class="message-role">
+                                <span class="icon">👤</span>
+                                <span>使用者</span>
+                                <!-- ✨ 情緒標籤 -->
+                                <div class="emotion-badges">
+                                    <span class="emotion-badge anxiety-high" title="不安程度: 8/10">😰 不安 8</span>
+                                </div>
+                            </div>
+                            <div class="message-meta">
+                                <span>🆔 #1002</span>
+                                <span>⏰ 10:32:40</span>
+                            </div>
+                        </div>
+                        <div class="message-content">
+                            插座突然燒焦了，有煙霧冒出來，我很害怕會不會引發火災...
+                        </div>
+                    </div>
+
+                    <!-- Message 3: 中度情緒 -->
+                    <div class="message-card user" data-emotion='{"anxiety_level":5,"urgency_level":7,"anger_level":3}'>
+                        <div class="message-header">
+                            <div class="message-role">
+                                <span class="icon">👤</span>
+                                <span>使用者</span>
+                                <!-- ✨ 情緒標籤 -->
+                                <div class="emotion-badges">
+                                    <span class="emotion-badge urgency-medium" title="急迫感: 7/10">⚡ 急 7</span>
+                                </div>
+                            </div>
+                            <div class="message-meta">
+                                <span>🆔 #1003</span>
+                                <span>⏰ 10:35:20</span>
+                            </div>
+                        </div>
+                        <div class="message-content">
+                            廁所一直滴水，聲音很吵影響睡眠，可以今天派人來看嗎？
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session 2 -->
+                <div class="session-group">
+                    <div class="session-header">
+                        <div class="session-id">
+                            <span>🔗</span>
+                            <span>會話 def-5678</span>
+                            <span class="session-status">🤖 AI 模式</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="session-time">14:20 ~ 14:28</div>
+                            <button class="btn-takeover">💬 接手對話</button>
+                        </div>
+                    </div>
+
+                    <!-- Message 4: 高度憤怒 -->
+                    <div class="message-card user" data-emotion='{"anxiety_level":4,"urgency_level":6,"anger_level":9}'>
+                        <div class="message-header">
+                            <div class="message-role">
+                                <span class="icon">👤</span>
+                                <span>使用者</span>
+                                <!-- ✨ 情緒標籤 -->
+                                <div class="emotion-badges">
+                                    <span class="emotion-badge anger-high" title="生氣指數: 9/10">😠 憤怒 9</span>
+                                </div>
+                            </div>
+                            <div class="message-meta">
+                                <span>🆔 #2001</span>
+                                <span>⏰ 14:20:10</span>
+                            </div>
+                        </div>
+                        <div class="message-content">
+                            報修三天了都沒人來！漏水越來越嚴重，這服務品質太差了吧！我要投訴！
+                        </div>
+                    </div>
+
+                    <!-- Message 5: 複合情緒 -->
+                    <div class="message-card user" data-emotion='{"anxiety_level":7,"urgency_level":8,"anger_level":6}'>
+                        <div class="message-header">
+                            <div class="message-role">
+                                <span class="icon">👤</span>
+                                <span>使用者</span>
+                                <!-- ✨ 情緒標籤 -->
+                                <div class="emotion-badges">
+                                    <span class="emotion-badge anxiety-high" title="不安程度: 7/10">😰 不安 7</span>
+                                    <span class="emotion-badge urgency-high" title="急迫感: 8/10">⚡ 緊急 8</span>
+                                    <span class="emotion-badge anger-medium" title="生氣指數: 6/10">😠 不滿 6</span>
+                                </div>
+                            </div>
+                            <div class="message-meta">
+                                <span>🆔 #2002</span>
+                                <span>⏰ 14:22:35</span>
+                            </div>
+                        </div>
+                        <div class="message-content">
+                            天花板突然滲水下來！地板都濕了，為什麼之前檢查都說沒問題？現在怎麼辦？
+                        </div>
+                    </div>
+
+                    <!-- Message 6: 中度不安 -->
+                    <div class="message-card user" data-emotion='{"anxiety_level":6,"urgency_level":5,"anger_level":2}'>
+                        <div class="message-header">
+                            <div class="message-role">
+                                <span class="icon">👤</span>
+                                <span>使用者</span>
+                                <!-- ✨ 無達標情緒 -->
+                            </div>
+                            <div class="message-meta">
+                                <span>🆔 #2003</span>
+                                <span>⏰ 14:25:50</span>
+                            </div>
+                        </div>
+                        <div class="message-content">
+                            電燈一直閃爍不穩定，不知道是不是電路有問題？會不會有危險？
+                        </div>
+                    </div>
+
+                    <!-- Message 7: 低度情緒 -->
+                    <div class="message-card user" data-emotion='{}'>
+                        <div class="message-header">
+                            <div class="message-role">
+                                <span class="icon">👤</span>
+                                <span>使用者</span>
+                            </div>
+                            <div class="message-meta">
+                                <span>🆔 #2004</span>
+                                <span>⏰ 14:27:15</span>
+                            </div>
+                        </div>
+                        <div class="message-content">
+                            請問冷氣定期保養大概什麼時候方便安排？謝謝。
+                        </div>
+                    </div>
+
+                    <!-- Message 8: 系統回覆範例 -->
+                    <div class="message-card llm">
+                        <div class="message-header">
+                            <div class="message-role">
+                                <span class="icon">🤖</span>
+                                <span>系統回覆</span>
+                            </div>
+                            <div class="message-meta">
+                                <span>🆔 #2005</span>
+                                <span>⏰ 14:27:45</span>
+                            </div>
+                        </div>
+                        <div class="message-content">
+                            您好！感謝您的詢問。冷氣定期保養我們可以為您安排在下週三或週四，請問您哪個時段比較方便呢？
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 情緒分析功能 ====================
+
+        /**
+         * 情緒篩選功能
+         */
+        function filterByEmotion(filterType) {
+            const messageCards = document.querySelectorAll('.message-card.user');
+            
+            messageCards.forEach(card => {
+                const emotionDataAttr = card.dataset.emotion;
+                
+                if (filterType === 'all') {
+                    card.style.display = 'block';
+                    card.parentElement.style.display = 'block';
+                    return;
+                }
+                
+                if (!emotionDataAttr || emotionDataAttr === '{}') {
+                    card.style.display = 'none';
+                    return;
+                }
+                
+                try {
+                    const emotionData = JSON.parse(emotionDataAttr);
+                    let shouldShow = false;
+                    
+                    switch (filterType) {
+                        case 'high':
+                            // 高風險：任一指標 ≥8
+                            shouldShow = (
+                                emotionData.anxiety_level >= 8 ||
+                                emotionData.urgency_level >= 8 ||
+                                emotionData.anger_level >= 8
+                            );
+                            break;
+                        case 'urgent':
+                            // 極緊急：急迫感 = 10
+                            shouldShow = emotionData.urgency_level === 10;
+                            break;
+                        case 'angry':
+                            // 生氣：生氣指數 ≥7
+                            shouldShow = emotionData.anger_level >= 7;
+                            break;
+                    }
+                    
+                    card.style.display = shouldShow ? 'block' : 'none';
+                } catch (e) {
+                    card.style.display = 'none';
+                }
+            });
+
+            // 檢查每個 session-group 是否有可見的訊息
+            document.querySelectorAll('.session-group').forEach(group => {
+                const visibleMessages = Array.from(group.querySelectorAll('.message-card.user'))
+                    .filter(card => card.style.display !== 'none');
+                
+                if (visibleMessages.length === 0 && filterType !== 'all') {
+                    group.style.display = 'none';
+                } else {
+                    group.style.display = 'block';
+                }
+            });
+        }
+
+        /**
+         * 顯示演示
+         */
+        function showDemo() {
+            // 重置篩選器
+            document.getElementById('emotionFilter').value = 'all';
+            filterByEmotion('all');
+            
+            // 顯示提示
+            alert('✅ 這是整合後的展示效果！\n\n特色功能：\n✨ 訊息卡片顯示情緒標籤\n✨ 新增 3 個情緒統計卡片\n✨ 情緒篩選器可快速篩選\n✨ 保留所有原有功能');
+        }
+
+        // 頁面載入時的動畫效果
+        window.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.message-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.5s ease';
+                
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

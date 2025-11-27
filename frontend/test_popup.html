@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>彈窗功能測試</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 4px;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    .result {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>🧪 住戶端彈窗功能測試</h1>
+  
+  <div class="test-section">
+    <h2>測試 1：檢查前端程式碼</h2>
+    <button onclick="testFrontendCode()">執行測試</button>
+    <div id="result1" class="result"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>測試 2：模擬完整流程</h2>
+    <p>步驟：</p>
+    <ol>
+      <li><button onclick="step1_sendMessage()">1. 住戶發送維修訊息</button></li>
+      <li><button onclick="step2_operatorTakeover()">2. 客服接手對話</button></li>
+      <li><button onclick="step3_operatorReply()">3. 客服發送回覆</button></li>
+      <li><button onclick="step4_checkMessages()">4. 查詢訊息記錄</button></li>
+    </ol>
+    <div id="result2" class="result"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>測試 3：檢查元素綁定</h2>
+    <button onclick="testElementBinding()">執行測試</button>
+    <div id="result3" class="result"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>測試 4：手動觸發彈窗</h2>
+    <p>Session ID: <input type="text" id="sessionInput" placeholder="輸入 session_id" style="width: 300px;"></p>
+    <button onclick="manualTrigger()">觸發彈窗</button>
+    <div id="result4" class="result"></div>
+  </div>
+
+  <script>
+    let currentSession = null;
+    
+    async function testFrontendCode() {
+      const result = document.getElementById('result1');
+      result.innerHTML = '檢查中...\n';
+      
+      try {
+        const response = await fetch('http://localhost:5173/index.html');
+        const html = await response.text();
+        
+        const checks = {
+          'async function sendPopupMessage': html.includes('async function sendPopupMessage()'),
+          'function checkNewMessages': html.includes('async function checkNewMessages'),
+          'function appendPopupMessage': html.includes('function appendPopupMessage'),
+          'fetch repair/chat': html.includes('repair/chat'),
+          'event listener binding': html.includes("popupSendBtn?.addEventListener"),
+          'role mapping (Humans->operator)': html.includes("role === 'Humans'") && html.includes("displayRole = 'operator'"),
+          'role mapping (llm->ai)': html.includes("role === 'llm'") && html.includes("displayRole = 'ai'"),
+        };
+        
+        let output = '前端程式碼檢查結果：\n\n';
+        let allPass = true;
+        
+        for (const [name, pass] of Object.entries(checks)) {
+          output += `${pass ? '✅' : '❌'} ${name}\n`;
+          if (!pass) allPass = false;
+        }
+        
+        output += '\n' + (allPass ? '🎉 所有檢查通過！' : '⚠️ 部分檢查失敗');
+        result.innerHTML = output;
+        result.className = allPass ? 'result success' : 'result error';
+        
+      } catch (error) {
+        result.innerHTML = `❌ 錯誤: ${error.message}`;
+        result.className = 'result error';
+      }
+    }
+    
+    async function step1_sendMessage() {
+      const result = document.getElementById('result2');
+      result.innerHTML = '步驟 1：發送維修訊息...\n';
+      
+      try {
+        const response = await fetch('http://localhost:8000/api/repair/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: '測試：廚房水龍頭漏水',
+            session_id: null,
+            history: [],
+            topn: 3
+          })
+        });
+        
+        const data = await response.json();
+        currentSession = data.session_id;
+        
+        result.innerHTML += `✅ 訊息已發送\n`;
+        result.innerHTML += `Session ID: ${currentSession}\n`;
+        result.innerHTML += `AI 回覆: ${data.reply.substring(0, 50)}...\n`;
+        
+        document.getElementById('sessionInput').value = currentSession;
+        
+      } catch (error) {
+        result.innerHTML += `❌ 錯誤: ${error.message}\n`;
+      }
+    }
+    
+    async function step2_operatorTakeover() {
+      const result = document.getElementById('result2');
+      if (!currentSession) {
+        result.innerHTML += '❌ 請先執行步驟 1\n';
+        return;
+      }
+      
+      result.innerHTML += '\n步驟 2：客服接手...\n';
+      
+      try {
+        const response = await fetch('http://localhost:8000/api/repair/manual_mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: currentSession,
+            manual_mode: true,
+            operator_id: 'TEST001',
+            operator_name: '測試客服'
+          })
+        });
+        
+        const data = await response.json();
+        result.innerHTML += `✅ ${data.message}\n`;
+        
+      } catch (error) {
+        result.innerHTML += `❌ 錯誤: ${error.message}\n`;
+      }
+    }
+    
+    async function step3_operatorReply() {
+      const result = document.getElementById('result2');
+      if (!currentSession) {
+        result.innerHTML += '❌ 請先執行步驟 1\n';
+        return;
+      }
+      
+      result.innerHTML += '\n步驟 3：客服發送回覆...\n';
+      
+      try {
+        const formData = new FormData();
+        formData.append('reply', '您好！我已收到您的問題，師傅會在 30 分鐘內抵達。');
+        formData.append('operator_id', 'TEST001');
+        formData.append('operator_name', '測試客服');
+        
+        const response = await fetch(`http://localhost:8000/api/repair/session/${currentSession}/reply`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        result.innerHTML += `✅ ${data.message}\n`;
+        result.innerHTML += `Message ID: ${data.message_id}\n`;
+        
+      } catch (error) {
+        result.innerHTML += `❌ 錯誤: ${error.message}\n`;
+      }
+    }
+    
+    async function step4_checkMessages() {
+      const result = document.getElementById('result2');
+      if (!currentSession) {
+        result.innerHTML += '❌ 請先執行步驟 1\n';
+        return;
+      }
+      
+      result.innerHTML += '\n步驟 4：查詢訊息記錄...\n';
+      
+      try {
+        const response = await fetch(`http://localhost:8000/api/repair/session/${currentSession}/messages?limit=50`);
+        const data = await response.json();
+        
+        result.innerHTML += `✅ 共 ${data.total_count} 則訊息：\n`;
+        
+        data.messages.forEach((msg, i) => {
+          const icon = msg.role === 'user' ? '👤' : (msg.role === 'Humans' ? '👩‍💼' : '🤖');
+          result.innerHTML += `  ${i+1}. [${icon} ${msg.role}] ${msg.content.substring(0, 40)}...\n`;
+        });
+        
+        result.innerHTML += '\n🎯 現在請開啟 http://localhost:5173 查看彈窗！\n';
+        
+      } catch (error) {
+        result.innerHTML += `❌ 錯誤: ${error.message}\n`;
+      }
+    }
+    
+    function testElementBinding() {
+      const result = document.getElementById('result3');
+      
+      // 在新視窗中開啟並檢查
+      const win = window.open('http://localhost:5173', '_blank');
+      
+      result.innerHTML = `已在新視窗開啟 http://localhost:5173\n\n`;
+      result.innerHTML += `請在該視窗的 Console 中執行以下程式碼：\n\n`;
+      result.innerHTML += `const checks = {\n`;
+      result.innerHTML += `  '彈窗元素': document.getElementById('operatorPopup') !== null,\n`;
+      result.innerHTML += `  '輸入框': document.getElementById('popupInput') !== null,\n`;
+      result.innerHTML += `  '送出按鈕': document.getElementById('popupSendBtn') !== null,\n`;
+      result.innerHTML += `  'sendPopupMessage': typeof sendPopupMessage === 'function',\n`;
+      result.innerHTML += `  'async函數': sendPopupMessage.constructor.name === 'AsyncFunction',\n`;
+      result.innerHTML += `};\n`;
+      result.innerHTML += `console.table(checks);\n\n`;
+      result.innerHTML += `如果全部為 true，表示綁定正常。\n`;
+    }
+    
+    function manualTrigger() {
+      const sessionId = document.getElementById('sessionInput').value.trim();
+      const result = document.getElementById('result4');
+      
+      if (!sessionId) {
+        result.innerHTML = '❌ 請輸入 Session ID';
+        return;
+      }
+      
+      result.innerHTML = `在新視窗的 Console 中執行以下程式碼：\n\n`;
+      result.innerHTML += `// 設定 session 並開始輪詢\n`;
+      result.innerHTML += `currentRepairSession = '${sessionId}';\n`;
+      result.innerHTML += `startRepairSessionPolling('${sessionId}');\n\n`;
+      result.innerHTML += `// 手動觸發彈窗\n`;
+      result.innerHTML += `showOperatorPopup('測試客服', null);\n\n`;
+      result.innerHTML += `// 檢查訊息\n`;
+      result.innerHTML += `loadPopupMessages();\n`;
+      
+      // 開啟視窗
+      window.open('http://localhost:5173#repair', '_blank');
+    }
+  </script>
+</body>
+</html>

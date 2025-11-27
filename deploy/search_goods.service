@@ -1,0 +1,16 @@
+[Unit]
+Description=SEARCH_Goods FastAPI service
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/search_goods
+Environment=PATH=/opt/search_goods/.venv/bin
+ExecStart=/opt/search_goods/.venv/bin/gunicorn -c /opt/search_goods/backend/gunicorn_conf.py app:app
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

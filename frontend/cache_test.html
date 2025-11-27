@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>強制清除快取測試</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+      background: #f5f5f5;
+    }
+    .alert {
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .alert-danger {
+      background: #fee;
+      border: 2px solid #f00;
+      color: #c00;
+    }
+    .alert-success {
+      background: #efe;
+      border: 2px solid #0a0;
+      color: #060;
+    }
+    .alert-warning {
+      background: #ffc;
+      border: 2px solid #fa0;
+      color: #a60;
+    }
+    button {
+      padding: 12px 24px;
+      margin: 10px 5px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    code {
+      background: #333;
+      color: #0f0;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+    .step {
+      margin: 20px 0;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .step h3 {
+      margin-top: 0;
+      color: #2563eb;
+    }
+    pre {
+      background: #333;
+      color: #0f0;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 快取清除驗證頁面</h1>
+  
+  <div id="status" class="alert alert-warning">
+    正在檢查 escapeHtml 函數...
+  </div>
+
+  <div class="step">
+    <h3>步驟 1：立即檢查</h3>
+    <button onclick="checkEscapeHtml()">檢查 escapeHtml 函數</button>
+    <div id="checkResult" style="margin-top: 10px;"></div>
+  </div>
+
+  <div class="step">
+    <h3>步驟 2：強制清除快取（必做）</h3>
+    <p><strong>方法 A：使用快捷鍵（推薦）</strong></p>
+    <ul>
+      <li>Mac: 按住 <code>Cmd + Shift + R</code></li>
+      <li>Windows: 按住 <code>Ctrl + Shift + R</code></li>
+      <li>或 <code>Cmd/Ctrl + Shift + Delete</code> 開啟清除資料對話框</li>
+    </ul>
+
+    <p><strong>方法 B：使用開發者工具</strong></p>
+    <ol>
+      <li>按 F12 開啟開發者工具</li>
+      <li>右鍵點擊重新整理按鈕</li>
+      <li>選擇「清空快取並強制重新整理」</li>
+    </ol>
+
+    <p><strong>方法 C：禁用快取（開發時使用）</strong></p>
+    <ol>
+      <li>按 F12 開啟開發者工具</li>
+      <li>切換到 Network 標籤</li>
+      <li>勾選「Disable cache」</li>
+      <li>保持開發者工具開啟狀態</li>
+    </ol>
+  </div>
+
+  <div class="step">
+    <h3>步驟 3：重新測試</h3>
+    <button onclick="window.location.reload(true)">重新載入此頁面</button>
+    <button onclick="window.open('http://localhost:5173', '_blank')">開啟主頁面</button>
+  </div>
+
+  <div class="step">
+    <h3>步驟 4：驗證主頁面</h3>
+    <p>在主頁面的 Console 執行以下程式碼：</p>
+    <pre>// 檢查 escapeHtml 函數
+console.log('escapeHtml 類型:', typeof escapeHtml);
+
+// 如果顯示 "function" 表示成功
+// 如果顯示 "undefined" 表示快取未清除
+
+// 測試函數
+if (typeof escapeHtml === 'function') {
+  console.log('✅ 測試:', escapeHtml('&lt;test&gt;'));
+} else {
+  console.log('❌ 函數不存在，請清除快取！');
+}</pre>
+  </div>
+
+  <div class="step">
+    <h3>步驟 5：終極方案（如果以上都無效）</h3>
+    <button onclick="addTimestamp()">添加時間戳記繞過快取</button>
+    <p id="timestampResult" style="margin-top: 10px;"></p>
+  </div>
+
+  <script>
+    // 頁面載入時自動檢查
+    window.addEventListener('load', () => {
+      checkEscapeHtml();
+    });
+
+    function checkEscapeHtml() {
+      const statusDiv = document.getElementById('status');
+      const resultDiv = document.getElementById('checkResult');
+      
+      // 檢查本頁面的 index.html 是否有 escapeHtml
+      fetch('http://localhost:5173/index.html')
+        .then(r => r.text())
+        .then(html => {
+          const hasEscapeHtml = html.includes('function escapeHtml');
+          const hasAsync = html.includes('async function sendPopupMessage');
+          const hasCheckNew = html.includes('async function checkNewMessages');
+          
+          let message = '<h4>檢查結果：</h4><ul>';
+          
+          if (hasEscapeHtml) {
+            message += '<li style="color: green;">✅ 服務端有 escapeHtml 函數</li>';
+            statusDiv.className = 'alert alert-success';
+            statusDiv.innerHTML = '✅ <strong>服務端程式碼正常</strong><br>但您的瀏覽器可能還在使用快取版本。';
+          } else {
+            message += '<li style="color: red;">❌ 服務端缺少 escapeHtml 函數</li>';
+            statusDiv.className = 'alert alert-danger';
+            statusDiv.innerHTML = '❌ 服務端程式碼有問題！';
+          }
+          
+          message += hasAsync ? '<li style="color: green;">✅ 服務端有 sendPopupMessage (async)</li>' : '<li style="color: red;">❌ 缺少 sendPopupMessage</li>';
+          message += hasCheckNew ? '<li style="color: green;">✅ 服務端有 checkNewMessages</li>' : '<li style="color: red;">❌ 缺少 checkNewMessages</li>';
+          message += '</ul>';
+          
+          // 檢查當前頁面（測試快取）
+          const currentHasEscape = typeof escapeHtml !== 'undefined';
+          message += '<h4>當前頁面狀態：</h4><ul>';
+          message += currentHasEscape ? 
+            '<li style="color: green;">✅ 當前頁面有 escapeHtml（快取已清除）</li>' :
+            '<li style="color: orange;">⚠️ 當前頁面沒有 escapeHtml（可能是測試頁）</li>';
+          message += '</ul>';
+          
+          if (hasEscapeHtml && !currentHasEscape) {
+            message += '<div style="background: #ffc; padding: 15px; margin-top: 10px; border-radius: 6px;">';
+            message += '<strong>⚠️ 重要：</strong> 服務端有最新程式碼，但您需要清除主頁面的快取！';
+            message += '</div>';
+          }
+          
+          resultDiv.innerHTML = message;
+        })
+        .catch(err => {
+          statusDiv.className = 'alert alert-danger';
+          statusDiv.innerHTML = '❌ 無法連接到服務端: ' + err.message;
+          resultDiv.innerHTML = '<p style="color: red;">檢查失敗：' + err.message + '</p>';
+        });
+    }
+
+    function addTimestamp() {
+      const timestamp = Date.now();
+      const url = `http://localhost:5173/index.html?v=${timestamp}`;
+      const resultDiv = document.getElementById('timestampResult');
+      
+      resultDiv.innerHTML = `
+        <p style="color: green;">✅ 已生成帶時間戳記的網址：</p>
+        <p><a href="${url}" target="_blank" style="color: #2563eb; text-decoration: underline;">${url}</a></p>
+        <p>點擊上方連結開啟，這會繞過快取直接載入最新版本。</p>
+      `;
+      
+      // 自動開啟
+      setTimeout(() => {
+        window.open(url, '_blank');
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
