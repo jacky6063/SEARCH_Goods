@@ -4496,8 +4496,8 @@ let isYtMuted = true;
       messageDiv.className = `popup-message ${displayRole}`;
       
       const roleLabel = role === 'user' ? '👤 您' : (role === 'Humans' || role === 'operator' ? '👩‍💼 客服' : '🤖 AI');
-      // 即時對話區：若後端回傳 emotion_data，使用者泡泡也顯示心情徽章
-      const emotionBadges = renderPopupEmotionBadges(emotion);
+      // 首頁真人客服彈窗：住戶泡泡不顯示心情徽章
+      const emotionBadges = displayRole === 'user' ? '' : renderPopupEmotionBadges(emotion);
       
       messageDiv.innerHTML = `
         <div class="popup-message-role">${roleLabel}</div>

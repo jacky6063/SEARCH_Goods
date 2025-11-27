@@ -1912,13 +1912,15 @@
             
             messagesList.innerHTML = messages.map(msg => {
                 if (msg.role === 'user') {
-                    // 不在管理端即時對話視窗顯示情緒徽章
-                    const emotionBadgesHtml = '';
+                    // 管理端即時對話視窗：住戶泡泡上方顯示心情指數
+                    const emotionBadgesHtml = msg.emotion_data
+                        ? renderEmotionBadges(msg.emotion_data)
+                        : '';
 
                     return `
                         <div class="chat-message user-msg">
                             <div class="chat-message-content">
-                                ${emotionBadgesHtml}
+                                ${emotionBadgesHtml ? `<div style="margin-bottom: 8px;">${emotionBadgesHtml}</div>` : ''}
                                 <div class="chat-bubble">${escapeHtml(msg.content)}</div>
                                 <div class="chat-timestamp">${formatTimeShort(msg.created_at)}</div>
                             </div>
