@@ -548,6 +548,26 @@ SEARCH_Goods 系統 - 前端應用程式
 
     <div class="workspace">
       <aside class="sidebar">
+        <section class="panel-card media-panel" id="mediaPanel">
+          <div class="panel-header">
+            <h2>品牌影音</h2>
+            <span class="panel-subtitle"></span>
+          </div>
+          <div id="youtubeThumbnail" class="youtube-thumbnail" style="display:none;">
+            <img id="thumbnailImg" alt="影片預覽">
+            <div class="play-overlay">
+              <div class="play-button">▶</div>
+              <div class="play-text">點擊播放影片</div>
+            </div>
+          </div>
+          <iframe id="youtubeFrame" title="品牌影片" allow="autoplay; encrypted-media; picture-in-picture; accelerometer; clipboard-write; gyroscope" allowfullscreen playsinline style="display:none;"></iframe>
+          <div class="youtube-controls" id="youtubeControls" style="display:none;">
+            <button id="ytPlayPauseBtn" class="yt-btn" title="播放/暫停">⏸️</button>
+            <button id="ytMuteBtn" class="yt-btn" title="靜音/取消靜音">🔊</button>
+          </div>
+          <div class="placeholder" id="youtubePlaceholder">尚未設定 YouTube 影片連結</div>
+        </section>
+
         <section class="panel-card search-panel" aria-label="商品查詢對話區">
           <div class="panel-header">
             <h2>自然語言查詢</h2>
@@ -574,26 +594,6 @@ SEARCH_Goods 系統 - 前端應用程式
           </div>
           <div id="modeHint" class="mode-lock-hint">自動模式：系統會依訊息內容在商品與維修間切換。</div>
           <div id="status" class="status">小提醒：Shift+Enter 送出、Enter 斷行、Ctrl/Cmd+K 重置、Ctrl/Cmd+Shift+S 語音。</div>
-        </section>
-
-        <section class="panel-card media-panel" id="mediaPanel">
-          <div class="panel-header">
-            <h2>品牌影音</h2>
-            <span class="panel-subtitle"></span>
-          </div>
-          <div id="youtubeThumbnail" class="youtube-thumbnail" style="display:none;">
-            <img id="thumbnailImg" alt="影片預覽">
-            <div class="play-overlay">
-              <div class="play-button">▶</div>
-              <div class="play-text">點擊播放影片</div>
-            </div>
-          </div>
-          <iframe id="youtubeFrame" title="品牌影片" allow="autoplay; encrypted-media; picture-in-picture; accelerometer; clipboard-write; gyroscope" allowfullscreen playsinline style="display:none;"></iframe>
-          <div class="youtube-controls" id="youtubeControls" style="display:none;">
-            <button id="ytPlayPauseBtn" class="yt-btn" title="播放/暫停">⏸️</button>
-            <button id="ytMuteBtn" class="yt-btn" title="靜音/取消靜音">🔊</button>
-          </div>
-          <div class="placeholder" id="youtubePlaceholder">尚未設定 YouTube 影片連結</div>
         </section>
       </aside>
 
