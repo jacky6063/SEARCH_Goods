@@ -1,57 +1,38 @@
 {
   "company_id": "chuanchi",
   "locale": "zh-TW",
-  "company_name": "傳啟資訊股份有限公司",
+  "company_name": "磐鈺建設股份有限公司",
   "company_name_en": "ChuanChi Information Co., Ltd.",
-  "profile_page_url": "https://www.myqr.com.tw",
   "established_year": "1993",
-  "overview": "傳啟資訊股份有限公司成立於 1993 年 3 月，近三十年來專注於協助企業構建資訊系統與數位流程，是眾多企業邁向智慧化與整合化的重要夥伴。 公司擁有深厚的軟硬體整合經驗及專業技術團隊，致力於提供完整的解決方案，協助企業提升品牌價值、優化營運效率，達成永續成長的目標。 自創立以來，傳啟資訊從形象網站、物流管理系統與票券系統起家，逐步拓展至會員管理、資安防護、通路與倉儲整合及雲端服務等多元領域。...",
+  "profile_page_url": "https://www.goldenjade.com.tw",
+  "overview": "公司介紹｜Brand Introduction【品牌理念｜Brand Philosophy】 我們以「自然」作為建築語彙，將土地的脈動、風的方向、光的節奏，轉化為空間的核心設計語言。我們相信，建築不僅是一座物理存在的構造物，而是城市與人之間的媒介，是生活品質的延伸，更是對土地最真誠的回應。 在每一個作品中，我們始終以「讓居住更舒適、更美好」為首要目標。 從建材選擇、工法細節、空間配置、到自然...",
   "business_scope": [
-    "資訊系統整合",
-    "數位轉型顧問",
-    "智慧化企業方案",
-    "AI 整合應用",
-    "雲端服務平台",
-    "O2O 行銷",
-    "形象網站建置",
-    "電子商務系統",
-    "響應式網站設計 (RWD)",
-    "系統設計與開發",
-    "流程管理系統",
-    "資訊安全整合"
+    "磐鈺建設股份有限公司"
   ],
   "services": {
     "core_services": [
       {
-        "category": "整體形象網站建置",
-        "description": "為企業形象、餐飲美食、休閒產業、工業產品、工商團體等不同領域量身打造網站，協助建立一致且專業的品牌形象。"
+        "category": "以人為本",
+        "description": "以生活需求為起點 、打造更貼近人心的空間。"
       },
       {
-        "category": "電子商務系統",
-        "description": "提供完整的購物平台與後端管理系統，支援線上訂購、金流串接、庫存及物流管理，助企業拓展電商營運版圖。"
+        "category": "提升幸福",
+        "description": "透過建築讓居民感受日常中的美好與舒適。"
       },
       {
-        "category": "輔助行銷系統",
-        "description": "整合行動會員、點數與優惠券模組，結合 QRcode 與行動應用，串聯線上線下行銷，強化客戶互動與回流。"
+        "category": "重視自然",
+        "description": "把自然的語彙融入建築 、使生命與環境相互滋養。"
       },
       {
-        "category": "系統設計與應用開發",
-        "description": "依據企業需求量身打造軟體，涵蓋資料庫架構、流程管理、資訊安全整合，建立專屬的數位營運工具。"
-      },
-      {
-        "category": "響應式網站設計 (RWD)",
-        "description": "自動適應桌機、平板與手機等裝置，提升載入速度與 SEO 成效，提供使用者流暢的一致體驗。 整合服務項目"
+        "category": "細節至上",
+        "description": "從工法到材質 、堅持頂級品質與精準設計。"
       }
     ],
-    "smart_solutions": [
-      "AI 整合應用教學",
-      "形象影音數位創作服務",
-      "智慧客服系統解決方案"
-    ]
+    "smart_solutions": []
   },
   "media": {
     "company_logo": "https://pshop.myqr.com.tw/qrssimage/GoodsPublicImage/4/4685.jpg?46",
-    "introduction_video": "https://youtu.be/E8RfyZoFixY"
+    "introduction_video": "https://youtu.be/yddFy483ta8"
   },
   "milestones": [
     {
@@ -64,49 +45,17 @@
     }
   ],
   "keywords": [
-    "傳啟資訊",
-    "資訊系統整合",
-    "數位轉型顧問",
-    "智慧化企業方案",
-    "AI 整合應用",
-    "雲端服務平台",
-    "O2O 行銷",
-    "形象網站建置",
-    "電子商務系統",
-    "響應式網站設計 (RWD)",
-    "系統設計與開發",
-    "流程管理系統",
-    "資訊安全整合",
-    "QRcode 行銷平台",
-    "行動會員系統",
-    "點數與優惠券模組",
-    "金流串接",
-    "庫存與物流管理",
-    "品牌形象設計",
-    "影音數位創作",
-    "智慧客服系統",
-    "數位行銷整合",
-    "客戶關係經營 (CRM)",
-    "使用者體驗優化 (UX/UI)",
-    "網站 SEO 優化",
-    "多裝置操作介面",
-    "智能解決方案"
+    "磐鈺建設股份有限公司"
   ],
   "metadata": {
-    "created_at": "2025-11-09",
-    "updated_at": "2025-11-09",
+    "created_at": "2025-12-02",
+    "updated_at": "2025-12-02",
     "version": "1.0",
     "data_source": "公司介紹.csv"
   },
   "contacts": {
-    "company_phone": "+886-04-27062295",
-    "company_phone_local": "04-27062295",
-    "customer_service_phone": "+886-04-26062295",
-    "customer_service_phone_local": "04-26062295",
-    "address": "台中市河南路二段 262 號 3 樓之 11",
-    "website": "https://www.myqr.com.tw",
-    "service_hours": "週一至週五 09:00-18:00",
-    "service_hours_en": "Monday to Friday 09:00-18:00"
+    "address": "408臺中市南屯區大墩十二街258號",
+    "website": "https://www.goldenjade.com.tw"
   },
   "promotions": [
     {
@@ -117,8 +66,8 @@
         "特惠價",
         "優惠卷"
       ],
-      "url": "https://s1.myqr.com.tw/NewShop/177/TypeGoods?typeHot=531",
-      "video": "https://youtube.com/shorts/KibeHnMBW1Q?feature=share",
+      "url": "https://www.goldenjade.com.tw",
+      "video": "https://youtu.be/yddFy483ta8",
       "image": "https://pshop.myqr.com.tw/qrssimage/GoodsPublicImage/4/4685.jpg?46"
     }
   ],
@@ -147,7 +96,7 @@
     },
     {
       "question": "公司地址在哪裡？",
-      "answer": "公司位於台中市河南路二段 262 號 3 樓之 11。",
+      "answer": "公司位於408臺中市南屯區大墩十二街258號。",
       "category": "contact",
       "keywords": [
         "地址",
@@ -169,7 +118,7 @@
     },
     {
       "question": "公司官網在哪裡？",
-      "answer": "公司官網：https://www.myqr.com.tw",
+      "answer": "公司官網：https://www.goldenjade.com.tw",
       "category": "contact",
       "keywords": [
         "官網",

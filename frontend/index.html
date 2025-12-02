@@ -1646,7 +1646,7 @@ SEARCH_Goods 系統 - 前端應用程式
         const prefix = h(addrMatch[1] || "");
         const rawAddr = addrMatch[2]?.trim() || "";
         if(rawAddr){
-          const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawAddr + " 傳啟資訊")}`;
+          const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawAddr + " 磐鈺建設")}`;
           const safeHref = a(mapUrl);
           const display = h(rawAddr);
           return `${prefix}<a href="${safeHref}" target="_blank" rel="noopener noreferrer" class="inline-link" style="color:#dc2626;text-decoration:none;">${display}</a>`;

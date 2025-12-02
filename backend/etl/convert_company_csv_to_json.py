@@ -106,7 +106,7 @@ class CompanyProfileConverter:
             "smart_solutions": []
         }
         
-        # 定義服務項目的模式
+        # 定義服務項目的模式 (傳啟資訊格式)
         service_patterns = [
             (r'一、整體形象網站建置[：:\s]+([^二]+)', "整體形象網站建置"),
             (r'二、電子商務系統[：:\s]+([^三]+)', "電子商務系統"),
@@ -129,6 +129,21 @@ class CompanyProfileConverter:
         if smart_match:
             smart_text = smart_match.group(1).strip()
             services["smart_solutions"] = [s.strip() for s in smart_text.split('，') if s.strip()]
+        
+        # 如果沒有找到傳啟資訊格式,嘗試提取品牌核心精神(磐鈺建設格式)
+        if not services["core_services"]:
+            core_values_match = re.search(r'【品牌核心精神[^】]*】\s*(.+?)(?=【|$)', description, re.DOTALL)
+            if core_values_match:
+                core_text = core_values_match.group(1).strip()
+                # 分割每個項目 (・開頭)
+                items = re.findall(r'・([^・\n]+)', core_text)
+                for item in items[:4]:  # 最多取4項
+                    parts = item.split('：', 1)
+                    if len(parts) == 2:
+                        services["core_services"].append({
+                            "category": parts[0].strip(),
+                            "description": parts[1].strip()
+                        })
         
         return services
     

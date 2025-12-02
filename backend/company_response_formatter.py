@@ -82,7 +82,7 @@ class CompanyResponseFormatter:
                 "rich_content": None
             }
         
-        lines = ["📞 傳啟資訊聯絡方式\n"]
+        lines = ["📞 磐鈺建設聯絡方式\n"]
         rich_items = []
         
         # 公司電話
@@ -115,7 +115,7 @@ class CompanyResponseFormatter:
             lines.append(f"📍 公司地址：{address}")
             
             # 生成 Google Maps URL
-            maps_query = urllib.parse.quote(f"{address} 傳啟資訊")
+            maps_query = urllib.parse.quote(f"{address} 磐鈺建設")
             maps_url = f"https://www.google.com/maps/search/?api=1&query={maps_query}"
             
             rich_items.append({
@@ -181,7 +181,8 @@ class CompanyResponseFormatter:
         self, 
         services: Dict[str, Any],
         profile_page_url: Optional[str] = None,
-        introduction_video: Optional[str] = None
+        introduction_video: Optional[str] = None,
+        company_name: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         格式化服務項目
@@ -190,6 +191,7 @@ class CompanyResponseFormatter:
             services: 服務項目字典
             profile_page_url: 官方介紹頁面 URL
             introduction_video: 公司介紹影片 URL
+            company_name: 公司名稱
         
         Returns:
             Dict[str, Any]: 包含 text 和 rich_content 的字典
@@ -200,7 +202,10 @@ class CompanyResponseFormatter:
                 "rich_content": None
             }
         
-        lines = ["🏢 傳啟資訊主要服務項目\n"]
+        # 使用傳入的公司名稱,若無則使用預設
+        company_name = company_name or '傳啟資訊'
+        
+        lines = [f"🏢 {company_name}主要服務項目\n"]
         lines.append("我們提供以下專業服務：\n")
         
         # 核心服務
@@ -628,10 +633,12 @@ class CompanyResponseFormatter:
             media = profile_data.get('media', {}) or {}
             profile_url = profile_data.get("profile_page_url") or profile_data.get("contacts", {}).get("website")
             intro_video = media.get("introduction_video") or media.get("introductionVideo")
+            company_name = profile_data.get('company_name')
             return self.format_services(
                 services,
                 profile_page_url=profile_url,
-                introduction_video=intro_video
+                introduction_video=intro_video,
+                company_name=company_name
             )
         
         elif topic == "overview":
