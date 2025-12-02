@@ -1,13 +1,22 @@
 {
   "company_id": "chuanchi",
   "locale": "zh-TW",
-  "company_name": "磐鈺建設股份有限公司",
+  "company_name": "傳啟資訊股份有限公司",
   "company_name_en": "ChuanChi Information Co., Ltd.",
   "established_year": "1993",
   "profile_page_url": "https://www.goldenjade.com.tw",
   "overview": "公司介紹｜Brand Introduction【品牌理念｜Brand Philosophy】 我們以「自然」作為建築語彙，將土地的脈動、風的方向、光的節奏，轉化為空間的核心設計語言。我們相信，建築不僅是一座物理存在的構造物，而是城市與人之間的媒介，是生活品質的延伸，更是對土地最真誠的回應。 在每一個作品中，我們始終以「讓居住更舒適、更美好」為首要目標。 從建材選擇、工法細節、空間配置、到自然...",
   "business_scope": [
-    "磐鈺建設股份有限公司"
+    "磐鈺建設股份有限公司",
+    "以人為本",
+    "提升幸福",
+    "重視自然",
+    "細節至上",
+    "自然語彙建築",
+    "自然共生",
+    "綠建築",
+    "空間設計",
+    "生活品質"
   ],
   "services": {
     "core_services": [
@@ -45,7 +54,16 @@
     }
   ],
   "keywords": [
-    "磐鈺建設股份有限公司"
+    "磐鈺建設股份有限公司",
+    "以人為本",
+    "提升幸福",
+    "重視自然",
+    "細節至上",
+    "自然語彙建築",
+    "自然共生",
+    "綠建築",
+    "空間設計",
+    "生活品質"
   ],
   "metadata": {
     "created_at": "2025-12-02",
@@ -54,8 +72,14 @@
     "data_source": "公司介紹.csv"
   },
   "contacts": {
+    "company_phone": "+886-04-2254-5388",
+    "company_phone_local": "04-2254-5388",
+    "customer_service_phone": "+886-04-2322-8268",
+    "customer_service_phone_local": "04-2322-8268",
     "address": "408臺中市南屯區大墩十二街258號",
-    "website": "https://www.goldenjade.com.tw"
+    "website": "https://www.goldenjade.com.tw",
+    "service_hours": "週一至週五 09:00-18:00",
+    "service_hours_en": "Monday to Friday 09:00-18:00"
   },
   "promotions": [
     {
@@ -85,7 +109,7 @@
     },
     {
       "question": "客服電話是幾號？",
-      "answer": "客服電話是 04-26062295，服務時間為週一至週五 09:00-18:00。",
+      "answer": "客服電話是 04-2322-8268，服務時間為週一至週五 09:00-18:00。",
       "category": "contact",
       "keywords": [
         "客服電話",

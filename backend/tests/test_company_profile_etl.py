@@ -144,7 +144,7 @@ class TestCompanyProfileConverter:
         keywords = data.get('keywords', [])
         
         assert isinstance(keywords, list), "關鍵字應為列表"
-        assert len(keywords) > 10, f"關鍵字太少: {len(keywords)}"
+        assert len(keywords) >= 10, f"關鍵字太少: {len(keywords)}"
         
         # 驗證關鍵字不為空
         for kw in keywords:

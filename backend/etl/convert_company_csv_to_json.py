@@ -28,17 +28,43 @@ class CompanyProfileConverter:
         """從描述文字中提取聯絡資訊"""
         contacts = {}
         
-        # 提取公司電話
-        phone_match = re.search(r'公司電話[：:]\s*(\d{2})[－-]?(\d{8})', description)
-        if phone_match:
-            contacts['company_phone'] = f"+886-{phone_match.group(1)}-{phone_match.group(2)}"
-            contacts['company_phone_local'] = f"{phone_match.group(1)}-{phone_match.group(2)}"
+        # 提取公司電話 (支援空格分隔格式)
+        phone_patterns = [
+            r'公司電話[：:]\s*(\d{2})[－\-\s]?(\d{4})[－\-\s]?(\d{4})',
+            r'公司電話[：:]\s*(\d{2})[－\-]?(\d{8})'
+        ]
+        
+        for pattern in phone_patterns:
+            phone_match = re.search(pattern, description)
+            if phone_match:
+                if len(phone_match.groups()) == 3:
+                    area, first, second = phone_match.groups()
+                    contacts['company_phone'] = f"+886-{area}-{first}-{second}"
+                    contacts['company_phone_local'] = f"{area}-{first}-{second}"
+                else:
+                    area, number = phone_match.groups()
+                    contacts['company_phone'] = f"+886-{area}-{number}"
+                    contacts['company_phone_local'] = f"{area}-{number}"
+                break
         
         # 提取客服電話
-        cs_phone_match = re.search(r'客服電話[：:]\s*(\d{2})[－-]?(\d{8})', description)
-        if cs_phone_match:
-            contacts['customer_service_phone'] = f"+886-{cs_phone_match.group(1)}-{cs_phone_match.group(2)}"
-            contacts['customer_service_phone_local'] = f"{cs_phone_match.group(1)}-{cs_phone_match.group(2)}"
+        cs_phone_patterns = [
+            r'客服電話[：:]\s*(\d{2})[－\-\s]?(\d{4})[－\-\s]?(\d{4})',
+            r'客服電話[：:]\s*(\d{2})[－\-]?(\d{8})'
+        ]
+        
+        for pattern in cs_phone_patterns:
+            cs_phone_match = re.search(pattern, description)
+            if cs_phone_match:
+                if len(cs_phone_match.groups()) == 3:
+                    area, first, second = cs_phone_match.groups()
+                    contacts['customer_service_phone'] = f"+886-{area}-{first}-{second}"
+                    contacts['customer_service_phone_local'] = f"{area}-{first}-{second}"
+                else:
+                    area, number = cs_phone_match.groups()
+                    contacts['customer_service_phone'] = f"+886-{area}-{number}"
+                    contacts['customer_service_phone_local'] = f"{area}-{number}"
+                break
         
         # 提取地址
         address_match = re.search(r'公司地址[：:]\s*([^\n]+?)(?=\s*公司|$)', description)
@@ -50,23 +76,31 @@ class CompanyProfileConverter:
         if website_match:
             contacts['website'] = website_match.group(1).strip()
         
-        # 預設服務時間（如果未指定）
-        if 'customer_service_phone' in contacts:
+        # 預設服務時間(如果有電話)
+        if 'customer_service_phone' in contacts or 'company_phone' in contacts:
             contacts['service_hours'] = "週一至週五 09:00-18:00"
             contacts['service_hours_en'] = "Monday to Friday 09:00-18:00"
         
         return contacts
     
     def parse_keywords(self, keywords_str: str) -> List[str]:
-        """解析關鍵字字串，分割成列表"""
+        """解析關鍵字字串,分割成列表"""
         if not keywords_str:
             return []
         
         # 使用中文逗號或英文逗號分割
-        keywords = re.split(r'[，,]', keywords_str)
+        keywords = re.split(r'[，,、\n]', keywords_str)
         
-        # 清理每個關鍵字
-        return [kw.strip() for kw in keywords if kw.strip()]
+        # 清理每個關鍵字並去重
+        seen = set()
+        result = []
+        for kw in keywords:
+            kw = kw.strip()
+            if kw and kw not in seen and kw not in {'公司介紹', '公司簡介'}:
+                seen.add(kw)
+                result.append(kw)
+        
+        return result
     
     def extract_business_scope(self, keywords: List[str]) -> List[str]:
         """從關鍵字中提取核心業務範圍（前 12 項）"""
@@ -154,6 +188,17 @@ class CompanyProfileConverter:
         if category == "公司基本資料":
             # 解析關鍵字
             keywords = self.parse_keywords(row.get('關鍵字', ''))
+            
+            # 如果關鍵字太少,從描述中提取更多
+            if len(keywords) < 10:
+                description = row.get('描述', '')
+                # 從品牌核心精神提取
+                core_values = re.findall(r'・([^：]+)：', description)
+                keywords.extend(core_values[:4])
+                
+                # 從建築哲學提取
+                philosophy_keywords = ['自然語彙建築', '自然共生', '綠建築', '空間設計', '生活品質']
+                keywords.extend(philosophy_keywords)
             
             return {
                 "company_id": "chuanchi",

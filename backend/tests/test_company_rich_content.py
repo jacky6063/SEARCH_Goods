@@ -155,7 +155,8 @@ def test_promotion_rich_content():
     # 檢查影片連結
     video_items = [i for i in items if i['type'] == 'video']
     if video_items:
-        assert 'youtube' in video_items[0]['action'].lower(), "影片連結應包含 youtube"
+        video_url = video_items[0]['action'].lower()
+        assert 'youtube' in video_url or 'youtu.be' in video_url, "影片連結應包含 youtube 或 youtu.be"
         print(f"✅ 影片連結: {video_items[0]['action']}")
     
     print(f"\n✅ 測試 2 通過")
