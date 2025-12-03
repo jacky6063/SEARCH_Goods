@@ -21,3 +21,4 @@ logs/*.log
 !logs/.gitkeep
 .env.dev
 backend/.env.dev
+.DS_Store
