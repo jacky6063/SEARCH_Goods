@@ -1069,9 +1069,6 @@ SEARCH_Goods 系統 - 前端應用程式
             if(buttonLevel === 'L3'){
               setHotScopePath({ L3: name });
               try { window.latestAvailableScope = null; } catch(e){}
-              appendChatBubble('user', name);
-              chatHistory.push({ role: 'user', content: name });
-              if(chatHistory.length > 40){ chatHistory = chatHistory.slice(-40); }
               let summaryShown = false;
               const showSummary = (result) => {
                 if(summaryShown){ return; }
@@ -1081,15 +1078,10 @@ SEARCH_Goods 系統 - 前端應用程式
               // 直接切到商品模式，帶入 category_hierarchy 並特價優先
               const parents = ensureHierarchyParents(labelCtx);
               if(!parents.L1 || !parents.L2){
-                console.warn('[hot-category] 缺少父層資訊，暫時改回聊天路徑', parents);
-                setMode('chat');
-                const fallbackMsg = `我想找${name}相關的商品，可以幫我推薦嗎？`;
-                const input = document.getElementById('q') || document.getElementById('mq');
-                if(input) input.value = fallbackMsg;
-                if(typeof sendChat === 'function'){
-                  sendChat();
-                }
-                loadHotCategories(0);
+                console.warn('[hot-category] 缺少父層資訊，顯示提示並停止搜尋', parents);
+                showEmptyState(name, `目前暫時無法取得「${name}」的上層分類，請稍後再試或重新選擇分類。`);
+                setStatus(`無法載入 ${name} 的上層分類`);
+                updateSearchSummary(`未取得 ${name} 的上層分類`);
                 return;
               }
               // 🆕 P0.3: 純分類查詢（query 為空，靠 category_hierarchy 觸發超快速路徑）
@@ -1190,17 +1182,8 @@ SEARCH_Goods 系統 - 前端應用程式
             let msg = '';
             if(buttonLevel === 'L1'){
               setHotScopePath({ L1: name, L2: null, L3: null });
-              msg = `你們有什麼${name}的品類？`;
-              appendChatBubble('user', name);
-              chatHistory.push({ role: 'user', content: name });
             }else if(buttonLevel === 'L2'){
               setHotScopePath({ L2: name, L3: null });
-              msg = `在${hotScopePath.L1}下我對${name}有興趣，還有哪些小分類或重點？`;
-            }
-            const input = document.getElementById('q') || document.getElementById('mq');
-            if(input) input.value = msg;
-            if(typeof sendChat === 'function'){
-              sendChat();
             }
             loadHotCategories(0);
           });
