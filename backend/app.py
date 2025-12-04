@@ -73,6 +73,7 @@ from llm_service import (
     llm_rerank_products,
     llm_analyze_query,
     llm_clarify_or_confirm,
+    clear_category_prompt_cache,
     USE_RERANK,
     USE_INTENT,
     USE_PROMO,
@@ -1493,6 +1494,7 @@ def admin_clear_cache(request: Request, x_admin_token: Optional[str] = Header(No
     # 🆕 P0.3: 清除分類快取
     global _category_cache
     _category_cache.clear()
+    clear_category_prompt_cache(force_rebuild=False)
     logger.info("  🗑️ [P0.3] 分類快取已清除")
     
     try:
@@ -1531,6 +1533,19 @@ def admin_upload_csv(request: Request, file: UploadFile = File(...), x_admin_tok
         os.unlink(tmp_path)
         raise HTTPException(status_code=400, detail="uploaded file is empty")
     try:
+        # basic validation: try parse to ensure CSV readable and not empty header
+        try:
+            df_check = pd.read_csv(tmp_path)
+            if df_check.empty and df_check.shape[1] == 0:
+                os.unlink(tmp_path)
+                raise HTTPException(status_code=400, detail="uploaded file is empty or invalid csv")
+        except HTTPException:
+            raise
+        except Exception as parse_exc:
+            os.unlink(tmp_path)
+            logger.warning("failed to parse uploaded goods csv: %s", parse_exc)
+            raise HTTPException(status_code=400, detail="failed to parse csv")
+
         size = os.path.getsize(tmp_path)
         client = getattr(request, "client", None)
         client_ip = client.host if client else "unknown"
@@ -1546,6 +1561,7 @@ def admin_upload_csv(request: Request, file: UploadFile = File(...), x_admin_tok
         # clear cache & refresh
         catalog_service.set_data_path(target_path)
         catalog_service.reset()
+        clear_category_prompt_cache(force_rebuild=False)
         try:
             load_goods_rows(refresh=True)
         except Exception as refresh_exc:
@@ -1561,6 +1577,77 @@ def admin_upload_csv(request: Request, file: UploadFile = File(...), x_admin_tok
         except Exception:
             pass
         raise HTTPException(status_code=500, detail="internal error processing upload")
+
+
+@app.post("/api/admin/upload-categories")
+def admin_upload_categories(
+    request: Request,
+    file: UploadFile = File(...),
+    rebuild_prompt: bool = Query(False, description="是否上傳後立即重建分類提示詞"),
+    x_admin_token: Optional[str] = Header(None),
+):
+    """
+    上傳分類 CSV（goods_categories.csv），成功後更新分類檔路徑、清分類/提示詞快取。
+    """
+    _check_admin(request, x_admin_token)
+    dst = Path(os.getenv("CATEGORIES_PATH") or categories_service.DEFAULT_CATEGORIES_PATH)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(delete=False, dir=str(dst.parent)) as tmp:
+        tmp_path = tmp.name
+        shutil.copyfileobj(file.file, tmp)
+
+    if os.path.getsize(tmp_path) == 0:
+        os.unlink(tmp_path)
+        raise HTTPException(status_code=400, detail="uploaded file is empty")
+
+    # 基本驗證：必須有 L1/L2/L3 欄位
+    try:
+        df = pd.read_csv(tmp_path, dtype=str, encoding="utf-8-sig")
+        required = {"L1", "L2", "L3"}
+        if not required.issubset(set(df.columns)):
+            os.unlink(tmp_path)
+            raise HTTPException(status_code=400, detail="categories csv missing required columns L1/L2/L3")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        try:
+            os.unlink(tmp_path)
+        except Exception:
+            pass
+        logger.warning("failed to parse uploaded categories csv: %s", exc)
+        raise HTTPException(status_code=400, detail="failed to parse categories csv")
+
+    try:
+        target_path = str(dst)
+        if not os.access(str(dst.parent), os.W_OK):
+            alt = Path("/tmp/goods_categories.csv")
+            logger.warning("categories dir not writable, falling back to %s", alt)
+            target_path = str(alt)
+            alt.parent.mkdir(parents=True, exist_ok=True)
+        os.replace(tmp_path, target_path)
+
+        # 更新分類路徑並清除分類快取
+        categories_service.set_categories_path(target_path)
+        global _category_cache
+        _category_cache.clear()
+
+        # 清除/重建分類提示詞快取
+        clear_category_prompt_cache(force_rebuild=rebuild_prompt)
+
+        return JSONResponse({
+            "status": "ok",
+            "message": "uploaded and replaced categories csv",
+            "path": target_path,
+            "prompt_rebuild": rebuild_prompt,
+        })
+    except Exception as exc:
+        logger.exception("error processing uploaded categories csv: %s", exc)
+        try:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail="internal error processing categories upload")
 
 
 # serve frontend static files (SPA fallback)

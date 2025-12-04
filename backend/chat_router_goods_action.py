@@ -1532,14 +1532,13 @@ def _compose_nav_text(selected: Dict[str, Optional[str]], next_level: str, names
     l1 = selected.get("L1") or ""
     l2 = selected.get("L2") or ""
     if next_level == "L2":
-        base = f"在「{l1}」下，常見的品類包括：{ '、'.join(names) }。"
+        base = f"熱門中分類（{l1}）：{ '、'.join(names) }"
     elif next_level == "L3":
-        base = f"在「{l1} > {l2}」下，小分類包括：{ '、'.join(names) }。"
+        base = f"熱門小分類（{l1} > {l2}）：{ '、'.join(names) }"
     else:
         base = f"我們目前可銷售的分類包含：{ '、'.join(names) }。"
     if more_count > 0:
         base += f"…還有 {more_count} 類可展開。"
-    base += "您偏好哪一種？也可以告訴我預算/用途/品牌，我再精準推薦。"
     return base
 
 
@@ -1556,7 +1555,12 @@ def _try_category_navigation_reply(user_text: str) -> Optional[Dict[str, Any]]:
         reply = _compose_nav_text(selected, "L2", names, int(scope.get("more_count") or 0))
         meta = {
             "oos_category": False,
-            "available_scope": {"level": "L2", "l2": names, "more_count": int(scope.get("more_count") or 0)},
+            "available_scope": {
+                "level": "L2",
+                "l2": names,
+                "more_count": int(scope.get("more_count") or 0),
+                "parent": {"L1": selected["L1"], "l1": selected["L1"]}
+            },
             "category_context": {"selected": {"L1": selected["L1"]}, "next_level": "L2"},
             "guide": {"hints": ["可提供預算、用途或品牌，我會更精準推薦"]},
         }
@@ -1568,7 +1572,12 @@ def _try_category_navigation_reply(user_text: str) -> Optional[Dict[str, Any]]:
         reply = _compose_nav_text(selected, "L3", names, int(scope.get("more_count") or 0))
         meta = {
             "oos_category": False,
-            "available_scope": {"level": "L3", "l3": names, "more_count": int(scope.get("more_count") or 0)},
+            "available_scope": {
+                "level": "L3",
+                "l3": names,
+                "more_count": int(scope.get("more_count") or 0),
+                "parent": {"L1": selected["L1"], "l1": selected["L1"], "L2": selected["L2"], "l2": selected["L2"]}
+            },
             "category_context": {"selected": {"L1": selected["L1"], "L2": selected["L2"]}, "next_level": "L3"},
             "guide": {"hints": ["可提供預算、用途或品牌，我會更精準推薦"]},
         }
@@ -1853,6 +1862,25 @@ def _legacy_chat_flow(req: ChatReq) -> ChatResponse:
                 )
         except Exception as exc:
             LOGGER.warning("Direct product-id search failed: %s", exc, session_id=req.session_id)
+
+    # 🆕 若文字中已能完整識別 L1/L2/L3，直接走分類搜尋（避免進入聊天話術）
+    selected_full = _extract_selected_levels_from_text(user_text)
+    if selected_full.get("L1") and selected_full.get("L2") and selected_full.get("L3"):
+        try:
+            df = catalog_service.get_dataframe()
+            results, _ = search_products_with_hierarchy(
+                df=df,
+                query=user_text,
+                hierarchy=selected_full,
+                topn=24,
+                min_score=0.0,
+            )
+            if results:
+                meta = {"from_category_autodetect": True, "category_hierarchy": selected_full}
+                filters = {"category_hierarchy": selected_full}
+                return _finalize_directional_products(results, user_text, meta=meta, structured_filters=filters)
+        except Exception as exc:
+            LOGGER.warning("category autodetect search failed: %s", exc, session_id=req.session_id)
 
     if user_text and not product_id_query:
         try:

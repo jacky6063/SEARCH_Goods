@@ -649,17 +649,32 @@ SEARCH_Goods 系統 - 前端應用程式
 
     <div class="panel-section">
       <div class="section-title">資料管理</div>
-      <div class="section-subtitle">上傳最新的商品清單並視需要清除快取。</div>
+      <div class="section-subtitle">上傳最新的商品/分類清單並視需要清除快取。</div>
       <div class="field">
-        <label for="uploadFile">CSV</label>
+        <label for="uploadFile">商品 CSV</label>
         <input id="uploadFile" type="file" accept=".csv">
       </div>
       <div class="actions">
         <button id="uploadBtn" class="btn primary">上傳並覆寫 CSV</button>
         <button id="clearCacheBtn" class="btn ghost">清除快取</button>
       </div>
+      <div class="field">
+        <label for="uploadCatFile">分類 CSV</label>
+        <input id="uploadCatFile" type="file" accept=".csv">
+      </div>
+      <div class="field checkbox">
+        <label>
+          <input type="checkbox" id="rebuildPromptToggle">
+          上傳後立即重建分類提示詞
+        </label>
+      </div>
+      <div class="actions">
+        <button id="uploadCatBtn" class="btn primary">上傳分類檔</button>
+        <button id="rebuildPromptBtn" class="btn ghost">重建分類提示詞（清快取）</button>
+      </div>
       <div class="stack">
         <div>上傳 URL：<span id="adminUrlUpload"></span></div>
+        <div>分類上傳 URL：<span id="adminUrlUploadCat"></span></div>
         <div>清除快取 URL：<span id="adminUrlClear"></span></div>
         <div>已儲存 token：<span id="adminTokenMasked" class="mono"></span></div>
       </div>
@@ -748,7 +763,7 @@ SEARCH_Goods 系統 - 前端應用程式
     const hostname = window.location.hostname;
     if(hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.')){
       // Local development：預設改用後端本機 8000 port，避免 Vite dev server 404
-      return 'http://localhost:8000/api/search';
+      return 'http://127.0.0.1:8000/api/search';
     }
     // Production: use remote API
     return "https://search-goods-api.onrender.com/api/search";
@@ -941,7 +956,9 @@ SEARCH_Goods 系統 - 前端應用程式
       }
       if(!result.L1 || !result.L2){
         try {
-          const parents = window.latestAvailableScope && (window.latestAvailableScope.parents || window.latestAvailableScope.parent);
+          const las = window.latestAvailableScope;
+          const parents = las && (las.parents || las.parent);
+          const selected = las && (las.selected || (las.category_context && las.category_context.selected));
           if(parents){
             if(!result.L1 && (parents.L1 || parents.l1)){
               result.L1 = parents.L1 || parents.l1;
@@ -949,6 +966,16 @@ SEARCH_Goods 系統 - 前端應用程式
             }
             if(!result.L2 && (parents.L2 || parents.l2)){
               result.L2 = parents.L2 || parents.l2;
+              setHotScopePath({ L2: result.L2 });
+            }
+          }
+          if(selected){
+            if(!result.L1 && (selected.L1 || selected.l1)){
+              result.L1 = selected.L1 || selected.l1;
+              setHotScopePath({ L1: result.L1 });
+            }
+            if(!result.L2 && (selected.L2 || selected.l2)){
+              result.L2 = selected.L2 || selected.l2;
               setHotScopePath({ L2: result.L2 });
             }
           }
@@ -1010,6 +1037,16 @@ SEARCH_Goods 系統 - 前端應用程式
           items = Array.isArray(data.items) ? data.items : [];
           ctx = (data && data.context) ? data.context : null;
           moreCount = Number(data && data.more_count) || 0;
+          // 補齊父層資訊，避免標題缺字
+          if(level === 'L2' && ctx && ctx.parent_l1){
+            setHotScopePath({ L1: ctx.parent_l1 });
+          }
+          if(level === 'L3' && ctx){
+            const nextL1 = ctx.parent_l1 || hotScopePath.L1;
+            const nextL2 = ctx.parent_l2 || hotScopePath.L2;
+            if(nextL1){ setHotScopePath({ L1: nextL1 }); }
+            if(nextL2){ setHotScopePath({ L2: nextL2 }); }
+          }
         }
 
         if(localReqId !== hotScopeReqId){
@@ -1030,15 +1067,77 @@ SEARCH_Goods 系統 - 前端應用程式
         const title = document.createElement('div');
         const labelCtx = (typeof ctx === 'object' && ctx) ? ctx : null;
         const labelLevel = level || 'L1';
+        // 取父層名稱：優先 hotScopePath，其次 API context，再次 latestAvailableScope.parents/parent
+        const latestScope = (typeof window !== 'undefined') ? (window.latestAvailableScope || {}) : {};
+        const latestParents = latestScope.parents || latestScope.parent || {};
+        const parentL1 = hotScopePath.L1 || labelCtx?.parent_l1 || latestParents.L1 || latestParents.l1 || '';
+        const parentL2 = hotScopePath.L2 || labelCtx?.parent_l2 || latestParents.L2 || latestParents.l2 || '';
         const label = labelCtx && labelCtx.label
           ? labelCtx.label
           : (labelLevel === 'L1'
             ? '熱門分類'
             : (labelLevel === 'L2'
-              ? `熱門中分類（${(hotScopePath.L1 || labelCtx?.parent_l1 || '')}）`
-              : `熱門小分類（${(hotScopePath.L1 || labelCtx?.parent_l1 || '')} > ${(hotScopePath.L2 || labelCtx?.parent_l2 || '')}）`));
-        title.textContent = label;
-        title.style.cssText = 'width:100%;font-size:13px;color:#475569;margin-bottom:2px;display:flex;align-items:center;gap:8px;';
+              ? `熱門中分類（${parentL1}）`
+              : `熱門小分類（${parentL1} > ${parentL2}）`));
+        
+        title.style.cssText = 'width:100%;font-size:13px;color:#475569;margin-bottom:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
+        
+        // 🆕 根據層級建立可互動的標題
+        if (labelLevel === 'L2' && parentL1) {
+          // L2: 顯示 "中分類：[L1 chip]"
+          const labelText = document.createElement('span');
+          labelText.textContent = '中分類：';
+          labelText.style.cssText = 'font-size:13px;color:#475569;';
+          title.appendChild(labelText);
+          
+          const l1Chip = document.createElement('button');
+          l1Chip.className = 'btn';
+          l1Chip.style.cssText = 'padding:4px 10px;border-radius:999px;font-size:12px;background:#3b82f6;color:white;font-weight:500;';
+          l1Chip.textContent = parentL1;
+          l1Chip.addEventListener('click', () => {
+            setHotScopePath({ L1: parentL1, L2: null, L3: null });
+            try { window.latestAvailableScope = null; } catch(e){}
+            loadHotCategories(0);
+          });
+          title.appendChild(l1Chip);
+        } else if (labelLevel === 'L3' && parentL1 && parentL2) {
+          // L3: 顯示 "小分類：[L1 chip] > [L2 chip]"
+          const labelText = document.createElement('span');
+          labelText.textContent = '小分類：';
+          labelText.style.cssText = 'font-size:13px;color:#475569;';
+          title.appendChild(labelText);
+          
+          const l1Chip = document.createElement('button');
+          l1Chip.className = 'btn';
+          l1Chip.style.cssText = 'padding:4px 10px;border-radius:999px;font-size:12px;background:#3b82f6;color:white;font-weight:500;';
+          l1Chip.textContent = parentL1;
+          l1Chip.addEventListener('click', () => {
+            setHotScopePath({ L1: parentL1, L2: null, L3: null });
+            try { window.latestAvailableScope = null; } catch(e){}
+            loadHotCategories(0);
+          });
+          title.appendChild(l1Chip);
+          
+          const sep = document.createElement('span');
+          sep.textContent = '>';
+          sep.style.cssText = 'color:#94a3b8;font-size:12px;margin:0 2px;';
+          title.appendChild(sep);
+          
+          const l2Chip = document.createElement('button');
+          l2Chip.className = 'btn';
+          l2Chip.style.cssText = 'padding:4px 10px;border-radius:999px;font-size:12px;background:#3b82f6;color:white;font-weight:500;';
+          l2Chip.textContent = parentL2;
+          l2Chip.addEventListener('click', () => {
+            setHotScopePath({ L1: parentL1, L2: parentL2, L3: null });
+            try { window.latestAvailableScope = null; } catch(e){}
+            loadHotCategories(0);
+          });
+          title.appendChild(l2Chip);
+        } else {
+          // L1 或其他：使用原本的文字標題
+          title.textContent = label;
+        }
+        
         // 返回上一層
         // 僅在有父層資訊時顯示返回上一層（避免初始化時出現多層 UI）
         const hasParent = (labelLevel === 'L2' && (hotScopePath.L1 || (labelCtx && labelCtx.parent_l1))) || (labelLevel === 'L3' && ((hotScopePath.L1 && hotScopePath.L2) || (labelCtx && labelCtx.parent_l1 && labelCtx.parent_l2)));
@@ -1067,7 +1166,8 @@ SEARCH_Goods 系統 - 前端應用程式
           btn.addEventListener('click', async ()=>{
             const buttonLevel = btn.dataset.level || scopeLevel;
             if(buttonLevel === 'L3'){
-              setHotScopePath({ L3: name });
+              // 🔧 保留 L1 和 L2，避免回到聊天時丟失層級資訊
+              setHotScopePath({ L1: parentL1 || hotScopePath.L1, L2: parentL2 || hotScopePath.L2, L3: name });
               try { window.latestAvailableScope = null; } catch(e){}
               let summaryShown = false;
               const showSummary = (result) => {
@@ -1076,7 +1176,12 @@ SEARCH_Goods 系統 - 前端應用程式
                 summaryShown = true;
               };
               // 直接切到商品模式，帶入 category_hierarchy 並特價優先
-              const parents = ensureHierarchyParents(labelCtx);
+              // 🔧 優先使用當前作用域的 parentL1/parentL2（來自標題渲染時的變數）
+              let parents = { L1: parentL1, L2: parentL2 };
+              // 如果沒有，再從 hotScopePath 或 ensureHierarchyParents 取得
+              if(!parents.L1 || !parents.L2){
+                parents = ensureHierarchyParents(labelCtx);
+              }
               if(!parents.L1 || !parents.L2){
                 console.warn('[hot-category] 缺少父層資訊，顯示提示並停止搜尋', parents);
                 showEmptyState(name, `目前暫時無法取得「${name}」的上層分類，請稍後再試或重新選擇分類。`);
@@ -1183,7 +1288,8 @@ SEARCH_Goods 系統 - 前端應用程式
             if(buttonLevel === 'L1'){
               setHotScopePath({ L1: name, L2: null, L3: null });
             }else if(buttonLevel === 'L2'){
-              setHotScopePath({ L2: name, L3: null });
+              // 🔧 保留 L1，只更新 L2（需要從當前作用域取得 parentL1）
+              setHotScopePath({ L1: parentL1 || hotScopePath.L1, L2: name, L3: null });
             }
             loadHotCategories(0);
           });
@@ -3578,10 +3684,15 @@ SEARCH_Goods 系統 - 前端應用程式
     const adminTokenInput = document.getElementById('adminToken');
     const saveTokenBtn = document.getElementById('saveToken');
     const uploadFileInput = document.getElementById('uploadFile');
+    const uploadCatFileInput = document.getElementById('uploadCatFile');
     const uploadBtn = document.getElementById('uploadBtn');
+    const uploadCatBtn = document.getElementById('uploadCatBtn');
+    const rebuildPromptToggle = document.getElementById('rebuildPromptToggle');
     const clearCacheBtn = document.getElementById('clearCacheBtn');
+    const rebuildPromptBtn = document.getElementById('rebuildPromptBtn');
     const adminMsg = document.getElementById('adminMsg');
     const adminUrlUpload = document.getElementById('adminUrlUpload');
+    const adminUrlUploadCat = document.getElementById('adminUrlUploadCat');
     const adminUrlClear = document.getElementById('adminUrlClear');
     const adminTokenMasked = document.getElementById('adminTokenMasked');
     const adminApiInput = document.getElementById('adminApiEndpoint');
@@ -3593,13 +3704,21 @@ SEARCH_Goods 系統 - 前端應用程式
       const text = m ? `狀態：${m}` : '狀態：';
       adminMsg.textContent = text;
     }
+    function setAdminStatus(msg, type = 'info'){
+      if(!adminMsg){ return; }
+      adminMsg.textContent = `狀態：${msg || ''}`;
+      const colors = { success: '#16a34a', error: '#dc2626', info: '#0f172a' };
+      adminMsg.style.color = colors[type] || colors.info;
+    }
 
     function maskToken(t){ if(!t) return '(none)'; if(t.length<=8) return t.replace(/.(?=.{2})/g,'*'); const start=t.slice(0,4); const end=t.slice(-4); return start+'…'+end; }
 
     function refreshAdminInfo(){
       const u = buildAdminEndpoint('upload-csv');
+      const uc = buildAdminEndpoint('upload-categories');
       const c = buildAdminEndpoint('clear-cache');
       if(adminUrlUpload){ adminUrlUpload.textContent = u; }
+      if(adminUrlUploadCat){ adminUrlUploadCat.textContent = uc; }
       if(adminUrlClear){ adminUrlClear.textContent = c; }
       const saved = localStorage.getItem('SEARCH_GOODS_ADMIN_TOKEN') || '';
       if(adminTokenMasked){ adminTokenMasked.textContent = maskToken(saved); }
@@ -3613,7 +3732,7 @@ SEARCH_Goods 系統 - 前端應用程式
       if(adminApiInput){ adminApiInput.value = normalized; }
       showAdminMsg('已更新 API_ENDPOINT');
       setStatus('已更新 API_ENDPOINT');
-      refreshAdminInfo();
+    refreshAdminInfo();
       loadBranding();
       loadVersionInfo();
     }
@@ -3661,36 +3780,72 @@ SEARCH_Goods 系統 - 前端應用程式
       const token = adminTokenInput.value || '';
       const file = uploadFileInput.files && uploadFileInput.files[0];
       if(!file){ showAdminMsg('請先選擇 CSV 檔案'); return; }
-      uploadBtn.disabled = true; showAdminMsg('上傳中...');
+      uploadBtn.disabled = true; setAdminStatus('上傳商品中...', 'info');
       try{
           const form = new FormData(); form.append('file', file, file.name);
           const ep = buildAdminEndpoint('upload-csv');
         const res = await fetch(ep, { method:'POST', headers: { 'x-admin-token': token }, body: form });
-        if(!res.ok){ showAdminMsg('上傳失敗: '+res.status); return; }
+        if(!res.ok){ setAdminStatus('商品上傳失敗: '+res.status, 'error'); return; }
         const j = await res.json();
         // Success: show the message from server
         const successMsg = j.message || j.status || 'ok';
-        showAdminMsg('✅ 上傳成功: ' + successMsg);
+        setAdminStatus('✅ 商品上傳成功: ' + successMsg, 'success');
         // Refresh info after successful upload
         refreshAdminInfo();
-      }catch(e){ showAdminMsg('上傳錯誤: '+e.message); }
+      }catch(e){ setAdminStatus('商品上傳錯誤: '+e.message, 'error'); }
       finally{ uploadBtn.disabled=false; }
+    }
+
+    async function adminUploadCategories(){
+      const token = adminTokenInput.value || '';
+      const file = uploadCatFileInput.files && uploadCatFileInput.files[0];
+      if(!file){ showAdminMsg('請先選擇分類 CSV'); return; }
+      uploadCatBtn.disabled = true; setAdminStatus('分類上傳中...', 'info');
+      try{
+        const form = new FormData(); form.append('file', file, file.name);
+        const rebuild = rebuildPromptToggle?.checked ? 'true' : 'false';
+        const ep = buildAdminEndpoint(`upload-categories?rebuild_prompt=${rebuild}`);
+        const res = await fetch(ep, { method:'POST', headers: { 'x-admin-token': token }, body: form });
+        if(!res.ok){ setAdminStatus('分類上傳失敗: '+res.status, 'error'); return; }
+        const j = await res.json();
+        const successMsg = j.message || j.status || 'ok';
+        setAdminStatus('✅ 分類上傳成功: ' + successMsg, 'success');
+        refreshAdminInfo();
+      }catch(e){ setAdminStatus('分類上傳錯誤: '+e.message, 'error'); }
+      finally{ uploadCatBtn.disabled=false; }
     }
 
     async function adminClearCache(){
       const token = adminTokenInput.value || '';
-      clearCacheBtn.disabled = true; showAdminMsg('清除中...');
+      clearCacheBtn.disabled = true; setAdminStatus('清除快取中...', 'info');
       try{
   const ep = buildAdminEndpoint('clear-cache'); refreshAdminInfo();
         const res = await fetch(ep, { method:'POST', headers: { 'x-admin-token': token } });
-        if(!res.ok){ showAdminMsg('清除失敗: '+res.status); return; }
-        const j = await res.json(); showAdminMsg('清除成功: '+(j.message||'ok'));
-      }catch(e){ showAdminMsg('清除錯誤: '+e.message); }
+        if(!res.ok){ setAdminStatus('清除快取失敗: '+res.status, 'error'); return; }
+        const j = await res.json(); setAdminStatus('清除成功: '+(j.message||'ok'), 'success');
+      }catch(e){ setAdminStatus('清除錯誤: '+e.message, 'error'); }
       finally{ clearCacheBtn.disabled=false; }
     }
 
     uploadBtn?.addEventListener('click', adminUpload);
+    uploadCatBtn?.addEventListener('click', adminUploadCategories);
     clearCacheBtn?.addEventListener('click', adminClearCache);
+    rebuildPromptBtn?.addEventListener('click', async ()=>{
+      const token = adminTokenInput.value || '';
+      if(rebuildPromptBtn) rebuildPromptBtn.disabled = true;
+      setAdminStatus('分類提示詞重建中（清快取）...', 'info');
+      try{
+        const ep = buildAdminEndpoint('clear-cache');
+        const res = await fetch(ep, { method:'POST', headers:{ 'x-admin-token': token } });
+        if(!res.ok){ setAdminStatus('提示詞重建觸發失敗: '+res.status, 'error'); return; }
+        const j = await res.json();
+        setAdminStatus('✅ 已清快取，提示詞將自動重建: '+(j.message||'ok'), 'success');
+      }catch(e){
+        setAdminStatus('提示詞重建錯誤: '+e.message, 'error');
+      }finally{
+        if(rebuildPromptBtn) rebuildPromptBtn.disabled = false;
+      }
+    });
     adminSetApiBtn?.addEventListener('click', ()=>{
       const next = adminApiInput?.value || '';
       applyApiEndpoint(next);

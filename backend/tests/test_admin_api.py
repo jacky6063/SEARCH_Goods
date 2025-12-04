@@ -21,6 +21,8 @@ def test_admin_endpoints(tmp_path, monkeypatch):
     dst_dir.mkdir()
     dst = dst_dir / "VIEW_GOODS_enhanced.csv"
     monkeypatch.setenv("DATA_PATH", str(dst))
+    cat_dst = dst_dir / "goods_categories.csv"
+    monkeypatch.setenv("CATEGORIES_PATH", str(cat_dst))
 
     # import and reload path_manager first to pick up the env var
     import path_manager
@@ -49,8 +51,21 @@ def test_admin_endpoints(tmp_path, monkeypatch):
     assert r.status_code == 200
     assert dst.exists()
     assert dst.read_text().startswith("col1,col2")
+    # bad csv should be rejected
+    r_bad = client.post("/api/admin/upload-csv", files={"file": ("f.csv", "")}, headers=headers)
+    assert r_bad.status_code == 400
 
     # clear cache endpoint
     r2 = client.post("/api/admin/clear-cache", headers=headers)
     assert r2.status_code == 200
     assert r2.json().get("status") == "ok"
+
+    # upload categories csv
+    cat_content = "L1,L2,L3,Enabled,DisplayOrder\nA,B,C,1,1\n"
+    r3 = client.post("/api/admin/upload-categories", files={"file": ("cats.csv", cat_content)}, headers=headers)
+    assert r3.status_code == 200
+    assert cat_dst.exists()
+    assert "A,B,C" in cat_dst.read_text()
+    # missing columns should fail
+    r4 = client.post("/api/admin/upload-categories", files={"file": ("cats.csv", "X,Y,Z\n1,2,3\n")}, headers=headers)
+    assert r4.status_code == 400

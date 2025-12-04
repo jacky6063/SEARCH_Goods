@@ -57,6 +57,19 @@ def _norm_name(val: Any) -> str:
     s = re.sub(r"\s+", " ", s)
     return s
 
+# === 公開查詢輔助 ===
+def get_all_categories(force: bool = False) -> List[Dict[str, Any]]:
+    """
+    取得啟用中的分類清單（已正規化、過濾 Disabled）。
+    回傳欄位：L1/L2/L3/DisplayOrder。
+    """
+    df = _ensure_loaded(force=force)
+    if df is None or df.empty:
+        return []
+    cols = ["L1", "L2", "L3", "DisplayOrder"]
+    existing = [c for c in cols if c in df.columns]
+    return df[existing].to_dict(orient="records")
+
 def _normalize_df(df: pd.DataFrame) -> pd.DataFrame:
     # Ensure required columns exist
     for col in REQUIRED_COLS:
@@ -199,6 +212,18 @@ def reset() -> None:
     """Clear cache to force reload on next access."""
     global _state, _CATEGORY_TERMS_CACHE, _CATEGORY_TERMS_TS, _TAXONOMY_INDEX_CACHE, _TAXONOMY_INDEX_TS
     _state = CategoriesState(df=None, path=os.getenv("CATEGORIES_PATH") or DEFAULT_CATEGORIES_PATH, ts=0.0, last_error=None)
+    _CATEGORY_TERMS_CACHE = set()
+    _CATEGORY_TERMS_TS = 0.0
+    _TAXONOMY_INDEX_CACHE = {}
+    _TAXONOMY_INDEX_TS = 0.0
+
+
+def set_categories_path(path: str) -> None:
+    """
+    更新分類檔路徑並清除相關快取。
+    """
+    global _state, _CATEGORY_TERMS_CACHE, _CATEGORY_TERMS_TS, _TAXONOMY_INDEX_CACHE, _TAXONOMY_INDEX_TS
+    _state = CategoriesState(df=None, path=str(path), ts=0.0, last_error=None)
     _CATEGORY_TERMS_CACHE = set()
     _CATEGORY_TERMS_TS = 0.0
     _TAXONOMY_INDEX_CACHE = {}

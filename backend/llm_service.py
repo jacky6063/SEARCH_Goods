@@ -33,6 +33,8 @@ import json
 import os
 import re
 from typing import Optional, List, Dict, Any, Set
+import threading
+import time
 import pandas as pd
 from openai import OpenAI
 import logging
@@ -45,10 +47,16 @@ from goods_search_service import (
 )
 from field_utils import FieldAccessor
 from planner.event_food_planner import parse_event_context
-from services.categories_service import get_category_terms
+from services.categories_service import get_category_terms, get_all_categories
 from utils.logging_utils import get_logger
 
 _logger = get_logger(__name__)
+
+# 分類提示詞快取配置
+CATEGORY_PROMPT_TTL = int(os.getenv("CATEGORY_PROMPT_TTL", "300"))  # 秒
+_CATEGORY_PROMPT_CACHE: Optional[str] = None
+_CATEGORY_PROMPT_TS: float = 0.0
+_CATEGORY_PROMPT_LOCK = threading.Lock()
 
 # === 搜索功能 LLM 配置 ===
 SEARCH_USE_EXPAND = os.getenv("SEARCH_USE_LLM_EXPAND", os.getenv("USE_LLM_EXPAND", "False")).lower() in ("1", "true", "yes")
@@ -82,6 +90,11 @@ CHAT_MODEL = CHAT_OPENAI_MODEL
 # ============================================================
 _openai_client_cache: Optional[OpenAI] = None
 _cached_api_key: Optional[str] = None
+
+# 分類提示詞快取配置
+CATEGORY_PROMPT_TTL = int(os.getenv("CATEGORY_PROMPT_TTL", "300"))  # 秒
+_CATEGORY_PROMPT_CACHE: Optional[str] = None
+_CATEGORY_PROMPT_TS: float = 0.0
 
 def _get_client() -> Optional[OpenAI]:
     """
@@ -512,6 +525,21 @@ CORE_PRODUCT_KEYWORDS = [
     "綠茶", "咖啡", "巧克力", "餅乾", "麵條", "醬料"
 ]
 
+# 房產關鍵詞（僅用於聊天提示詞切換，不改商品/訂單邏輯）
+REAL_ESTATE_KEYWORDS = [
+    "磐鈺建設",
+    "磐鈺",
+    "磐鈺草間漫漫",
+    "磐鈺雲華",
+    "磐鈺雲詠",
+    "極致輕寓2房",
+    "光合雅寓3房",
+    "市景菁英3房",
+    "景觀大戶4房",
+    "樂樂璵里",
+    "協奏輕盈3房",
+]
+
 CONFIRMATION_TERMS: Set[str] = {
     "要",
     "好",
@@ -561,90 +589,209 @@ CSV_ONLY_SYSTEM_PROMPT = """
 4) 若找不到候選：請用禮貌語氣請客戶提供價位、款式或顏色。禁止臆測或捏造商品。
 """.strip()
 
+STATIC_CATEGORY_PROMPT = """
+你是商品分類專家，請精確識別用戶查詢中的商品分類層級。
+
+【識別原則】
+1. 商品核心名詞優先：提取查詢中的核心商品名
+2. 忽略修飾詞：「台灣」、「日曬」、「有機」等為修飾詞，不影響分類
+3. 食品材料歸常溫食品；不確定時給出最相關層級，至少識別 L1
+
+【輸出格式】
+{
+  "category_hierarchy": {"L1": "...", "L2": "...", "L3": "..."},
+  "confidence": {"L1": 0.0-1.0, "L2": 0.0-1.0, "L3": 0.0-1.0},
+  "matching_keywords": [...]
+}
+""".strip()
+
+
+def _safe_int_from_any(val: Any) -> Optional[int]:
+    try:
+        return int(str(val).strip())
+    except Exception:
+        return None
+
+
+def _build_category_tree(categories: List[Dict[str, Any]]) -> Dict[str, Any]:
+    tree: Dict[str, Any] = {}
+    if not categories:
+        return tree
+    for row in categories:
+        l1 = str(row.get("L1") or "").strip()
+        l2 = str(row.get("L2") or "").strip()
+        l3 = str(row.get("L3") or "").strip()
+        order = _safe_int_from_any(row.get("DisplayOrder"))
+        if not l1:
+            continue
+        node1 = tree.setdefault(l1, {"order": order, "children": {}})
+        if l2:
+            node2 = node1["children"].setdefault(l2, {"order": order, "children": []})
+            if l3:
+                node2["children"].append({"name": l3, "order": order})
+    return tree
+
+
+def _guess_column(df: pd.DataFrame, candidates: List[str]) -> Optional[str]:
+    for cand in candidates:
+        if cand in df.columns:
+            return cand
+    return None
+
+
+def _get_product_examples(df: Optional[pd.DataFrame], l3: str, limit: int = 3) -> List[str]:
+    if df is None or df.empty or not l3:
+        return []
+    l3_col = _guess_column(df, ["CateName_L3", "小分類名稱", "L3", "分類名稱"])
+    if not l3_col:
+        return []
+    subset = df[df[l3_col].astype(str).str.strip() == l3]
+    if subset.empty:
+        return []
+    name_col = _guess_column(subset, ["商品名稱", "Name", "name", "品名"])
+    if not name_col:
+        return []
+    names = []
+    for raw in subset[name_col].astype(str).fillna(""):
+        cleaned = raw.strip()
+        if cleaned:
+            names.append(cleaned[:30])
+        if len(names) >= limit:
+            break
+    return names
+
+
 # === 🆕 分類層級識別提示詞 ===
 def _build_category_hierarchy_prompt() -> str:
     """
-    根據 CSV 中的實際分類層級，動態構建 LLM 提示詞
-    優化版本: 整合真實商品範例,重點標註容易誤判的分類
+    動態從分類/商品資料構建提示詞；失敗時回退靜態版本。
     """
-    return """
-你是商品分類專家,請精確識別用戶查詢中的商品分類層級。
+    try:
+        categories = get_all_categories()
+        if not categories:
+            _logger.warning("category prompt: categories empty, fallback to static")
+            return STATIC_CATEGORY_PROMPT
+        tree = _build_category_tree(categories)
+        products_df: Optional[pd.DataFrame] = None
+        try:
+            products_df = load_data(DEFAULT_DATA_PATH)
+        except Exception as exc:
+            _logger.warning("category prompt: load products failed: %s", exc)
 
-【🆕 重要分類範例與商品對照】
+        def _order_key(node):
+            order = _safe_int_from_any(node.get("order"))
+            return (order if order is not None else 10_000_000)
 
-📦 常溫食品類:
-  🥘 五穀/豆類/米麵/乾貨:
-    ⭐ 烹調食材 (菇類/食材): 木茸、香菇、黑木耳、白木耳、海帶芽
-    • 米類: 白米、糙米、香米、五色十穀米
-    • 麵條/冬粉: 意麵、雞絲麵、米粉
-    • 燕麥/五穀/玉米: 奇亞籽、紅藜麥、黃豆、綠豆
-  
-  🧂 調味/醬料/醬菜:
-    ⭐ 醬油/味噌/糖: 昆布醬油、黑豆蔭油、素蠔油、海鹽、糯米醋
-    • 沾/拌醬: 美乃滋、芥末醬、蕃茄醬
-    • 辛香料: 白胡椒粉、肉桂粉、黑胡椒粉
-  
-  🫒 食用油:
-    • 植物油: 苦茶油、南瓜籽油、橄欖油、葵花油
-  
-  ☕ 沖調/飲品/咖啡/早餐:
-    • 茶葉/茶包: 玄米綠茶、國寶茶、玫瑰花茶
-    • 咖啡: 即溶咖啡、黑咖啡
-    • 早餐麥片: 燕麥片、即食燕麥片
+        l1_items = sorted(
+            [{"name": name, **node} for name, node in tree.items()],
+            key=lambda x: (_order_key(x), x["name"])
+        )
 
-👜 包包配件類:
-  • 女用皮包/側背包: 斜背包、肩背包
-  • 女用皮包/手提包: 托特包、手提袋
-  • 女用皮包/後背包: 雙肩包、輕量後背包
-  • 男用配件/休閒包: 牛皮包、胸包
-  • 男用配件/皮夾: 短夾、四夾、六夾
+        parts: List[str] = []
+        parts.append("你是商品分類專家，以下是目前系統的分類與代表商品：")
+        l1_cap = int(os.getenv("CATEGORY_PROMPT_L1_CAP", "50"))
+        l2_cap = int(os.getenv("CATEGORY_PROMPT_L2_CAP", "100"))
+        l3_cap_per_l2 = int(os.getenv("CATEGORY_PROMPT_L3_CAP", "50"))
+        example_limit = int(os.getenv("CATEGORY_PROMPT_EXAMPLE_LIMIT", "3"))
+        l1_count = 0
+        l2_count_total = 0
+        l3_count_total = 0
+        for l1 in l1_items:
+            if l1_count >= l1_cap:
+                parts.append("  …(其他 L1 省略以控制長度)")
+                break
+            parts.append(f"\n📦 {l1['name']}:")
+            l2_children = l1.get("children") or {}
+            l2_items = sorted(
+                [{"name": name, **node} for name, node in l2_children.items()],
+                key=lambda x: (_order_key(x), x["name"])
+            )
+            l2_local = 0
+            for l2 in l2_items:
+                if l2_count_total >= l2_cap:
+                    parts.append("  • …(其他 L2 省略)")
+                    break
+                l2_count_total += 1
+                l2_local += 1
+                parts.append(f"  • {l2['name']}:")
+                l3_list = l2.get("children") or []
+                l3_items = sorted(
+                    l3_list,
+                    key=lambda x: (_order_key(x), x.get("name", ""))
+                )
+                l3_local = 0
+                for l3 in l3_items:
+                    if l3_local >= l3_cap_per_l2:
+                        parts.append("    - …(其他小分類省略)")
+                        break
+                    l3_local += 1
+                    l3_count_total += 1
+                    l3_name = l3.get("name") or ""
+                    examples = _get_product_examples(products_df, l3_name, limit=example_limit)
+                    if examples:
+                        parts.append(f"    - {l3_name}: {', '.join(examples)}")
+                    else:
+                        parts.append(f"    - {l3_name}")
+            l1_count += 1
 
-👟 戶外與運動用品類:
-  • 運動鞋/籃球鞋: 籃球鞋、運動鞋
-  • 運動鞋/慢跑鞋: 跑鞋、運動慢跑鞋
-  • 運動鞋/登山鞋: 登山靴、健走鞋、防水登山鞋
+        parts.extend([
+            "",
+            "【識別原則】",
+            "1. 商品核心名詞優先：提取查詢中的核心商品名",
+            "2. 忽略修飾詞：「台灣」「日曬」「有機」等為修飾詞",
+            "3. 食品材料歸常溫食品；不確定時至少識別 L1 大分類",
+            "",
+            "【輸出格式】",
+            '{ "category_hierarchy": {"L1": "...", "L2": "...", "L3": "..."},',
+            '  "confidence": {"L1": 0.0-1.0, "L2": 0.0-1.0, "L3": 0.0-1.0},',
+            '  "matching_keywords": [...] }',
+        ])
+        _logger.info(
+            "category prompt built: L1=%d (cap=%d) L2=%d (cap=%d) L3=%d (per L2 cap=%d) examples=%d",
+            l1_count, l1_cap, l2_count_total, l2_cap, l3_count_total, l3_cap_per_l2, example_limit,
+        )
+        return "\n".join(parts)
+    except Exception as exc:
+        _logger.warning("category prompt fallback static due to: %s", exc)
+        return STATIC_CATEGORY_PROMPT
 
-【🆕 識別原則】
-1. ⭐ 商品核心名詞優先: 提取查詢中的核心商品名 (例: "木茸"、"背包")
-2. 忽略修飾詞: 「台灣」、「日曬」、「有機」等為修飾詞,不影響分類
-3. ⭐ 食品材料必歸食品類: 所有可食用的材料、食材、調味品都屬於「常溫食品」
-4. 不確定時給出最相關層級: 至少識別 L1 大分類
 
-【🆕 範例】
-查詢: "我要購買台灣日曬木茸"
-✅ 正確識別:
-{{
-  "category_hierarchy": {{"L1": "常溫食品", "L2": "五穀/豆類/米麵/乾貨", "L3": "烹調食材"}},
-  "confidence": {{"L1": 0.95, "L2": 0.90, "L3": 0.85}},
-  "matching_keywords": ["木茸"]
-}}
-❌ 錯誤: 不要將「木茸」歸類為「米類」或其他非食材分類
+def clear_category_prompt_cache(force_rebuild: bool = False) -> None:
+    """
+    清除分類提示詞快取；選擇性立即重建。
+    """
+    global _CATEGORY_PROMPT_CACHE, _CATEGORY_PROMPT_TS
+    with _CATEGORY_PROMPT_LOCK:
+        _CATEGORY_PROMPT_CACHE = None
+        _CATEGORY_PROMPT_TS = 0.0
+        if force_rebuild:
+            try:
+                _CATEGORY_PROMPT_CACHE = _build_category_hierarchy_prompt()
+                _CATEGORY_PROMPT_TS = time.time()
+            except Exception as exc:
+                _logger.warning("category prompt rebuild failed after clear: %s", exc)
+                _CATEGORY_PROMPT_CACHE = None
+                _CATEGORY_PROMPT_TS = 0.0
 
-查詢: "有斜款背包嗎"
-✅ 正確識別:
-{{
-  "category_hierarchy": {{"L1": "包包配件", "L2": "女用皮包", "L3": "側背包"}},
-  "confidence": {{"L1": 0.90, "L2": 0.85, "L3": 0.80}},
-  "matching_keywords": ["背包", "斜款"]
-}}
 
-查詢: "找橄欖油"
-✅ 正確識別:
-{{
-  "category_hierarchy": {{"L1": "常溫食品", "L2": "食用油", "L3": "植物油"}},
-  "confidence": {{"L1": 0.95, "L2": 0.90, "L3": 0.85}},
-  "matching_keywords": ["橄欖油"]
-}}
-
-【輸出 JSON 格式】必須包含:
-{{
-  "category_hierarchy": {{"L1": "...", "L2": "...", "L3": "..."}},
-  "confidence": {{"L1": 0.0-1.0, "L2": 0.0-1.0, "L3": 0.0-1.0}},
-  "matching_keywords": [...]
-}}
-
-若查詢中無法識別某層級,該欄位留空字串 ""。
-""".strip()
+def _get_category_hierarchy_prompt(force: bool = False) -> str:
+    """
+    具快取的分類提示詞取得；失敗時回退靜態版且不污染快取。
+    """
+    global _CATEGORY_PROMPT_CACHE, _CATEGORY_PROMPT_TS
+    now = time.time()
+    with _CATEGORY_PROMPT_LOCK:
+        if not force and _CATEGORY_PROMPT_CACHE and (now - _CATEGORY_PROMPT_TS) < CATEGORY_PROMPT_TTL:
+            return _CATEGORY_PROMPT_CACHE
+        try:
+            prompt = _build_category_hierarchy_prompt()
+            _CATEGORY_PROMPT_CACHE = prompt
+            _CATEGORY_PROMPT_TS = now
+            return prompt
+        except Exception as exc:
+            _logger.warning("category prompt build failed: %s", exc)
+            # 保留舊快取，不污染
+            return _CATEGORY_PROMPT_CACHE or STATIC_CATEGORY_PROMPT
 
 SUGGEST_PROMPT_SUFFIX = "也可輸入 1=原建議、2=特價關聯、3=智慧搭配。"
 
@@ -1204,7 +1351,7 @@ def llm_analyze_query(query: str, system_prompt: Optional[str] = None, use_searc
     
     _logger.info(f"      - 呼叫 OpenAI API 進行意圖分析")
     # 🆕 構建包含分類層級識別的提示詞
-    category_prompt = _build_category_hierarchy_prompt()
+    category_prompt = _get_category_hierarchy_prompt()
     
     default_prompt = (
         "你是一個商品搜尋意圖解析器。輸入是使用者的自然語言需求，請輸出 JSON，包含：\n"
@@ -1804,6 +1951,100 @@ def _detect_conversation_intent(query: str) -> str:
     return "general"
 
 
+def _detect_real_estate_query(query: str) -> Dict[str, Any]:
+    """識別房產意圖（僅聊天用），回傳是否命中與推測的層級。"""
+    if not query:
+        return {"hit": False, "hierarchy": {}}
+    norm = query.strip()
+    norm_lower = norm.lower()
+    hit = any(kw.lower() in norm_lower for kw in REAL_ESTATE_KEYWORDS)
+    hierarchy: Dict[str, str] = {}
+    if not hit:
+        return {"hit": False, "hierarchy": hierarchy}
+    # 簡單層級推測（不改動搜尋邏輯，只給 LLM 提示）
+    if "磐鈺" in norm:
+        hierarchy["L1"] = "磐鈺建設"
+    if "草間漫漫" in norm:
+        hierarchy["L2"] = "磐鈺草間漫漫"
+    elif "雲華" in norm:
+        hierarchy["L2"] = "磐鈺雲華"
+    elif "雲詠" in norm:
+        hierarchy["L2"] = "磐鈺雲詠"
+    if "極致輕寓2房" in norm:
+        hierarchy["L3"] = "極致輕寓2房"
+    elif "光合雅寓3房" in norm:
+        hierarchy["L3"] = "光合雅寓3房"
+    elif "市景菁英3房" in norm:
+        hierarchy["L3"] = "市景菁英3房"
+    elif "景觀大戶4房" in norm:
+        hierarchy["L3"] = "景觀大戶4房"
+    elif "協奏輕盈3房" in norm or "樂樂璵里" in norm:
+        hierarchy["L3"] = "協奏輕盈3房"
+    return {"hit": hit, "hierarchy": hierarchy}
+
+
+def _filter_real_estate_items(catalog: List[Dict[str, Any]], hierarchy: Dict[str, str]) -> List[Dict[str, Any]]:
+    """從 snapshot 中抓取房產商品，盡量依層級縮小。"""
+    if not catalog:
+        return []
+    def _norm(s: Any) -> str:
+        return str(s or "").strip()
+    l1 = _norm(hierarchy.get("L1"))
+    l2 = _norm(hierarchy.get("L2"))
+    l3 = _norm(hierarchy.get("L3"))
+    hits: List[Dict[str, Any]] = []
+    for item in catalog:
+        name = _norm(item.get("name"))
+        cat = _norm(item.get("category"))
+        if l3 and (l3 in name or cat == l3):
+            hits.append(item)
+            continue
+        if l2 and (l2 in name):
+            hits.append(item)
+            continue
+        if l1 and ("磐鈺" in name or cat == l1 or any(term in name for term in ["草間漫漫", "雲華", "雲詠"])):
+            hits.append(item)
+            continue
+        if any(term in name for term in REAL_ESTATE_KEYWORDS):
+            hits.append(item)
+    # 去重保留順序
+    seen = set()
+    deduped: List[Dict[str, Any]] = []
+    for it in hits:
+        gid = _norm(it.get("good_id"))
+        if gid in seen:
+            continue
+        seen.add(gid)
+        deduped.append(it)
+    return deduped
+
+
+def _build_real_estate_prompt(items: List[Dict[str, Any]], hierarchy: Dict[str, str]) -> str:
+    """房產專員提示詞，控制語氣與結構。"""
+    lines = [
+        "你是房地產專員，主推磐鈺建設系列案，語氣精簡專業，不寒暄、不自介。",
+        "回覆格式：",
+        "1) 先一句定位，說明案名/戶型與適合族群。",
+        "2) 接 2-4 個重點，以「•」列出（坪數/格局、採光通風、生活圈、陽台/綠化亮點）。",
+        "3) 收尾 CTA：詢問是否要看其他坪型或預約賞屋。",
+        "限制：60-80 字內（不含項目符號），不要詢問日常外出/送禮/工作用途，不要捏造價格。",
+        "若沒有符合商品，回覆固定句：目前沒有找到該分類的房源，需不需要改看其他坪型或社區？",
+        "",
+        "可參考的房源：",
+    ]
+    if hierarchy:
+        lines.append(f"- 層級提示：L1={hierarchy.get('L1') or ''} L2={hierarchy.get('L2') or ''} L3={hierarchy.get('L3') or ''}".strip())
+    if items:
+        for it in items[:6]:
+            name = str(it.get("name") or "").strip()
+            cat = str(it.get("category") or "").strip()
+            tag = f"【{cat}】" if cat else ""
+            lines.append(f"- {tag} {name}")
+    else:
+        lines.append("- 目前沒有候選房源可供參考。")
+    return "\n".join(lines)
+
+
 def _build_information_system_prompt(intent_type: str = "general") -> str:
     """建立資訊諮詢專用的系統提示詞，支援個性化語氣"""
     
@@ -2375,6 +2616,25 @@ def chat_reply(
     catalog = catalog or []
     normalized_message = (user_message or "").strip()
     previous_alignment = _extract_alignment_from_history(history)
+
+    # 🏠 房產意圖：切換房產專員提示詞（僅聊天，不改其他流程）
+    real_estate_ctx = _detect_real_estate_query(normalized_message)
+    if real_estate_ctx.get("hit"):
+        estate_items = _filter_real_estate_items(catalog, real_estate_ctx.get("hierarchy") or {})
+        system_prompt = _build_real_estate_prompt(estate_items, real_estate_ctx.get("hierarchy") or {})
+        context = {"products": estate_items}
+        reply_text = _mock_or_real_llm(system_prompt, history, normalized_message, catalog, context)
+        structured_filters = {}
+        if real_estate_ctx.get("hierarchy"):
+            structured_filters["category_hierarchy"] = real_estate_ctx["hierarchy"]
+        return {
+            "reply": reply_text,
+            "intent": "real_estate",
+            "overview": True,
+            "meta": {"real_estate": True, "category_hierarchy": real_estate_ctx.get("hierarchy"), "items_count": len(estate_items)},
+            "structured_filters": structured_filters,
+            "action": {"type": "none"},
+        }
 
     # 🎯 優先檢測上下文產品詢問 - 混合智慧核心
     context_inquiry = _detect_context_product_inquiry(normalized_message, history)
