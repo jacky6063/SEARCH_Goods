@@ -1312,7 +1312,7 @@ def _pick_first_in_text(text: str, candidates: List[str]) -> Optional[str]:
 def _normalize_text_for_match(t: str) -> str:
     t = (t or "").strip()
     # 保留斜線（/、／）以支援名稱中含斜線的分類（例如：五穀/豆類/米麵/乾貨）
-    t = re.sub(r"[，,。．\.；;！!、\\|（）()【】［］\[\]》〈<>]", " ", t)
+    t = re.sub(r"[，,。．\.；;！!？?、\\|（）()【】［］\[\]》〈<>]", " ", t)
     t = re.sub(r"\s+", " ", t)
     return t
 
@@ -1429,6 +1429,8 @@ def _pick_taxonomy_entry(entries: List[Dict[str, Any]], key: str, terms: List[st
 def _match_taxonomy_path(text: str) -> Dict[str, Optional[str]]:
     try:
         taxonomy = categories_service.get_taxonomy_index()
+        if not any(taxonomy.get(level) for level in ("l1", "l2", "l3")):
+            taxonomy = categories_service.get_taxonomy_index(force=True)
     except Exception:
         taxonomy = {}
     terms = _extract_focus_terms(text)
@@ -1450,9 +1452,17 @@ def _extract_selected_levels_from_text(text: str) -> Dict[str, Optional[str]]:
     """從文字中抽取 L1/L2/L3 選擇（以現有 taxonomy 名稱為基準做 substring/語序匹配）。"""
     selected = {"L1": None, "L2": None, "L3": None}
     raw = _normalize_text_for_match(text)
+    try:
+        # 確保分類快取已載入（若前序流程清空了快取，這裡會強制重載）
+        categories_service.get_scope(level="L1", top_k=None)
+    except Exception:
+        pass
+    taxonomy_index = categories_service.get_taxonomy_index(force=True)
     
     # 先嘗試語序模式：在 X 下 Y、小分類/品類等
     l1_names = (_get_scope_names("L1", top_k=None).get("names") or [])
+    if not l1_names:
+        l1_names = [entry.get("name") for entry in taxonomy_index.get("l1", []) if entry.get("name")]
     l1_guess = None
     # 常見語序：在X下、X 下面
     m = re.search(r"在\s*([\u4e00-\u9fffA-Za-z0-9 /&-]{1,20})\s*下", raw)
@@ -1473,6 +1483,12 @@ def _extract_selected_levels_from_text(text: str) -> Dict[str, Optional[str]]:
         if not selected.get("L1") or selected.get("L2"):
             return
         l2_names = (_get_scope_names("L2", top_k=None, parent_l1=selected["L1"]).get("names") or [])
+        if not l2_names:
+            l2_names = [
+                entry.get("l2")
+                for entry in taxonomy_index.get("l2", [])
+                if entry.get("l1") == selected["L1"] and entry.get("l2")
+            ]
         if not l2_names:
             return
         m3 = re.search(
@@ -1503,6 +1519,12 @@ def _extract_selected_levels_from_text(text: str) -> Dict[str, Optional[str]]:
         l3_names = (
             _get_scope_names("L3", top_k=None, parent_l1=selected["L1"], parent_l2=selected["L2"]).get("names") or []
         )
+        if not l3_names:
+            l3_names = [
+                entry.get("l3")
+                for entry in taxonomy_index.get("l3", [])
+                if entry.get("l1") == selected["L1"] and entry.get("l2") == selected["L2"] and entry.get("l3")
+            ]
         if not l3_names:
             return
         m5 = re.search(r"小分類\s*([\u4e00-\u9fffA-Za-z0-9 /&-]{1,40})", raw)
@@ -1559,7 +1581,7 @@ def _try_category_navigation_reply(user_text: str) -> Optional[Dict[str, Any]]:
                 "level": "L2",
                 "l2": names,
                 "more_count": int(scope.get("more_count") or 0),
-                "parent": {"L1": selected["L1"], "l1": selected["L1"]}
+                "parents": {"L1": selected["L1"], "l1": selected["L1"]},
             },
             "category_context": {"selected": {"L1": selected["L1"]}, "next_level": "L2"},
             "guide": {"hints": ["可提供預算、用途或品牌，我會更精準推薦"]},
@@ -1576,7 +1598,7 @@ def _try_category_navigation_reply(user_text: str) -> Optional[Dict[str, Any]]:
                 "level": "L3",
                 "l3": names,
                 "more_count": int(scope.get("more_count") or 0),
-                "parent": {"L1": selected["L1"], "l1": selected["L1"], "L2": selected["L2"], "l2": selected["L2"]}
+                "parents": {"L1": selected["L1"], "l1": selected["L1"], "L2": selected["L2"], "l2": selected["L2"]},
             },
             "category_context": {"selected": {"L1": selected["L1"], "L2": selected["L2"]}, "next_level": "L3"},
             "guide": {"hints": ["可提供預算、用途或品牌，我會更精準推薦"]},
@@ -1882,6 +1904,14 @@ def _legacy_chat_flow(req: ChatReq) -> ChatResponse:
         except Exception as exc:
             LOGGER.warning("category autodetect search failed: %s", exc, session_id=req.session_id)
 
+    # 類目導覽 / 範圍總覽優先回覆，避免純分類詢問被拉進 LLM 話術
+    nav_early = _try_category_navigation_reply(user_text)
+    if nav_early:
+        return ChatResponse(**nav_early)
+    overview_early = _try_overview_scope_reply(user_text)
+    if overview_early:
+        return ChatResponse(**overview_early)
+
     if user_text and not product_id_query:
         try:
             from llm_service import llm_analyze_query, llm_clarify_or_confirm
@@ -1906,14 +1936,6 @@ def _legacy_chat_flow(req: ChatReq) -> ChatResponse:
     
     # 清理過期快取
     _cleanup_session_cache()
-    # 類目導覽（L1->L2->L3）回覆，不直接推商品（優先於概覽）
-    nav = _try_category_navigation_reply(user_text)
-    if nav:
-        return ChatResponse(**nav)
-    # 概覽/販售範圍問句快速回覆（Top-K L1）
-    overview = _try_overview_scope_reply(user_text)
-    if overview:
-        return ChatResponse(**overview)
 
     planner_intent: Optional[DetectedIntent] = None
     try:

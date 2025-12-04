@@ -142,8 +142,13 @@ def _ensure_loaded(force: bool = False) -> pd.DataFrame:
     try:
         p = Path(path)
         if not p.exists():
-            _state = CategoriesState(df=pd.DataFrame(), path=path, ts=now, last_error=f"not found: {path}")
-            return _state.df
+            fallback = Path(DEFAULT_CATEGORIES_PATH)
+            if p.resolve() != fallback.resolve() and fallback.exists():
+                p = fallback
+                path = str(fallback)
+            else:
+                _state = CategoriesState(df=pd.DataFrame(), path=path, ts=now, last_error=f"not found: {path}")
+                return _state.df
         raw = pd.read_csv(p, dtype=str, encoding="utf-8-sig").fillna("")
         df = _normalize_df(raw)
         _state = CategoriesState(df=df, path=path, ts=now, last_error=None)
@@ -232,6 +237,9 @@ def set_categories_path(path: str) -> None:
 
 def get_scope(level: str = "L1", parent_l1: Optional[str] = None, parent_l2: Optional[str] = None, top_k: Optional[int] = None) -> Dict[str, Any]:
     df = _ensure_loaded()
+    # 若因暫時讀取失敗導致快取為空，嘗試強制重載一次（避免回傳空分類影響導覽邏輯）
+    if (df is None or df.empty):
+        df = _ensure_loaded(force=True)
     level = (level or "L1").upper()
     if df is None or df.empty:
         return {
@@ -383,6 +391,8 @@ def get_taxonomy_index(force: bool = False) -> Dict[str, Any]:
     ):
         return _TAXONOMY_INDEX_CACHE
     df = _ensure_loaded(force=force)
+    if (df is None or df.empty) and not force:
+        df = _ensure_loaded(force=True)
     index = _build_taxonomy_index(df if isinstance(df, pd.DataFrame) else pd.DataFrame())
     _TAXONOMY_INDEX_CACHE = index
     _TAXONOMY_INDEX_TS = now
