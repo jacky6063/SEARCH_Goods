@@ -503,6 +503,10 @@ L2_HINTS_BY_L1: Dict[str, Dict[str, List[str]]] = {
     "時尚女性": {
         "女用皮包": QUERY_CATEGORY_HINTS["包"],
     },
+    "常溫食品": {
+        "五穀/豆類/米麵/乾貨": ["米", "米類", "豆包", "豆腐", "米麵", "米飯", "穀物"],
+        "零食/餅乾/點心": ["零食", "點心", "餅乾", "零食點心"],
+    },
 }
 MARKETING_TAILS = [
     ("麥片", "，晨起元氣好選擇"),
@@ -1546,6 +1550,20 @@ def _extract_selected_levels_from_text(text: str) -> Dict[str, Optional[str]]:
     # 再次補齊可能缺少的 L2/L3
     _maybe_fill_l2()
     _maybe_fill_l3()
+
+    # 若已有 L3/L2 但缺 L1，從 taxonomy 反查路徑補齊
+    if taxonomy_index:
+        if selected.get("L3") and not selected.get("L1"):
+            for entry in taxonomy_index.get("l3", []):
+                if entry.get("l3") == selected["L3"]:
+                    selected["L1"] = entry.get("l1") or selected.get("L1")
+                    selected["L2"] = entry.get("l2") or selected.get("L2")
+                    break
+        if selected.get("L2") and not selected.get("L1"):
+            for entry in taxonomy_index.get("l2", []):
+                if entry.get("l2") == selected["L2"]:
+                    selected["L1"] = entry.get("l1") or selected.get("L1")
+                    break
 
     return selected
 
