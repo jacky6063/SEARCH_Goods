@@ -64,12 +64,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Trigger Render deployment
-        if: env.RENDER_SERVICE_ID && env.RENDER_API_KEY
+      - name: Validate Render secrets
         run: |
-          curl -fsSL \
+          if [ -z "${RENDER_SERVICE_ID}" ] || [ -z "${RENDER_API_KEY}" ]; then
+            echo "::error::Missing RENDER_SERVICE_ID or RENDER_API_KEY, skip deploy."
+            exit 1
+          fi
+          echo "RENDER_SERVICE_ID length: ${#RENDER_SERVICE_ID}"
+          echo "RENDER_API_KEY length: ${#RENDER_API_KEY}"
+
+      - name: Trigger Render deployment
+        if: ${{ env.RENDER_SERVICE_ID && env.RENDER_API_KEY }}
+        run: |
+          set -euo pipefail
+          curl -sS -D /tmp/render_headers.txt --fail-with-body \
             -H "Authorization: Bearer ${RENDER_API_KEY}" \
             -H "Content-Type: application/json" \
             -d '{}' \
             https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys
-
+          echo "Render response headers:"
+          cat /tmp/render_headers.txt
