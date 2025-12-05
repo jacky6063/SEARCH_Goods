@@ -1012,6 +1012,9 @@ FOOD_CATEGORIES = {
     "養身食品", "養身飲品",
 }
 FOOD_CATEGORIES_LOWER = {name.lower() for name in FOOD_CATEGORIES}
+GIFT_KEYWORDS = {"禮盒", "伴手", "伴手禮", "送禮"}
+GENDER_FEMALE = {"女款", "女生", "女用", "女性", "女士", "女子"}
+GENDER_MALE = {"男款", "男生", "男用", "男性", "男士", "紳士"}
 
 def _is_food_item(item: Dict[str, Any]) -> bool:
     """檢查商品是否為食品"""
@@ -1045,12 +1048,26 @@ def _is_food_query(query: str, keywords: List[str]) -> bool:
     
     return False
 
+
+def _detect_gender_from_text(query: str, keywords: List[str]) -> Optional[str]:
+    """從查詢與關鍵詞中推測性別"""
+    lowered = (query or "").lower()
+    lowered_keywords = [kw.lower() for kw in keywords if kw]
+    female_hits = any(any(token in lowered for token in GENDER_FEMALE) or any(token in kw for token in GENDER_FEMALE) for kw in lowered_keywords) or any(token in lowered for token in GENDER_FEMALE)
+    male_hits = any(any(token in lowered for token in GENDER_MALE) or any(token in kw for token in GENDER_MALE) for kw in lowered_keywords) or any(token in lowered for token in GENDER_MALE)
+    if female_hits and not male_hits:
+        return "female"
+    if male_hits and not female_hits:
+        return "male"
+    return None
+
 def _apply_structured_filters(records: List[Dict[str, Any]], filters: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
     if not records or not filters:
         return records
     category_filter = (filters.get("category_filter") or "").lower()
     must_keywords = [kw.lower() for kw in filters.get("must_have_keywords") or [] if kw]
     excluded_keywords = [kw.lower() for kw in filters.get("excluded_keywords") or [] if kw]
+    gender = (filters.get("gender") or "").lower()
     price_filter = filters.get("price_filter") or {}
     min_price = price_filter.get("min_price")
     max_price = price_filter.get("max_price")
@@ -1069,6 +1086,13 @@ def _apply_structured_filters(records: List[Dict[str, Any]], filters: Optional[D
             continue
         if excluded_keywords and any(kw in haystack for kw in excluded_keywords):
             continue
+        if gender:
+            female_tokens = {"女", "女款", "女生", "女用", "女性", "女士", "女子", "women", "female"}
+            male_tokens = {"男", "男款", "男生", "男用", "男性", "男士", "紳士", "men", "male"}
+            if gender == "female" and not any(tok in haystack for tok in female_tokens):
+                continue
+            if gender == "male" and not any(tok in haystack for tok in male_tokens):
+                continue
         if price_filter:
             special_price = FieldAccessor.get_special_price(item)
             regular_price = FieldAccessor.get_price(item)
@@ -1361,6 +1385,8 @@ def llm_analyze_query(query: str, system_prompt: Optional[str] = None, use_searc
         # 🆕 新增分類層級欄位
         "category_hierarchy: {L1: '', L2: '', L3: ''} 商品分類層級（若有識別到）\n"
         "hierarchy_confidence: {L1: 0.0, L2: 0.0, L3: 0.0} 每個層級的識別信心度\n"
+        "gender: 'female' 或 'male'（若無則給空字串）\n"
+        "規則：若需求包含 禮盒/伴手/伴手禮/送禮，請填 category_terms=['禮盒']、required_terms=['禮盒']，並給出對應的 category_hierarchy（L3 信心建議 >=0.6）。若出現 女款/女生/女用/女性/女士 → gender='female'；男款/男生/男用/男性/男士 → gender='male'。\n"
         "notes: 其他補充（字串）。若無明確資訊對應欄位請給空陣列或空字串。\n\n"
         # 🆕 加入分類識別指導
         f"{category_prompt}"
@@ -1378,6 +1404,8 @@ def llm_analyze_query(query: str, system_prompt: Optional[str] = None, use_searc
             result["category_hierarchy"] = {"L1": "", "L2": "", "L3": ""}
         if "hierarchy_confidence" not in result:
             result["hierarchy_confidence"] = {"L1": 0.0, "L2": 0.0, "L3": 0.0}
+        if "gender" not in result:
+            result["gender"] = ""
         _logger.info(f"      ✅ 意圖分析完成: {result}")
         return result
     except Exception:
@@ -1389,6 +1417,8 @@ def llm_analyze_query(query: str, system_prompt: Optional[str] = None, use_searc
                 result["category_hierarchy"] = {"L1": "", "L2": "", "L3": ""}
             if "hierarchy_confidence" not in result:
                 result["hierarchy_confidence"] = {"L1": 0.0, "L2": 0.0, "L3": 0.0}
+            if "gender" not in result:
+                result["gender"] = ""
             _logger.info(f"      ✅ 意圖分析完成 (JSON 修復): {result}")
             return result
         except Exception as e:
@@ -1645,6 +1675,20 @@ def _mock_or_real_llm(
 
     mock_reply = _generate_mock_reply(user_message, catalog, context)
     _logger.debug("_mock_or_real_llm invoked")
+
+    # Guardrail：有 must-have 或性別約束但無候選時，直接回缺貨/改查詢
+    structured_filters = context.get("structured_filters") or {}
+    musts = structured_filters.get("must_have_keywords") or []
+    gender = (structured_filters.get("gender") or "").lower()
+    products = context.get("products") or []
+    if (musts or gender) and not products:
+        if musts:
+            must_text = "、".join(str(m) for m in musts if m)
+            return f"目前沒有包含「{must_text}」的商品，需改成相關品類或放寬條件嗎？"
+        if gender == "female":
+            return "目前沒有女款庫存，想改看通用/男款，或提供其他條件嗎？"
+        if gender == "male":
+            return "目前沒有男款庫存，想改看通用/女款，或提供其他條件嗎？"
 
     if context.get("overview"):
         _logger.debug("Using mock reply due to overview context")
@@ -2296,6 +2340,14 @@ def _prepare_chat_context(user_message: str, catalog: List[Dict[str, Any]]) -> D
         and any(trigger in normalized_query for trigger in GENERAL_OVERVIEW_TRIGGERS)
     )
     structured_filters = _derive_structured_filters(query, keywords)
+    gender_hint = _detect_gender_from_text(query, keywords)
+    if gender_hint:
+        structured_filters["gender"] = gender_hint
+    # 禮盒/伴手關鍵詞強制 must-have
+    if any(gift in normalized_query for gift in GIFT_KEYWORDS):
+        musts = structured_filters.get("must_have_keywords") or []
+        musts.append("禮盒")
+        structured_filters["must_have_keywords"] = list(dict.fromkeys(musts))
     category_context_detected = False
 
     if wants_overview:
@@ -2323,6 +2375,17 @@ def _prepare_chat_context(user_message: str, catalog: List[Dict[str, Any]]) -> D
                 category_context_detected = True
                 structured_filters = dict(structured_filters or {})
                 structured_filters.setdefault("category_hierarchy", category_hierarchy)
+            # required_terms -> must_have_keywords；category_terms -> category_filter（若未設定）
+            required_terms = analysis.get("required_terms") or []
+            category_terms = analysis.get("category_terms") or []
+            if required_terms:
+                musts = structured_filters.get("must_have_keywords") or []
+                musts.extend(required_terms)
+                structured_filters["must_have_keywords"] = list(dict.fromkeys([m for m in musts if m]))
+            if category_terms and not structured_filters.get("category_filter"):
+                structured_filters["category_filter"] = str(category_terms[0]).strip().lower()
+            if analysis.get("gender") and not structured_filters.get("gender"):
+                structured_filters["gender"] = str(analysis.get("gender")).lower()
         except Exception as e:
             _logger.warning("Failed to analyze query for hierarchy: %s", e)
             category_hierarchy = None

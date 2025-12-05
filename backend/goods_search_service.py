@@ -57,6 +57,12 @@ DEFAULT_KWS: List[str] = [
     "廚房","料理","調味","醬","油","鹽","糖","胡椒","香料","醋","醬油","芝麻","胡麻","昆布","高湯"
 ]
 
+CORE_INTENT_TERMS: set[str] = {
+    "禮盒", "伴手", "伴手禮", "送禮",
+    "女款", "女生", "女用",
+    "男款", "男生", "男用",
+}
+
 
 _COLUMN_DEFINITION_PATH = Path(__file__).with_name("column_definitions.json")
 ROOT = Path(__file__).resolve().parents[1]
@@ -477,6 +483,7 @@ def score_row(row: Dict[str, Any], terms: List[str], original_query: str = "") -
         if any(term in text for term in expanded_terms):
             product_name = FieldAccessor.get_name(row).lower()
             in_name = normalized in product_name
+            matched_core = normalized in CORE_INTENT_TERMS or any(term in CORE_INTENT_TERMS for term in expanded_terms)
             # 🔧 優先配對類別關鍵字：晚宴包、小巧等
             if in_name:
                 score += 3.0  # 名稱中有關鍵字加高分
@@ -484,10 +491,14 @@ def score_row(row: Dict[str, Any], terms: List[str], original_query: str = "") -
                 score += 0.5
             else:
                 score += 1.5  # 其他欄位匹配也加分
+            if matched_core:
+                score += 2.0  # 禮盒/性別等核心詞額外加分
 
     # 🔧 新增：檢查 REMARK 欄位中的類別標籤（如「晚宴包」、「小包」等）
     remark = str(row.get("REMARK") or row.get("備註") or "").lower()
     for query_term in query_terms:
+        if not query_term or len(query_term) < 2:
+            continue  # 避免單字（如「有」）在備註中誤加分
         if query_term in remark:
             score += 4.0  # REMARK 中有完全匹配給予高分
 
