@@ -1865,6 +1865,10 @@ async def chat_endpoint(req: ChatReq):
             except Exception as exc:
                 logger.warning("Content engine enrichment skipped due to error: %s", exc)
 
+        # 顯示模式保底，避免 None 傳回前端/測試
+        if not payload.get("display_mode"):
+            payload["display_mode"] = "text_only"
+
         # 🎙️ 語音模式處理
         if req.voice_mode:
             from voice_service import (
