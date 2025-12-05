@@ -69,7 +69,9 @@ def get_data_path(
     # 1. 優先使用環境變數
     env_path = os.getenv(env_var)
     if env_path:
-        path = Path(env_path)
+        raw_env_path = Path(env_path).expanduser()
+        # 若為相對路徑，視為相對專案根目錄（避免測試環境給相對路徑時產生不一致）
+        path = raw_env_path if raw_env_path.is_absolute() else (ROOT / raw_env_path).resolve()
         if path.exists():
             logger.info(f"使用環境變數路徑: {env_var}={path}")
             return path

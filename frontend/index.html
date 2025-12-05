@@ -2422,9 +2422,15 @@ SEARCH_Goods 系統 - 前端應用程式
         
         // 🆕 啟動真人客服狀態輪詢
         if (data.session_id && typeof startRepairSessionPolling === 'function') {
-          console.log('[Operator] 啟動輪詢 for session:', data.session_id);
-          // 傳入 supabase_session_id 和維修專用的 UI session_id
-          startRepairSessionPolling(data.session_id, repairUISessionId);
+          // ✅ 使用 meta.supabase_session_id (UUID) 來輪詢，而非 UI session_id
+          const supabaseSessionId = data.meta?.supabase_session_id;
+          if (supabaseSessionId) {
+            console.log('[Operator] 啟動輪詢 for supabase_session:', supabaseSessionId, 'ui_session:', data.session_id);
+            // 傳入 supabase_session_id 和維修專用的 UI session_id
+            startRepairSessionPolling(supabaseSessionId, data.session_id);
+          } else {
+            console.warn('[Operator] ⚠️ 未取得 supabase_session_id，無法啟動輪詢');
+          }
         }
         
         return data;

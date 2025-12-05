@@ -808,10 +808,15 @@ def _is_category_navigation_query(query: str) -> bool:
         return False
     
     normalized = query.lower()
-    
+    navigation_strong_signals = [
+        "分類有哪些", "還有哪些分類", "還有哪些小分類", "小分類", "品類", "類別有什麼", "種類有什麼"
+    ]
+    if any(signal in normalized for signal in navigation_strong_signals):
+        return True
+
     # 排除：包含商品購買意圖的關鍵字
     product_indicators = [
-        "禮盒", "伴手", "醬油", "鞋", "包", "包包",
+        "禮盒", "伴手", "醬油", "鞋",
         "要買", "我要", "有賣", "想買", "購買",
         "醬", "xo", "豆腐乳", "米", "衣服", "褲子"
     ]
@@ -3181,6 +3186,7 @@ def chat_reply(
         response["status"] = "🩺 專業健康諮詢中"
     elif intent_type == "usage":
         response["status"] = "📋 使用指導分析中"
+    response.setdefault("display_mode", "text_only")
     return response
 
 def _detect_query_intent(text: str) -> str:

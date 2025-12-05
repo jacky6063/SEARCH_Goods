@@ -679,6 +679,28 @@ REPAIR_LOGGING_BRIDGE = ChatLoggingBridge(
     logger=logger,
 )
 
+# 🆕 記憶體降級模式：當 Supabase 不可用時,使用記憶體管理 repair session 狀態
+# key: ui_session_id, value: {supabase_session_id, manual_mode, operator_id, operator_name, status, started_at, messages}
+MEMORY_REPAIR_SESSIONS: Dict[str, Dict[str, Any]] = {}
+
+def get_or_create_memory_session(ui_session_id: str) -> str:
+    """記憶體降級：取得或創建 session ID"""
+    if ui_session_id not in MEMORY_REPAIR_SESSIONS:
+        import uuid
+        from datetime import datetime
+        memory_session_id = f"mem-{uuid.uuid4()}"
+        MEMORY_REPAIR_SESSIONS[ui_session_id] = {
+            "supabase_session_id": memory_session_id,
+            "manual_mode": False,
+            "operator_id": None,
+            "operator_name": None,
+            "status": "ongoing",
+            "started_at": datetime.utcnow().isoformat(),
+            "messages": []
+        }
+        logger.info(f"[Memory] Created fallback session: UI={ui_session_id} -> Memory={memory_session_id}")
+    return MEMORY_REPAIR_SESSIONS[ui_session_id]["supabase_session_id"]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
@@ -1995,6 +2017,18 @@ if ENABLE_REPAIR_SERVICE:
                 },
                 supabase_session_id=existing_supabase_session_id,
             )
+            
+            # 🆕 降級模式：如果 Supabase 不可用,使用記憶體管理
+            if not supabase_session_id:
+                logger.warning(f"[Repair] Supabase unavailable, using memory fallback for session: {session_id}")
+                supabase_session_id = get_or_create_memory_session(session_id)
+                # 記錄訊息到記憶體
+                from datetime import datetime as dt_class
+                MEMORY_REPAIR_SESSIONS[session_id]["messages"].append({
+                    "role": "user",
+                    "content": req.message,
+                    "timestamp": dt_class.utcnow().isoformat()
+                })
 
             # 情緒分析（達標才寫入 chat_messages.emotion_data 與 emotion_analysis）
             try:
@@ -2423,24 +2457,39 @@ if ENABLE_REPAIR_SERVICE:
                 detail="維修服務未啟用"
             )
         
+        # 🆕 記憶體降級：檢查記憶體中是否有此 session
+        if session_id in MEMORY_REPAIR_SESSIONS:
+            mem_session = MEMORY_REPAIR_SESSIONS[session_id]
+            logger.info(f"[Memory] Returning fallback session status for: {session_id}")
+            return SessionStatusResponse(
+                session_id=mem_session["supabase_session_id"],
+                manual_mode=mem_session["manual_mode"],
+                operator_id=mem_session.get("operator_id"),
+                operator_name=mem_session.get("operator_name"),
+                operator_avatar=mem_session.get("operator_avatar"),
+                status=mem_session.get("status", "ongoing"),
+                started_at=mem_session.get("started_at"),
+                mode_updated_at=mem_session.get("mode_updated_at")
+            )
+        
         try:
             from supabase_client import get_supabase_client
             client = get_supabase_client(prefer_service_role=True)
             
-            # 查詢 repair_sessions 表
+            # 查詢 repair_sessions 表（不使用 .single() 避免 0 rows 拋出異常）
             response = client.table('repair_sessions')\
                 .select('session_id, manual_mode, operator_id, operator_name, operator_avatar, status, started_at, mode_updated_at')\
                 .eq('session_id', session_id)\
-                .single()\
                 .execute()
             
-            if not response.data:
+            # 檢查是否有結果
+            if not response.data or len(response.data) == 0:
                 raise HTTPException(
                     status_code=404,
                     detail=f"Session {session_id} 不存在"
                 )
             
-            data = response.data
+            data = response.data[0]  # 取第一筆資料
             
             return SessionStatusResponse(
                 session_id=data.get('session_id'),
@@ -2506,6 +2555,35 @@ if ENABLE_REPAIR_SERVICE:
                 raise HTTPException(
                     status_code=400,
                     detail="接手對話需提供 operator_id"
+                )
+            
+            # 🆕 記憶體降級：檢查並更新記憶體中的 session
+            # 這裡要檢查 UI session id (因為前端可能用這個來查詢)
+            memory_ui_session = None
+            for ui_sess, mem_data in MEMORY_REPAIR_SESSIONS.items():
+                if mem_data["supabase_session_id"] == req.session_id:
+                    memory_ui_session = ui_sess
+                    break
+            
+            if memory_ui_session:
+                logger.info(f"[Memory] Updating fallback session mode: {req.session_id} -> manual_mode={req.manual_mode}")
+                MEMORY_REPAIR_SESSIONS[memory_ui_session]["manual_mode"] = req.manual_mode
+                MEMORY_REPAIR_SESSIONS[memory_ui_session]["mode_updated_at"] = datetime.utcnow().isoformat()
+                if req.manual_mode:
+                    MEMORY_REPAIR_SESSIONS[memory_ui_session]["operator_id"] = req.operator_id
+                    MEMORY_REPAIR_SESSIONS[memory_ui_session]["operator_name"] = req.operator_name
+                else:
+                    MEMORY_REPAIR_SESSIONS[memory_ui_session]["operator_id"] = None
+                    MEMORY_REPAIR_SESSIONS[memory_ui_session]["operator_name"] = None
+                    MEMORY_REPAIR_SESSIONS[memory_ui_session]["operator_avatar"] = None
+                
+                mode_text = "真人接手" if req.manual_mode else "AI 自動回覆"
+                return ManualModeResponse(
+                    success=True,
+                    session_id=req.session_id,
+                    manual_mode=req.manual_mode,
+                    operator_id=req.operator_id,
+                    message=f"✅ 已切換為{mode_text}（記憶體模式）"
                 )
             
             # 更新資料庫中的 session 狀態

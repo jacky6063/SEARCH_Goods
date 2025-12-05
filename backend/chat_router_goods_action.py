@@ -501,11 +501,11 @@ QUERY_CATEGORY_HINTS: Dict[str, List[str]] = {
 
 L2_HINTS_BY_L1: Dict[str, Dict[str, List[str]]] = {
     "時尚女性": {
-        "女用皮包": QUERY_CATEGORY_HINTS["包"],
+        "女用皮包": QUERY_CATEGORY_HINTS["包"] + ["皮包", "手提包", "肩背包", "背包"],
     },
     "常溫食品": {
-        "五穀/豆類/米麵/乾貨": ["米", "米類", "豆包", "豆腐", "米麵", "米飯", "穀物"],
-        "零食/餅乾/點心": ["零食", "點心", "餅乾", "零食點心"],
+        "五穀/豆類/米麵/乾貨": ["米", "米類", "豆包", "豆腐", "米麵", "米飯", "穀物", "佐醬", "湯料", "乾貨"],
+        "零食/餅乾/點心": ["零食", "點心", "餅乾", "零食點心", "小食", "糖果"],
     },
 }
 MARKETING_TAILS = [
@@ -1321,8 +1321,14 @@ def _normalize_text_for_match(t: str) -> str:
     return t
 
 
-def _best_match(candidates: List[str], text: str) -> Optional[str]:
-    """從候選名單中挑選與文字最相似（以最長子字串匹配、優先長度）的名稱。"""
+def _best_match(candidates: List[str], text: str, threshold: float = 0.6) -> Optional[str]:
+    """
+    從候選名單中挑選與文字最相似的名稱。
+    - 優先採用子字串精確匹配（最長優先）
+    - 若無子字串命中，使用相似度（SequenceMatcher）並套用閾值
+    """
+    from difflib import SequenceMatcher
+
     t = _normalize_text_for_match(text)
     best = None
     best_len = 0
@@ -1334,7 +1340,23 @@ def _best_match(candidates: List[str], text: str) -> Optional[str]:
             if len(n) > best_len:
                 best = n
                 best_len = len(n)
-    return best
+    if best:
+        return best
+
+    scored: List[Tuple[float, str]] = []
+    folded = _fold_for_score(t)
+    for name in candidates or []:
+        n = str(name or "").strip()
+        if not n:
+            continue
+        score = SequenceMatcher(None, _fold_for_score(n), folded).ratio()
+        scored.append((score, n))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    if scored and scored[0][0] >= threshold:
+        top3 = scored[:3]
+        LOGGER.debug("best_match fallback: top=%s", top3)
+        return scored[0][1]
+    return None
 
 
 def _fold_for_score(text: str) -> str:
@@ -1458,7 +1480,7 @@ def _extract_selected_levels_from_text(text: str) -> Dict[str, Optional[str]]:
     raw = _normalize_text_for_match(text)
     try:
         # 確保分類快取已載入（若前序流程清空了快取，這裡會強制重載）
-        categories_service.get_scope(level="L1", top_k=None)
+        categories_service.get_scope(level="L1", top_k=None, force=True)
     except Exception:
         pass
     taxonomy_index = categories_service.get_taxonomy_index(force=True)
@@ -1467,6 +1489,7 @@ def _extract_selected_levels_from_text(text: str) -> Dict[str, Optional[str]]:
     l1_names = (_get_scope_names("L1", top_k=None).get("names") or [])
     if not l1_names:
         l1_names = [entry.get("name") for entry in taxonomy_index.get("l1", []) if entry.get("name")]
+    LOGGER.debug("[Extract] L1 names=%d query=%s", len(l1_names), raw)
     l1_guess = None
     # 常見語序：在X下、X 下面
     m = re.search(r"在\s*([\u4e00-\u9fffA-Za-z0-9 /&-]{1,20})\s*下", raw)
@@ -1495,6 +1518,7 @@ def _extract_selected_levels_from_text(text: str) -> Dict[str, Optional[str]]:
             ]
         if not l2_names:
             return
+        LOGGER.debug("[Extract] L2 names=%d parent=%s", len(l2_names), selected["L1"])
         m3 = re.search(
             rf"(?:對|於|在)?\s*(?:{re.escape(selected['L1'])})?\s*(?:下)?[\s，,。]*我?對?\s*([\u4e00-\u9fffA-Za-z0-9 /&-]{{1,40}})\s*(?:有興趣|感興趣|喜歡|偏好|想看|想找)",
             raw,
@@ -1531,6 +1555,7 @@ def _extract_selected_levels_from_text(text: str) -> Dict[str, Optional[str]]:
             ]
         if not l3_names:
             return
+        LOGGER.debug("[Extract] L3 names=%d parent=%s/%s", len(l3_names), selected["L1"], selected["L2"])
         m5 = re.search(r"小分類\s*([\u4e00-\u9fffA-Za-z0-9 /&-]{1,40})", raw)
         l3_guess = _best_match(l3_names, m5.group(1)) if m5 else None
         if not l3_guess:
@@ -1565,6 +1590,8 @@ def _extract_selected_levels_from_text(text: str) -> Dict[str, Optional[str]]:
                     selected["L1"] = entry.get("l1") or selected.get("L1")
                     break
 
+    LOGGER.debug("[Extract] selected=%s", selected)
+
     return selected
 
 
@@ -1582,47 +1609,46 @@ def _compose_nav_text(selected: Dict[str, Optional[str]], next_level: str, names
     return base
 
 
-def _try_category_navigation_reply(user_text: str) -> Optional[Dict[str, Any]]:
-    selected = _extract_selected_levels_from_text(user_text)
+def _build_category_navigation_response(user_text: str, selected: Dict[str, Optional[str]]) -> Optional[Dict[str, Any]]:
+    """
+    根據已識別的分類層級構建導覽回應。
+    - 若無 L1，回傳 None（表示不處理）
+    - 若只有 L1：返回 L2 列表，available_scope.level = L2
+    - 若有 L1+L2：返回 L3 列表，available_scope.level = L3
+    - 若有 L1+L2+L3：已在最深層，仍回傳 L3 列表（保持可瀏覽）
+    """
     if not selected.get("L1"):
         return None
-    # 依選擇層級決定下一層
-    if selected.get("L1") and not selected.get("L2"):
-        # 提供 L2
-        topk = int(os.getenv("SCOPE_TOPK_L2", "8"))
-        scope = _get_scope_names("L2", top_k=topk, parent_l1=selected["L1"])
-        names = scope.get("names") or []
-        reply = _compose_nav_text(selected, "L2", names, int(scope.get("more_count") or 0))
-        meta = {
-            "oos_category": False,
-            "available_scope": {
-                "level": "L2",
-                "l2": names,
-                "more_count": int(scope.get("more_count") or 0),
-                "parents": {"L1": selected["L1"], "l1": selected["L1"]},
-            },
-            "category_context": {"selected": {"L1": selected["L1"]}, "next_level": "L2"},
-            "guide": {"hints": ["可提供預算、用途或品牌，我會更精準推薦"]},
-        }
-    elif selected.get("L1") and selected.get("L2") and not selected.get("L3"):
-        # 提供 L3
-        topk = int(os.getenv("SCOPE_TOPK_L3", "8"))
-        scope = _get_scope_names("L3", top_k=topk, parent_l1=selected["L1"], parent_l2=selected["L2"])
-        names = scope.get("names") or []
-        reply = _compose_nav_text(selected, "L3", names, int(scope.get("more_count") or 0))
-        meta = {
-            "oos_category": False,
-            "available_scope": {
-                "level": "L3",
-                "l3": names,
-                "more_count": int(scope.get("more_count") or 0),
-                "parents": {"L1": selected["L1"], "l1": selected["L1"], "L2": selected["L2"], "l2": selected["L2"]},
-            },
-            "category_context": {"selected": {"L1": selected["L1"], "L2": selected["L2"]}, "next_level": "L3"},
-            "guide": {"hints": ["可提供預算、用途或品牌，我會更精準推薦"]},
-        }
+
+    if selected.get("L3"):
+        level = "L3"
+        next_level = None
+        scope = _get_scope_names("L3", top_k=int(os.getenv("SCOPE_TOPK_L3", "8")), parent_l1=selected["L1"], parent_l2=selected["L2"])
+    elif selected.get("L2"):
+        level = "L3"
+        next_level = "L3"
+        scope = _get_scope_names("L3", top_k=int(os.getenv("SCOPE_TOPK_L3", "8")), parent_l1=selected["L1"], parent_l2=selected["L2"])
     else:
-        return None
+        level = "L2"
+        next_level = "L2"
+        scope = _get_scope_names("L2", top_k=int(os.getenv("SCOPE_TOPK_L2", "8")), parent_l1=selected["L1"])
+
+    names = scope.get("names") or []
+    more_count = int(scope.get("more_count") or 0)
+    reply = _compose_nav_text(selected, level if level in ("L2", "L3") else "L1", names, more_count)
+    meta = {
+        "oos_category": False,
+        "available_scope": {
+            "level": level,
+            level.lower(): names,
+            "more_count": more_count,
+            "parents": {"L1": selected.get("L1"), "l1": selected.get("L1"), "L2": selected.get("L2"), "l2": selected.get("L2")},
+        },
+        "category_context": {"selected": selected, "next_level": next_level},
+        "guide": {"hints": ["可提供預算、用途或品牌，我會更精準推薦"]},
+        "decision": {"from": "_build_category_navigation_response", "user_text": user_text},
+    }
+
     return {
         "ok": True,
         "reply": reply,
@@ -1636,6 +1662,14 @@ def _try_category_navigation_reply(user_text: str) -> Optional[Dict[str, Any]]:
         "chat_session_id": str(uuid.uuid4())[:8],
         "status": None,
     }
+
+
+def _try_category_navigation_reply(user_text: str) -> Optional[Dict[str, Any]]:
+    selected = _extract_selected_levels_from_text(user_text)
+    resp = _build_category_navigation_response(user_text, selected)
+    if resp:
+        LOGGER.debug("[NavReply] selected=%s level=%s", selected, resp.get("meta", {}).get("available_scope", {}).get("level"))
+    return resp
 
 
 def _sanitize_category_value(value: Any) -> str:
@@ -1989,6 +2023,10 @@ def _legacy_chat_flow(req: ChatReq) -> ChatResponse:
             catalog=catalog,
             topn=10  # 增加搜尋結果數量
         )
+        llm_result = llm_result or {}
+        if not llm_result.get("display_mode"):
+            llm_result["display_mode"] = "text_only"
+        llm_result.setdefault("meta", {})
         structured_filters = llm_result.get("structured_filters") or {}
         llm_meta = llm_result.get("meta") or {}
 
@@ -2064,7 +2102,7 @@ def _legacy_chat_flow(req: ChatReq) -> ChatResponse:
                     "suggestion_ids": [],
                     "meta": llm_result.get("meta", {}),
                     "action": {"type": "none"},
-                    "display_mode": llm_result.get("display_mode", "text_only"),
+                    "display_mode": llm_result.get("display_mode") or "text_only",
                     "structured_payload": llm_result.get("structured_payload"),
                     "structured_products": llm_result.get("structured_products", []),
                     "status": llm_result.get("status"),
