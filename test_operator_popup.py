@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 """
-真人客服彈窗功能快速測試腳本
-
-測試項目:
-1. 建立測試 session
-2. 切換為真人接手模式
-3. 查詢 session 狀態
-4. 恢復 AI 自動模式
+真人客服彈窗功能快速測試腳本（需真人/外部服務，預設跳過）
 """
+
+import pytest
+pytestmark = pytest.mark.skip(reason="manual integration test (requires live service) — skipped in CI/pytest")
 
 import requests
 import json

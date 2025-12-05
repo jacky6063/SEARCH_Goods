@@ -957,6 +957,15 @@ def load_goods_rows(refresh: bool = False) -> List[Dict[str, Any]]:
     return _GOODS_ROWS_CACHE or []
 
 
+# 向後相容：舊版測試引用的函式名稱
+def load_goods_data(csv_path: Optional[str] = None) -> pd.DataFrame:
+    """
+    Deprecated alias for load_data, kept for test compatibility.
+    """
+    path = csv_path or str(DEFAULT_DATA_PATH)
+    return load_data(path)
+
+
 # === Chat mode support: catalog snapshot ======================================
 PRIORITY_KEYWORDS: Tuple[str, ...] = (
     "包", "包包", "背包", "手提包", "肩背包", "斜背包", "晚宴包",

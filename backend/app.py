@@ -2011,8 +2011,8 @@ if ENABLE_REPAIR_SERVICE:
                 return RepairChatResp(
                     reply="",  # 空回覆，等待客服人員回覆
                     repairs=[],
-                    session_id=supabase_session_id or session_id,
-                    meta={"manual_mode": True, "message": "waiting_for_operator"}
+                    session_id=session_id,
+                    meta={"manual_mode": True, "message": "waiting_for_operator", "supabase_session_id": supabase_session_id}
                 )
             
             # 確保 repair_sessions 表中有此 session 記錄
@@ -2053,8 +2053,8 @@ if ENABLE_REPAIR_SERVICE:
                 return RepairChatResp(
                     reply="",  # 空回覆，等待客服人員回覆
                     repairs=[],
-                    session_id=supabase_session_id or session_id,
-                    meta={"manual_mode": True, "message": "waiting_for_operator"}
+                    session_id=session_id,
+                    meta={"manual_mode": True, "message": "waiting_for_operator", "supabase_session_id": supabase_session_id}
                 )
             
             # 載入維修資料
@@ -2142,8 +2142,8 @@ if ENABLE_REPAIR_SERVICE:
             return RepairChatResp(
                 reply=reply,
                 repairs=formatted_repairs,
-                session_id=supabase_session_id or session_id,  # 返回 supabase_session_id
-                meta=response_meta,
+                session_id=session_id,  # 返回前端 session_id，supabase 映射放 meta
+                meta={**response_meta, "supabase_session_id": supabase_session_id},
             )
             
         except Exception as e:
