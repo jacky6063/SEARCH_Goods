@@ -56,6 +56,7 @@ _logger = get_logger(__name__)
 CATEGORY_PROMPT_TTL = int(os.getenv("CATEGORY_PROMPT_TTL", "300"))  # 秒
 _CATEGORY_PROMPT_CACHE: Optional[str] = None
 _CATEGORY_PROMPT_TS: float = 0.0
+_CATEGORY_ALIAS_MAP: Dict[str, Dict[str, str]] = {}
 _CATEGORY_PROMPT_LOCK = threading.Lock()
 
 # === 搜索功能 LLM 配置 ===
@@ -700,7 +701,7 @@ def _build_category_hierarchy_prompt() -> str:
             if l1_count >= l1_cap:
                 parts.append("  …(其他 L1 省略以控制長度)")
                 break
-            parts.append(f"\n📦 {l1['name']}:")
+            parts.append(f"\n📦 [L1] {l1['name']}:")
             l2_children = l1.get("children") or {}
             l2_items = sorted(
                 [{"name": name, **node} for name, node in l2_children.items()],
@@ -713,7 +714,7 @@ def _build_category_hierarchy_prompt() -> str:
                     break
                 l2_count_total += 1
                 l2_local += 1
-                parts.append(f"  • {l2['name']}:")
+                parts.append(f"  • [L2] {l2['name']}:")
                 l3_list = l2.get("children") or []
                 l3_items = sorted(
                     l3_list,
@@ -728,10 +729,11 @@ def _build_category_hierarchy_prompt() -> str:
                     l3_count_total += 1
                     l3_name = l3.get("name") or ""
                     examples = _get_product_examples(products_df, l3_name, limit=example_limit)
+                    marker = f"[L3] {l3_name}" if l3_name else "[L3]"
                     if examples:
-                        parts.append(f"    - {l3_name}: {', '.join(examples)}")
+                        parts.append(f"    - {marker}: {', '.join(examples)}")
                     else:
-                        parts.append(f"    - {l3_name}")
+                        parts.append(f"    - {marker}")
             l1_count += 1
 
         parts.extend([
@@ -740,6 +742,7 @@ def _build_category_hierarchy_prompt() -> str:
             "1. 商品核心名詞優先：提取查詢中的核心商品名",
             "2. 忽略修飾詞：「台灣」「日曬」「有機」等為修飾詞",
             "3. 食品材料歸常溫食品；不確定時至少識別 L1 大分類",
+            "4. 請遵守 [L1]/[L2]/[L3] 標記，不可將 L2 誤判為 L1；若看到「伴手禮盒/伴手禮/伴手」請映射到 L1=常溫食品，L2=伴手好禮，L3=伴手好禮。",
             "",
             "【輸出格式】",
             '{ "category_hierarchy": {"L1": "...", "L2": "...", "L3": "..."},',
@@ -754,6 +757,69 @@ def _build_category_hierarchy_prompt() -> str:
     except Exception as exc:
         _logger.warning("category prompt fallback static due to: %s", exc)
         return STATIC_CATEGORY_PROMPT
+
+
+def _get_category_alias_map() -> Dict[str, Dict[str, str]]:
+    """
+    建立「用戶詞 → 標準層級」對照，供層級補全與分類映射使用。
+    提醒：分類資料更新（goods_categories.csv）後請重建快取。
+    """
+    global _CATEGORY_ALIAS_MAP
+    if _CATEGORY_ALIAS_MAP:
+        return _CATEGORY_ALIAS_MAP
+    alias: Dict[str, Dict[str, str]] = {}
+    try:
+        categories = get_all_categories()
+        for cat in categories or []:
+            l1 = str(cat.get("L1") or "").strip()
+            l2 = str(cat.get("L2") or "").strip()
+            l3 = str(cat.get("L3") or "").strip()
+            if l2:
+                alias[l2.lower()] = {"L1": l1, "L2": l2, "L3": l3 or l2}
+            if l3:
+                alias[l3.lower()] = {"L1": l1, "L2": l2 or l3, "L3": l3}
+        # 特例：伴手禮盒相關同義詞
+        alias.setdefault("伴手禮盒", {"L1": "常溫食品", "L2": "伴手好禮", "L3": "伴手好禮"})
+        alias.setdefault("伴手禮", {"L1": "常溫食品", "L2": "伴手好禮", "L3": "伴手好禮"})
+        alias.setdefault("伴手", {"L1": "常溫食品", "L2": "伴手好禮", "L3": "伴手好禮"})
+        alias.setdefault("禮盒", {"L1": "常溫食品", "L2": "伴手好禮", "L3": "伴手好禮"})
+    except Exception as exc:
+        _logger.warning("category alias map build failed: %s", exc)
+    _logger.info("category alias map built: %d entries", len(alias))
+    _CATEGORY_ALIAS_MAP = alias
+    return _CATEGORY_ALIAS_MAP
+
+
+def _complete_category_hierarchy(
+    hierarchy: Optional[Dict[str, str]],
+    category_terms: Optional[List[str]] = None
+) -> Dict[str, str]:
+    """
+    依據 alias map 補全/修正層級，避免 L2 誤判為 L1 或缺層。
+    """
+    alias_map = _get_category_alias_map()
+    hierarchy = hierarchy or {}
+    l1 = str(hierarchy.get("L1") or "").strip()
+    l2 = str(hierarchy.get("L2") or "").strip()
+    l3 = str(hierarchy.get("L3") or "").strip()
+
+    def _apply_alias(term: str):
+        nonlocal l1, l2, l3
+        if not term:
+            return
+        alias = alias_map.get(term.lower())
+        if not alias:
+            return
+        l1 = l1 or alias.get("L1") or ""
+        l2 = l2 or alias.get("L2") or ""
+        l3 = l3 or alias.get("L3") or ""
+
+    for term in category_terms or []:
+        _apply_alias(str(term))
+    for term in (l3, l2, l1):
+        _apply_alias(term)
+
+    return {"L1": l1, "L2": l2, "L3": l3}
 
 
 def clear_category_prompt_cache(force_rebuild: bool = False) -> None:
@@ -772,6 +838,13 @@ def clear_category_prompt_cache(force_rebuild: bool = False) -> None:
                 _logger.warning("category prompt rebuild failed after clear: %s", exc)
                 _CATEGORY_PROMPT_CACHE = None
                 _CATEGORY_PROMPT_TS = 0.0
+
+
+def refresh_category_prompt_after_data_update() -> None:
+    """
+    分類/商品資料更新後呼叫，確保提示詞同步最新 goods_categories.csv。
+    """
+    clear_category_prompt_cache(force_rebuild=True)
 
 
 def _get_category_hierarchy_prompt(force: bool = False) -> str:
@@ -1079,11 +1152,25 @@ def _apply_structured_filters(records: List[Dict[str, Any]], filters: Optional[D
         l2_cat = FieldAccessor.get_category_l2(item).lower()
         l3_cat = FieldAccessor.get_category_l3(item).lower()
         description = FieldAccessor.get_description(item).lower()
-        haystack = " ".join([name, l1_cat, l2_cat, l3_cat, description]).lower()
-        if category_filter and category_filter not in haystack:
+        category_haystack = " ".join([l1_cat, l2_cat, l3_cat]).lower()
+        haystack = " ".join([name, category_haystack, description]).lower()
+        if category_filter and category_filter not in category_haystack:
             continue
-        if must_keywords and not all(kw in haystack for kw in must_keywords):
-            continue
+        if must_keywords:
+            gift_terms = {"禮盒", "伴手", "伴手禮"}
+            gift_ok = True
+            for kw in must_keywords:
+                kw_lower = kw.lower()
+                if kw_lower in gift_terms:
+                    if (kw_lower not in name) and (kw_lower not in category_haystack):
+                        gift_ok = False
+                        break
+                else:
+                    if kw_lower not in haystack:
+                        gift_ok = False
+                        break
+            if not gift_ok:
+                continue
         if excluded_keywords and any(kw in haystack for kw in excluded_keywords):
             continue
         if gender:
@@ -1386,7 +1473,9 @@ def llm_analyze_query(query: str, system_prompt: Optional[str] = None, use_searc
         "category_hierarchy: {L1: '', L2: '', L3: ''} 商品分類層級（若有識別到）\n"
         "hierarchy_confidence: {L1: 0.0, L2: 0.0, L3: 0.0} 每個層級的識別信心度\n"
         "gender: 'female' 或 'male'（若無則給空字串）\n"
-        "規則：若需求包含 禮盒/伴手/伴手禮/送禮，請填 category_terms=['禮盒']、required_terms=['禮盒']，並給出對應的 category_hierarchy（L3 信心建議 >=0.6）。若出現 女款/女生/女用/女性/女士 → gender='female'；男款/男生/男用/男性/男士 → gender='male'。\n"
+        "規則：若需求包含 禮盒/伴手/伴手禮/送禮，請填 category_terms=['禮盒']、required_terms=['禮盒']，並給出對應的 category_hierarchy（L3 信心建議 >=0.6）。\n"
+        "      伴手禮盒/伴手禮/伴手 → 映射到 category_hierarchy={L1:'常溫食品', L2:'伴手好禮', L3:'伴手好禮'}。\n"
+        "      若出現 女款/女生/女用/女性/女士 → gender='female'；男款/男生/男用/男性/男士 → gender='male'。\n"
         "notes: 其他補充（字串）。若無明確資訊對應欄位請給空陣列或空字串。\n\n"
         # 🆕 加入分類識別指導
         f"{category_prompt}"
@@ -1406,6 +1495,17 @@ def llm_analyze_query(query: str, system_prompt: Optional[str] = None, use_searc
             result["hierarchy_confidence"] = {"L1": 0.0, "L2": 0.0, "L3": 0.0}
         if "gender" not in result:
             result["gender"] = ""
+        # 🆕 依據分類 alias 補全層級，避免 L2 誤判為 L1
+        result["category_hierarchy"] = _complete_category_hierarchy(
+            result.get("category_hierarchy"),
+            result.get("category_terms") or []
+        )
+        # 🆕 信心低或層級缺失時，標記澄清
+        hierarchy_confidence = result.get("hierarchy_confidence") or {}
+        max_conf = max([float(v) for v in hierarchy_confidence.values()] or [0.0])
+        if max_conf < 0.55 or not result["category_hierarchy"].get("L2"):
+            result["need_clarification"] = True
+            result["clarify_question"] = "要找哪一類的禮盒？例如：伴手好禮、送禮禮盒。"
         _logger.info(f"      ✅ 意圖分析完成: {result}")
         return result
     except Exception:
@@ -1419,6 +1519,15 @@ def llm_analyze_query(query: str, system_prompt: Optional[str] = None, use_searc
                 result["hierarchy_confidence"] = {"L1": 0.0, "L2": 0.0, "L3": 0.0}
             if "gender" not in result:
                 result["gender"] = ""
+            result["category_hierarchy"] = _complete_category_hierarchy(
+                result.get("category_hierarchy"),
+                result.get("category_terms") or []
+            )
+            hierarchy_confidence = result.get("hierarchy_confidence") or {}
+            max_conf = max([float(v) for v in hierarchy_confidence.values()] or [0.0])
+            if max_conf < 0.55 or not result["category_hierarchy"].get("L2"):
+                result["need_clarification"] = True
+                result["clarify_question"] = "要找哪一類的禮盒？例如：伴手好禮、送禮禮盒。"
             _logger.info(f"      ✅ 意圖分析完成 (JSON 修復): {result}")
             return result
         except Exception as e:
@@ -2348,6 +2457,7 @@ def _prepare_chat_context(user_message: str, catalog: List[Dict[str, Any]]) -> D
         musts = structured_filters.get("must_have_keywords") or []
         musts.append("禮盒")
         structured_filters["must_have_keywords"] = list(dict.fromkeys(musts))
+        structured_filters.setdefault("category_filter", "禮")
     category_context_detected = False
 
     if wants_overview:
@@ -2383,7 +2493,13 @@ def _prepare_chat_context(user_message: str, catalog: List[Dict[str, Any]]) -> D
                 musts.extend(required_terms)
                 structured_filters["must_have_keywords"] = list(dict.fromkeys([m for m in musts if m]))
             if category_terms and not structured_filters.get("category_filter"):
-                structured_filters["category_filter"] = str(category_terms[0]).strip().lower()
+                first_term = str(category_terms[0]).strip()
+                alias = _get_category_alias_map().get(first_term.lower())
+                if alias:
+                    structured_filters.setdefault("category_hierarchy", alias)
+                    structured_filters["category_filter"] = (alias.get("L3") or alias.get("L2") or first_term).lower()
+                else:
+                    structured_filters["category_filter"] = first_term.lower()
             if analysis.get("gender") and not structured_filters.get("gender"):
                 structured_filters["gender"] = str(analysis.get("gender")).lower()
         except Exception as e:
@@ -2865,6 +2981,7 @@ def chat_reply(
 
     context = _prepare_chat_context(user_message, catalog)
     structured_filters = context.get("structured_filters") or {}
+    _logger.info("chat_reply filters=%s hierarchy=%s", structured_filters, structured_filters.get("category_hierarchy"))
     prompt_items = context.get("matches") or catalog[:max(topn, 1)]
     system_prompt = _build_system_prompt(prompt_items)
     reply_text = _mock_or_real_llm(system_prompt, history, user_message, catalog, context)

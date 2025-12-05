@@ -74,6 +74,7 @@ from llm_service import (
     llm_analyze_query,
     llm_clarify_or_confirm,
     clear_category_prompt_cache,
+    refresh_category_prompt_after_data_update,
     USE_RERANK,
     USE_INTENT,
     USE_PROMO,
@@ -1633,6 +1634,8 @@ def admin_upload_categories(
 
         # 清除/重建分類提示詞快取
         clear_category_prompt_cache(force_rebuild=rebuild_prompt)
+        if rebuild_prompt:
+            refresh_category_prompt_after_data_update()
 
         return JSONResponse({
             "status": "ok",
