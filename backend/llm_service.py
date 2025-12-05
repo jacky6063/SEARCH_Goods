@@ -790,6 +790,51 @@ def _get_category_alias_map() -> Dict[str, Dict[str, str]]:
     return _CATEGORY_ALIAS_MAP
 
 
+def _is_category_navigation_query(query: str) -> bool:
+    """
+    檢測查詢是否為純分類導覽（不應補全層級）。
+    
+    導覽查詢範例：
+    - "你們有什麼常溫食品的品類？"
+    - "還有哪些小分類？"
+    - "伴手好禮下還有哪些類別？"
+    
+    商品查詢範例（應補全層級）：
+    - "有伴手禮盒嗎"
+    - "想買XO醬"
+    - "女款包包"
+    """
+    if not query:
+        return False
+    
+    normalized = query.lower()
+    
+    # 排除：包含商品購買意圖的關鍵字
+    product_indicators = [
+        "禮盒", "伴手", "醬油", "鞋", "包", "包包",
+        "要買", "我要", "有賣", "想買", "購買",
+        "醬", "xo", "豆腐乳", "米", "衣服", "褲子"
+    ]
+    if any(indicator in normalized for indicator in product_indicators):
+        return False
+    
+    # 檢測：純導覽關鍵字模式
+    import re
+    navigation_patterns = [
+        r"有什麼.*?(品類|分類|小分類|類別|種類|類型)",
+        r"還有哪些.*?(小分類|品類|種類|類別)",
+        r"(品類|分類|類別|種類|類型).*?有(什麼|哪些)",
+        r"(底下|下面|裡面|之下).*?有(什麼|哪些).*(品類|分類|類別)",
+        r"(賣|有|提供).*?(什麼|哪些).*(品類|分類|類別|種類)",
+    ]
+    
+    for pattern in navigation_patterns:
+        if re.search(pattern, normalized):
+            return True
+    
+    return False
+
+
 def _complete_category_hierarchy(
     hierarchy: Optional[Dict[str, str]],
     category_terms: Optional[List[str]] = None
@@ -1495,11 +1540,12 @@ def llm_analyze_query(query: str, system_prompt: Optional[str] = None, use_searc
             result["hierarchy_confidence"] = {"L1": 0.0, "L2": 0.0, "L3": 0.0}
         if "gender" not in result:
             result["gender"] = ""
-        # 🆕 依據分類 alias 補全層級，避免 L2 誤判為 L1
-        result["category_hierarchy"] = _complete_category_hierarchy(
-            result.get("category_hierarchy"),
-            result.get("category_terms") or []
-        )
+        # 🆕 只在非導覽查詢時補全層級（避免干擾分類導覽）
+        if not _is_category_navigation_query(query):
+            result["category_hierarchy"] = _complete_category_hierarchy(
+                result.get("category_hierarchy"),
+                result.get("category_terms") or []
+            )
         # 🆕 信心低或層級缺失時，標記澄清
         hierarchy_confidence = result.get("hierarchy_confidence") or {}
         max_conf = max([float(v) for v in hierarchy_confidence.values()] or [0.0])
@@ -1519,10 +1565,12 @@ def llm_analyze_query(query: str, system_prompt: Optional[str] = None, use_searc
                 result["hierarchy_confidence"] = {"L1": 0.0, "L2": 0.0, "L3": 0.0}
             if "gender" not in result:
                 result["gender"] = ""
-            result["category_hierarchy"] = _complete_category_hierarchy(
-                result.get("category_hierarchy"),
-                result.get("category_terms") or []
-            )
+            # 只在非導覽查詢時補全層級
+            if not _is_category_navigation_query(query):
+                result["category_hierarchy"] = _complete_category_hierarchy(
+                    result.get("category_hierarchy"),
+                    result.get("category_terms") or []
+                )
             hierarchy_confidence = result.get("hierarchy_confidence") or {}
             max_conf = max([float(v) for v in hierarchy_confidence.values()] or [0.0])
             if max_conf < 0.55 or not result["category_hierarchy"].get("L2"):
