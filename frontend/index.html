@@ -47,7 +47,7 @@ SEARCH_Goods 系統 - 前端應用程式
     html,body{height:100%;}
     body{
       margin:0;
-      background:linear-gradient(180deg,#eef2f7 0%,#f7f8fb 35%,#fcfdff 100%);
+      background:linear-gradient(180deg,#eef2f7 0%,#eef2f7 100%);
       color:var(--text);
       font-family:"SF Pro Display","SF Pro Text","PingFang TC","Microsoft JhengHei",sans-serif;
       line-height:1.5;
@@ -80,7 +80,7 @@ SEARCH_Goods 系統 - 前端應用程式
     }
     .panel-header{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;}
     .panel-card h2{margin:0;font-size:18px;font-weight:600;color:var(--text);}
-    .panel-subtitle{font-size:13px;color:var(--sub);}
+    .panel-subtitle{font-size:13px;color:#000;}
     .input-group{display:flex;gap:12px;margin-bottom:16px;}
     .input{flex:1;border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:15px;color:var(--text);background:#f8fafc;transition:border 0.2s,box-shadow 0.2s;}
     .input-textarea{min-height:140px;resize:vertical;line-height:1.6;}
@@ -91,11 +91,11 @@ SEARCH_Goods 系統 - 前端應用程式
     .btn.primary{background:var(--accent);color:#fff;box-shadow:0 10px 20px rgba(37,99,235,0.25);}
     .btn.primary:hover{background:#1f4fd6;}
     .btn.ghost{background:#eff6ff;color:var(--accent);border-color:rgba(37,99,235,0.2);box-shadow:none;}
-    .status{font-size:13px;color:var(--sub);background:#f8fafc;border:1px dashed var(--border);border-radius:12px;padding:12px;margin-top:18px;}
+    .status{font-size:13px;color:#000;background:#f8fafc;border:1px dashed var(--border);border-radius:12px;padding:12px;margin-top:18px;}
     .action-row{display:flex;gap:12px;flex-wrap:wrap;}
     .intent-mode-row{margin-top:8px;gap:8px;}
     .intent-mode-row .mode-btn{flex:1;min-width:0;}
-    .mode-lock-hint{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.4;}
+    .mode-lock-hint{font-size:12px;color:#000;margin-top:6px;line-height:1.4;}
     .media-panel{display:flex;flex-direction:column;gap:12px;--video-aspect:16/9;position:relative;}
     .media-panel iframe{width:100%;aspect-ratio:var(--video-aspect,16/9);height:auto;border:0;border-radius:14px;background:#000;transition:all 0.25s ease;}
     .media-panel .youtube-thumbnail{width:100%;aspect-ratio:var(--video-aspect,16/9);position:relative;cursor:pointer;border-radius:14px;overflow:hidden;background:#000;}
@@ -118,7 +118,7 @@ SEARCH_Goods 系統 - 前端應用程式
     .results-column{display:flex;flex-direction:column;gap:20px;height:100%;min-height:0;}
     .results-header{display:flex;align-items:center;justify-content:space-between;gap:12px;}
     .results-header h2{margin:0;font-size:22px;font-weight:600;}
-    #resultCount{font-size:14px;color:var(--sub);background:#eef2ff;padding:6px 12px;border-radius:999px;}
+    #resultCount{font-size:14px;color:#000;background:#eef2ff;padding:6px 12px;border-radius:999px;}
     #hotCategories{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;}
     #hotCategories button{
       border:1px solid rgba(37,99,235,0.25);
@@ -1080,7 +1080,7 @@ SEARCH_Goods 系統 - 前端應用程式
               ? `熱門中分類（${parentL1}）`
               : `熱門小分類（${parentL1} > ${parentL2}）`));
         
-        title.style.cssText = 'width:100%;font-size:13px;color:#475569;margin-bottom:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
+        title.style.cssText = 'width:100%;font-size:13px;color:#000;margin-bottom:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
         
         // 🆕 根據層級建立可互動的標題
         if (labelLevel === 'L2' && parentL1) {
