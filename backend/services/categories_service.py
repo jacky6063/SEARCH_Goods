@@ -7,7 +7,9 @@ import re
 from pathlib import Path
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[1]
+# 🔧 修正：往上 2 層到專案根目錄（與 path_manager.py 一致）
+# services/categories_service.py → services/ → backend/ → 專案根目錄
+ROOT = Path(__file__).resolve().parents[2]
 
 DEFAULT_CATEGORIES_PATH = os.getenv("CATEGORIES_PATH") or str(ROOT / "data" / "goods_categories.csv")
 CATEGORIES_CACHE_TTL = int(os.getenv("CATEGORIES_CACHE_TTL", "300"))
