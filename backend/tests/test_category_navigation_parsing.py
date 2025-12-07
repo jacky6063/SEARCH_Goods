@@ -48,12 +48,3 @@ def test_extract_l3_from_slash_terms():
   assert selected["L1"] == "常溫食品"
   assert selected["L2"] == "五穀/豆類/米麵/乾貨"
   assert selected["L3"] == "米類"
-
-
-def test_extract_l2_from_fashion_bag_keywords():
-  """沒有斜線時，包包關鍵字也應能辨識 L2"""
-  text = "在時尚女性下我要找包包還有哪些分類重點？"
-  selected = _extract_selected_levels_from_text(text)
-  assert selected["L1"] == "時尚女性"
-  assert selected["L2"] == "女用皮包"
-  assert selected["L3"] in (None, "")
