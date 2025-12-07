@@ -1596,6 +1596,16 @@ def _extract_selected_levels_from_text(text: str) -> Dict[str, Optional[str]]:
         if not l3_names:
             return
         LOGGER.debug("[Extract] L3 names=%d parent=%s/%s", len(l3_names), selected["L1"], selected["L2"])
+        
+        # 🔧 優先使用斜線分隔的關鍵字精確匹配（支援：豆包/豆腐/米類/佐醬湯料）
+        slash_terms = [t.strip() for t in re.split(r'[/、,，]', raw) if t.strip()]
+        for term in slash_terms:
+            l3_guess = _best_match(l3_names, term)
+            if l3_guess:
+                selected["L3"] = l3_guess
+                return
+        
+        # 再嘗試語序模式：小分類X
         m5 = re.search(r"小分類\s*([\u4e00-\u9fffA-Za-z0-9 /&-]{1,40})", raw)
         l3_guess = _best_match(l3_names, m5.group(1)) if m5 else None
         if not l3_guess:
