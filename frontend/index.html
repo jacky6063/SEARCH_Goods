@@ -61,7 +61,7 @@ SEARCH_Goods 系統 - 前端應用程式
       flex-direction:column;
       min-height:100vh;
     }
-    .topbar{display:flex;align-items:center;justify-content:space-between;gap:24px;}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:24px;position:relative;z-index:1200;}
     .version-info{font-size:12px;color:var(--sub);white-space:nowrap;}
     .brand-identity{display:flex;align-items:center;gap:16px;}
     .brand-area{height:72px;max-width:280px;overflow:hidden;display:flex;align-items:center;}
@@ -715,7 +715,6 @@ SEARCH_Goods 系統 - 前端應用程式
       </div>
       <div class="top-actions">
         <button onclick="showInitialTips()" class="btn ghost" title="查看使用說明" style="display: none;">❓ 幫助</button>
-        <button id="adminToggle" class="btn ghost">⚙️ 管理面板</button>
         <div id="versionInfo" class="version-info">版本讀取中…</div>
       </div>
     </header>
@@ -741,6 +740,7 @@ SEARCH_Goods 系統 - 前端應用程式
           </div>
           <div class="placeholder" id="youtubePlaceholder">尚未設定 YouTube 影片連結</div>
         </section>
+        <button id="adminToggle" class="btn ghost" style="width:100%;">⚙️ 管理面板</button>
 
         <section class="panel-card search-panel" aria-label="商品查詢對話區">
           <div id="status" class="status">為您找到 1 項商品：</div>
