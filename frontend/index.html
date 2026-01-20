@@ -342,6 +342,7 @@ SEARCH_Goods 系統 - 前端應用程式
     @media (max-width:1024px){
       .workspace{grid-template-columns:1fr;gap:20px;}
       .results{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}
+      .flow-panel{display:none;}
     }
     @media (max-width:720px){
       .container{padding:12px 12px calc(120px + var(--safe-bottom));}
@@ -363,11 +364,13 @@ SEARCH_Goods 系統 - 前端應用程式
       .card-label{min-width:70px;font-size:12px;}
       .card-image{width:100%;aspect-ratio:1/1;height:auto;}
       #chat-panel .chat-box{min-height:220px;padding:20px 18px 72px;max-width:100%;margin:0;}
+      #chat-panel .chat-input-area{display:none;}
       .suggest-actions{position:sticky;bottom:calc(120px + var(--safe-bottom));padding:8px 0;z-index:2;background:transparent;}
       .repair-bubble{max-width:100%;width:100%;}
       .repair-bubble .repairs-container,
       .repair-bubble .repair-card{width:100%;box-sizing:border-box;}
       .chat-box,.bubble.assistant,.card,.suggest-actions button,#hotCategories button,.mobile-bar input{border-width:2px;}
+      .flow-panel{display:none;}
       .mobile-bar{
         display:flex;
         flex-wrap:wrap;
