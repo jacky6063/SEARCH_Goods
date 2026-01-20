@@ -54,9 +54,9 @@ SEARCH_Goods 系統 - 前端應用程式
       -webkit-font-smoothing:antialiased;
     }
     .container{
-      max-width:1200px;
-      margin:0 auto;
-      padding:32px clamp(18px,4vw,42px) calc(140px + var(--safe-bottom));
+      max-width:100%;
+      margin:0;
+      padding:28px clamp(16px,3vw,32px) calc(120px + var(--safe-bottom));
       display:flex;
       flex-direction:column;
       min-height:100vh;
@@ -68,7 +68,7 @@ SEARCH_Goods 系統 - 前端應用程式
     .brand-area img{max-height:72px;width:auto;object-fit:contain;display:none;}
     .brand-placeholder{font-size:12px;color:var(--accent);text-align:left;padding:0 6px;}
     .top-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-    .workspace{margin-top:24px;display:grid;grid-template-columns:360px 1fr;gap:32px;align-items:stretch;flex:1;min-height:0;}
+    .workspace{margin-top:24px;display:grid;grid-template-columns:380px 1fr;gap:28px;align-items:stretch;flex:1;min-height:0;}
     .sidebar{display:flex;flex-direction:column;gap:20px;height:100%;min-height:0;}
     .panel-card{
       border-radius:24px;
@@ -77,6 +77,12 @@ SEARCH_Goods 系統 - 前端應用程式
       background:var(--glass);
       backdrop-filter:blur(22px);
       box-shadow:var(--shadow);
+    }
+    .search-panel{
+      background:transparent;
+      border:none;
+      box-shadow:none;
+      padding:0;
     }
     .panel-header{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;}
     .panel-card h2{margin:0;font-size:18px;font-weight:600;color:var(--text);}
@@ -91,12 +97,25 @@ SEARCH_Goods 系統 - 前端應用程式
     .btn.primary{background:var(--accent);color:#fff;box-shadow:0 10px 20px rgba(37,99,235,0.25);}
     .btn.primary:hover{background:#1f4fd6;}
     .btn.ghost{background:#eff6ff;color:var(--accent);border-color:rgba(37,99,235,0.2);box-shadow:none;}
-    .status{font-size:13px;color:#000;background:#f8fafc;border:1px dashed var(--border);border-radius:12px;padding:12px;margin-top:18px;}
+    .status{
+      font-size:12px;
+      line-height:18px;
+      color:#0f172a;
+      background:#fff;
+      border:1px dashed #c7d2fe;
+      border-radius:10px;
+      padding:15px 18px;
+      margin-top:18px;
+      min-height:48px;
+      display:flex;
+      align-items:center;
+      box-shadow:0 10px 22px rgba(15,23,42,0.08);
+    }
     .action-row{display:flex;gap:12px;flex-wrap:wrap;}
     .intent-mode-row{margin-top:8px;gap:8px;}
     .intent-mode-row .mode-btn{flex:1;min-width:0;}
     .mode-lock-hint{font-size:12px;color:#000;margin-top:6px;line-height:1.4;}
-    .media-panel{display:flex;flex-direction:column;gap:12px;--video-aspect:16/9;position:relative;}
+    .media-panel{display:flex;flex-direction:column;gap:12px;--video-aspect:16/9;position:relative;margin-top:20px;}
     .media-panel iframe{width:100%;aspect-ratio:var(--video-aspect,16/9);height:auto;border:0;border-radius:14px;background:#000;transition:all 0.25s ease;}
     .media-panel .youtube-thumbnail{width:100%;aspect-ratio:var(--video-aspect,16/9);position:relative;cursor:pointer;border-radius:14px;overflow:hidden;background:#000;}
     .media-panel .youtube-thumbnail img{width:100%;height:100%;object-fit:cover;display:block;}
@@ -115,11 +134,40 @@ SEARCH_Goods 系統 - 前端應用程式
     .media-panel.vertical-video iframe,
     .media-panel.vertical-video .youtube-thumbnail,
     .media-panel.vertical-video .placeholder{width:min(100%,320px);aspect-ratio:var(--video-aspect,9/16);align-self:center;}
-    .results-column{display:flex;flex-direction:column;gap:20px;height:100%;min-height:0;}
-    .results-header{display:flex;align-items:center;justify-content:space-between;gap:12px;}
-    .results-header h2{margin:0;font-size:22px;font-weight:600;}
-    #resultCount{font-size:14px;color:#000;background:#eef2ff;padding:6px 12px;border-radius:999px;}
-    #hotCategories{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;}
+    .results-column{display:flex;flex-direction:column;gap:20px;height:100%;min-height:0;flex:1;margin-top:20px;}
+    .results-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:stretch;height:100%;}
+    .results-layout.flow-hidden{grid-template-columns:minmax(0,1fr);}
+    .results-layout.flow-hidden .flow-panel{display:none;}
+    .results-main{display:flex;flex-direction:column;gap:20px;min-width:0;flex:1;min-height:0;position:relative;}
+    .flow-panel{
+      position:sticky;
+      top:120px;
+      align-self:start;
+      background:#f8fafc;
+      border:1px solid var(--border);
+      border-radius:20px;
+      padding:18px;
+      box-shadow:var(--shadow);
+      min-height:360px;
+      max-height:calc(100vh - 160px);
+      overflow:auto;
+    }
+    .flow-panel h3{margin:0 0 12px;font-size:16px;font-weight:700;}
+    .flow-panel .flow-actions{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
+    .flow-panel .flow-actions .btn{padding:8px 12px;font-size:12px;}
+    .flow-steps{display:flex;flex-direction:column;gap:0;margin-bottom:14px;}
+    .flow-step{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 12px;}
+    .flow-step-title{font-size:12px;font-weight:700;color:#1f2937;margin-bottom:6px;}
+    .flow-step-data{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:11px;white-space:pre-wrap;color:#334155;}
+    .flow-step-spacer{height:18px;}
+    .flow-empty{color:#64748b;font-size:13px;line-height:1.6;}
+    @media (max-width: 1100px){
+      .results-layout{grid-template-columns:1fr;gap:16px;}
+      .flow-panel{position:static;max-height:none;}
+    }
+    .results-header{display:flex;align-items:center;justify-content:flex-end;gap:12px;min-height:0;}
+    #resultCount{font-size:14px;color:#000;background:#eef2ff;padding:0;border-radius:999px;}
+    #hotCategories{display:flex;flex-wrap:wrap;gap:10px;margin:-117px 0 12px;}
     #hotCategories button{
       border:1px solid rgba(37,99,235,0.25);
       border-radius:999px;
@@ -148,13 +196,17 @@ SEARCH_Goods 系統 - 前端應用程式
       backdrop-filter:blur(26px);
       box-shadow:0 28px 60px rgba(15,23,42,0.14);
       transition:box-shadow 0.3s ease;
-      max-width:780px;
-      margin:0 auto;
+      max-width:none;
+      margin:0;
       width:100%;
       display:flex;
       flex-direction:column;
     }
     .chat-box:hover{box-shadow:0 34px 70px rgba(15,23,42,0.18);}
+    .chat-input-area{display:flex;gap:12px;align-items:flex-start;background:var(--glass);border:1px solid var(--glass-border);border-radius:24px;padding:16px 18px;box-shadow:var(--shadow);}
+    .chat-input-area .input-textarea{min-height:120px;resize:vertical;}
+    .chat-input-actions{display:flex;flex-direction:column;gap:10px;min-width:140px;}
+    .chat-input-actions .btn{width:100%;}
     .bubble{
       max-width:88%;
       padding:18px 26px;
@@ -178,6 +230,22 @@ SEARCH_Goods 系統 - 前端應用程式
       background:linear-gradient(180deg,#ffffff 0%,#f5f7fb 100%);
       border:1px solid rgba(15,23,42,0.04);
       border-top-left-radius:40px;
+    }
+    .initial-chat-prompt{
+      display:flex;
+      justify-content:flex-start;
+      margin:8px 0 16px;
+    }
+    .initial-chat-prompt__bubble{
+      max-width:88%;
+      padding:16px 22px;
+      border-radius:28px;
+      background:linear-gradient(160deg,#fff7ed 0%,#ffedd5 100%);
+      border:1px dashed rgba(249,115,22,0.4);
+      color:#7c2d12;
+      font-size:16px;
+      line-height:1.6;
+      box-shadow:0 10px 22px rgba(249,115,22,0.12);
     }
     .bubble:active{transform:scale(0.995);box-shadow:0 6px 16px rgba(15,23,42,0.1);}
     .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s;}
@@ -225,6 +293,13 @@ SEARCH_Goods 系統 - 前端應用程式
     .suggest-actions button:hover{transform:translateY(-1px);box-shadow:0 18px 30px rgba(15,23,42,0.18);}
     .suggest-actions button:active{transform:scale(0.98);}
     .search-mode .suggest-actions{display:none;}
+    .search-mode .results-header{
+      position:absolute;
+      top:0;
+      right:0;
+      pointer-events:none;
+    }
+    .search-mode #search-panel{margin-top:0;}
     .ai-recommend-label{background:#f1f5f9;border-radius:8px;padding:6px 10px;font-size:13px;margin-top:4px;color:#334155;}
     .plan-card-container{margin-top:12px;border-left:3px solid var(--accent);padding-left:12px;}
     .plan-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:8px;}
@@ -233,9 +308,6 @@ SEARCH_Goods 系統 - 前端應用程式
     .category-breadcrumb span.separator{color:#94a3b8;margin:0 2px;}
     .category-breadcrumb button{background:transparent;border:1px solid #cbd5e1;color:#3b82f6;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;transition:all 0.2s;white-space:nowrap;}
     .category-breadcrumb button:hover{background:#dbeafe;border-color:#3b82f6;color:#1e40af;}
-    .confidence-badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;background:#fef3c7;color:#92400e;padding:4px 8px;border-radius:6px;font-weight:600;}
-    .confidence-bar{display:inline-block;width:40px;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden;}
-    .confidence-bar-fill{height:100%;background:#10b981;border-radius:2px;}
     @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(37,99,235,.35)}70%{box-shadow:0 0 0 14px rgba(37,99,235,0)}100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}}
     @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
     .loading-shimmer{position:relative;overflow:hidden;background:#f1f5f9;}
@@ -428,6 +500,108 @@ SEARCH_Goods 系統 - 前端應用程式
     body.popup-locked{
       overflow:hidden;
     }
+    /* ========== 條件式查詢視窗樣式 ========== */
+    .filter-modal{
+      position:fixed;
+      inset:0;
+      background:rgba(10,15,25,0.35);
+      backdrop-filter:blur(2px);
+      z-index:1850;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .filter-modal.hidden{
+      display:none;
+    }
+    .filter-dialog{
+      width:720px;
+      max-width:100%;
+      max-height:90vh;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:20px;
+      box-shadow:0 24px 55px rgba(15,23,42,0.2);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    .filter-header{
+      padding:18px 20px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .filter-title{
+      margin:0;
+      font-size:18px;
+      font-weight:700;
+    }
+    .filter-body{
+      padding:16px 20px;
+      overflow:auto;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .filter-section{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .filter-section h4{
+      margin:0;
+      font-size:14px;
+      font-weight:700;
+      color:var(--text);
+    }
+    .filter-section .hint{
+      margin:0;
+      font-size:12px;
+      color:var(--sub);
+    }
+    .filter-chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .filter-chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#f8fafc;
+      color:var(--text);
+      font-size:13px;
+    }
+    .filter-chip input{
+      accent-color:#2563eb;
+    }
+    .filter-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+      gap:10px;
+    }
+    .filter-input{
+      width:100%;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:#f8fafc;
+      color:var(--text);
+    }
+    .filter-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      padding:14px 20px;
+      border-top:1px solid var(--border);
+      background:linear-gradient(180deg,rgba(248,250,252,0.6),rgba(248,250,252,1));
+    }
     @keyframes slideIn{
       from{transform:translateY(100%);opacity:0;}
       to{transform:translateY(0);opacity:1;}
@@ -569,51 +743,46 @@ SEARCH_Goods 系統 - 前端應用程式
         </section>
 
         <section class="panel-card search-panel" aria-label="商品查詢對話區">
-          <div class="panel-header">
-            <h2>自然語言查詢</h2>
-            <span class="panel-subtitle">告訴我您的需求，我會為您找出最合適的商品。</span>
-          </div>
-          <div class="input-group">
-            <textarea id="q" class="input input-textarea" placeholder="" aria-label="查詢輸入" rows="4"></textarea>
-            <button id="sendBtn" class="btn primary" aria-label="送出 (Enter)">送出</button>
-          </div>
-          <div class="action-row">
-            <button id="voiceBtn" class="btn ghost" aria-label="語音輸入 (Ctrl/Cmd+Shift+S)">🎙️ 語音輸入</button>
-            <button id="resetBtn" class="btn ghost" aria-label="重新對話 (Ctrl/Cmd+K)">重新對話</button>
-          </div>
-          <div class="action-row intent-mode-row" aria-label="意圖模式切換">
-            <button id="modeAutoBtn" class="btn ghost mode-btn active" data-mode="auto" title="自動識別意圖">
-              🤖 自動
-            </button>
-            <button id="modeShoppingBtn" class="btn ghost mode-btn" data-mode="shopping" title="強制商品搜尋">
-              🛒 商品
-            </button>
-            <button id="modeRepairBtn" class="btn ghost mode-btn" data-mode="repair" title="強制維修服務">
-              🔧 維修
-            </button>
-          </div>
-          <div id="modeHint" class="mode-lock-hint">自動模式：系統會依訊息內容在商品與維修間切換。</div>
-          <div id="status" class="status">小提醒：Shift+Enter 送出、Enter 斷行、Ctrl/Cmd+K 重置、Ctrl/Cmd+Shift+S 語音。</div>
+          <div id="status" class="status">為您找到 1 項商品：</div>
         </section>
       </aside>
 
       <section class="results-column">
-        <div class="results-header">
-          <h2>搜尋結果</h2>
-          <span id="resultCount">0 筆結果</span>
-        </div>
-        <div id="searchSummary"></div>
-        <div id="hotCategories"></div>
-        <div id="chat-panel" style="display:none;">
-          <div id="chat-messages" class="chat-box" aria-live="polite"></div>
-          <div class="suggest-actions">
-            <button data-sg="1">1 商品卡</button>
-            <button data-sg="2">2 特價關聯</button>
-            <button data-sg="3">3 智慧搭配</button>
+        <div class="results-layout">
+          <div class="results-main">
+            <div class="results-header">
+              <span id="resultCount"></span>
+            </div>
+            <div id="searchSummary"></div>
+            <div id="hotCategories"></div>
+            <div id="chat-panel" style="display:none;">
+            <div id="chat-messages" class="chat-box" aria-live="polite"></div>
+            <div class="suggest-actions">
+              <button data-sg="1">1 商品卡</button>
+              <button data-sg="2">2 特價關聯</button>
+              <button data-sg="3">3 智慧搭配</button>
+            </div>
+            <div class="chat-input-area" aria-label="自然語言查詢輸入區">
+              <textarea id="q" class="input input-textarea" placeholder="請輸入您的需求…" aria-label="查詢輸入" rows="4"></textarea>
+              <div class="chat-input-actions">
+                <button id="voiceBtn" class="btn ghost" aria-label="語音輸入 (Ctrl/Cmd+Shift+S)">🎙️ 語音輸入</button>
+                <button id="resetBtn" class="btn ghost" aria-label="重新對話 (Ctrl/Cmd+K)">重新對話</button>
+                <button id="sendBtn" class="btn primary" aria-label="送出 (Enter)">送出</button>
+              </div>
+            </div>
           </div>
-        </div>
-        <div id="search-panel" style="display:none;">
-          <div id="results" class="results" aria-live="polite"></div>
+            <div id="search-panel" style="display:none;">
+              <div id="results" class="results" aria-live="polite"></div>
+            </div>
+          </div>
+          <aside class="flow-panel" aria-live="polite">
+            <h3>每個流程產生的資訊</h3>
+            <div class="flow-actions">
+              <button class="btn ghost" id="flowCopyBtn">複製流程資料</button>
+            </div>
+            <div id="flowSteps" class="flow-steps"></div>
+            <div id="flowEmpty" class="flow-empty">尚未產生流程資料，請先送出一則查詢。</div>
+          </aside>
         </div>
       </section>
     </div>
@@ -666,6 +835,12 @@ SEARCH_Goods 系統 - 前端應用程式
         <label>
           <input type="checkbox" id="rebuildPromptToggle">
           上傳後立即重建分類提示詞
+        </label>
+      </div>
+      <div class="field checkbox">
+        <label>
+          <input type="checkbox" id="generateWhitelistToggle">
+          上傳後自動產生條件白名單（會呼叫 LLM）
         </label>
       </div>
       <div class="actions">
@@ -724,6 +899,17 @@ SEARCH_Goods 系統 - 前端應用程式
       <div id="paramMsg" class="msg"></div>
     </div>
 
+    <div class="panel-section">
+      <div class="section-title">顯示設定</div>
+      <div class="section-subtitle">控制「每個流程產生的資訊」面板是否顯示。</div>
+      <div class="field checkbox">
+        <label>
+          <input type="checkbox" id="flowPanelToggle">
+          顯示每個流程產生的資訊面板
+        </label>
+      </div>
+    </div>
+
     <div id="adminMsg" class="msg">狀態：未操作</div>
   </div>
 
@@ -754,6 +940,46 @@ SEARCH_Goods 系統 - 前端應用程式
     <div class="popup-input-area">
       <input type="text" id="popupInput" placeholder="輸入訊息..." aria-label="輸入訊息">
       <button id="popupSendBtn" class="btn primary" aria-label="送出">送出</button>
+    </div>
+  </div>
+
+  <!-- 條件式查詢視窗 -->
+  <div id="filter-modal" class="filter-modal hidden" aria-hidden="true">
+    <div class="filter-dialog" role="dialog" aria-modal="true" aria-labelledby="filter-title">
+      <div class="filter-header">
+        <div>
+          <h3 id="filter-title" class="filter-title">多重條件查詢</h3>
+          <p class="hint">目前結果較多，勾選條件後再查詢</p>
+        </div>
+        <button class="close-btn" id="filter-close" aria-label="關閉">✖️</button>
+      </div>
+      <div class="filter-body">
+        <section class="filter-section">
+          <h4>分類（可多選）</h4>
+          <div id="filter-categories" class="filter-chips"></div>
+        </section>
+        <section class="filter-section">
+          <h4>價格區間（可選填）</h4>
+          <div class="filter-grid">
+            <label>
+              <span class="hint">最低價</span>
+              <input id="filter-price-min" class="filter-input" type="number" min="0" placeholder="例如 3000">
+            </label>
+            <label>
+              <span class="hint">最高價</span>
+              <input id="filter-price-max" class="filter-input" type="number" min="0" placeholder="例如 5000">
+            </label>
+          </div>
+        </section>
+        <section class="filter-section">
+          <h4>其他條件（可多選）</h4>
+          <div id="filter-attributes" class="filter-chips"></div>
+        </section>
+      </div>
+      <div class="filter-actions">
+        <button class="btn ghost" id="filter-cancel">取消</button>
+        <button class="btn primary" id="filter-confirm">確認並查詢</button>
+      </div>
     </div>
   </div>
 
@@ -1427,6 +1653,8 @@ SEARCH_Goods 系統 - 前端應用程式
     let currentMode = "chat";
     let mode = currentMode;
     let chatHistory = [];
+    let pendingFilterContext = null;
+    let lastStructuredFilters = null;
     let welcomed = false;
     let showedInitialTips = localStorage.getItem('search_goods_tips_shown') === 'true';
     function h(s){ 
@@ -1466,6 +1694,111 @@ SEARCH_Goods 系統 - 前端應用程式
     summaryEl.style.display = 'block';
   }
   function clearResults(){ resultsEl.innerHTML = ""; const c = document.getElementById('resultCount'); if(c && mode === "search") c.textContent = '0 筆結果'; updateSearchSummary(''); }
+
+  const flowStepsEl = document.getElementById('flowSteps');
+  const flowEmptyEl = document.getElementById('flowEmpty');
+  const flowCopyBtn = document.getElementById('flowCopyBtn');
+  let lastFlowSnapshot = null;
+  let flowTrace = [];
+  let flowTitle = '流程資訊';
+  const flowPanelToggle = document.getElementById('flowPanelToggle');
+  const resultsLayout = document.querySelector('.results-layout');
+  const FLOW_PANEL_VISIBLE_KEY = 'SEARCH_GOODS_FLOW_PANEL_VISIBLE';
+
+  function _stringifyFlowData(data){
+    try{
+      return JSON.stringify(data, null, 2);
+    }catch(err){
+      return String(data);
+    }
+  }
+
+  function updateFlowPanel(title, steps){
+    if(!flowStepsEl || !flowEmptyEl){ return; }
+    const validSteps = Array.isArray(steps) ? steps.filter(step => step && step.title) : [];
+    if(!validSteps.length){
+      flowStepsEl.innerHTML = '';
+      flowEmptyEl.style.display = 'block';
+      lastFlowSnapshot = null;
+      return;
+    }
+    flowEmptyEl.style.display = 'none';
+    flowStepsEl.innerHTML = validSteps.map((step, idx) => {
+      const dataText = _stringifyFlowData(step.data);
+      const spacer = idx === validSteps.length - 1 ? '' : '<div class="flow-step-spacer"></div>';
+      return `
+        <div class="flow-step">
+          <div class="flow-step-title">${escapeHtml(step.title)}</div>
+          <div class="flow-step-data">${escapeHtml(dataText)}</div>
+        </div>
+        ${spacer}
+      `;
+    }).join('');
+    lastFlowSnapshot = { title: title || '流程資訊', steps: validSteps };
+  }
+
+  function resetFlowTrace(title){
+    flowTitle = title || '流程資訊';
+    flowTrace = [];
+    updateFlowPanel(flowTitle, flowTrace);
+  }
+
+  function addFlowStep(title, data){
+    if(!title){ return; }
+    flowTrace.push({ title, data });
+    updateFlowPanel(flowTitle, flowTrace);
+  }
+
+  function formatFlowSnapshot(snapshot){
+    if(!snapshot || !Array.isArray(snapshot.steps)){ return ''; }
+    const lines = [`${snapshot.title}`];
+    snapshot.steps.forEach((step) => {
+      lines.push(`\n[${step.title}]`);
+      lines.push(_stringifyFlowData(step.data));
+      lines.push('');
+      lines.push('');
+    });
+    return lines.join('\n').trim();
+  }
+
+  if(flowCopyBtn){
+    flowCopyBtn.addEventListener('click', async () => {
+      if(!lastFlowSnapshot){ return; }
+      const payload = formatFlowSnapshot(lastFlowSnapshot);
+      try{
+        await navigator.clipboard.writeText(payload);
+        flowCopyBtn.textContent = '已複製';
+        setTimeout(() => { flowCopyBtn.textContent = '複製流程資料'; }, 1200);
+      }catch(err){
+        console.warn('copy failed', err);
+      }
+    });
+  }
+
+  function setFlowPanelVisible(visible){
+    if(!resultsLayout){ return; }
+    resultsLayout.classList.toggle('flow-hidden', !visible);
+    try{
+      localStorage.setItem(FLOW_PANEL_VISIBLE_KEY, visible ? '1' : '0');
+    }catch(err){
+      console.warn('flow panel preference save failed', err);
+    }
+  }
+
+  if(flowPanelToggle){
+    flowPanelToggle.addEventListener('change', () => {
+      setFlowPanelVisible(!!flowPanelToggle.checked);
+    });
+    let storedVisible = '1';
+    try{
+      storedVisible = localStorage.getItem(FLOW_PANEL_VISIBLE_KEY) || '1';
+    }catch(err){
+      storedVisible = '1';
+    }
+    const visible = storedVisible !== '0';
+    flowPanelToggle.checked = visible;
+    setFlowPanelVisible(visible);
+  }
   // 骨架卡：降級為可選（保留函式但不再自動呼叫）
   function setLoading(on){ /* deprecated: use showSearchSpinner/hideSearchSpinner */ }
   function showSkeletonCards(){ /* optional: call manually if needed */ }
@@ -1978,10 +2311,30 @@ SEARCH_Goods 系統 - 前端應用程式
   function renderWelcome(){
     if(welcomed){ return; }
     const isMobile = window.matchMedia("(max-width:600px)").matches;
-    const desktopMsg = '👋 您好，我是智慧客服〈小哈〉，隨時為您待命。\n請告訴我您想處理的服務項目：\n商品查詢｜快速比對與查詢商品資訊\n客服聯繫｜提供最新客服電話與聯絡方式\n住宅維修｜水電設備與公共區域維修引導手機版';
-    const mobileMsg = '嗨～我是小哈！隨時為您待命\n商品查詢｜快速查詢商品資訊\n客服聯繫｜提供最新聯絡方式\n住宅維修｜水電公共維修指引';
-    appendChatBubble('assistant', isMobile ? mobileMsg : desktopMsg);
+    const desktopMsg = '👋 您好，我是智慧客服〈小哈〉，隨時為您待命。';
+    const mobileMsg = '👋 您好，我是智慧客服〈小哈〉，隨時為您待命。';
+    ensureInitialPrompt(isMobile ? mobileMsg : desktopMsg);
     welcomed = true;
+  }
+
+  function ensureInitialPrompt(message){
+    if(!chatMessagesEl){ return; }
+    if(chatMessagesEl.querySelector('.initial-chat-prompt')){ return; }
+    if(chatMessagesEl.childElementCount > 0){ return; }
+    const promptWrap = document.createElement('div');
+    promptWrap.className = 'initial-chat-prompt';
+    const promptBubble = document.createElement('div');
+    promptBubble.className = 'initial-chat-prompt__bubble';
+    promptBubble.textContent = message || '';
+    promptWrap.appendChild(promptBubble);
+    chatMessagesEl.appendChild(promptWrap);
+    scrollChatToBottom();
+  }
+
+  function removeInitialPrompt(){
+    if(!chatMessagesEl){ return; }
+    const promptEl = chatMessagesEl.querySelector('.initial-chat-prompt');
+    if(promptEl){ promptEl.remove(); }
   }
 
   function resetChatConversation(){
@@ -2017,12 +2370,12 @@ SEARCH_Goods 系統 - 前端應用程式
     if(chatPanel){ chatPanel.style.display = 'flex'; }
     if(searchPanel){ searchPanel.style.display = 'none'; }
     const c = document.getElementById('resultCount');
-    if(c){ c.textContent = '聊天模式'; }
+    if(c){ c.textContent = ''; }
     updatePaginationVisibility();
     renderWelcome();
   }
 
-  function switchToSearch(queryText, itemIds, prefetchedItems, categoryGroups, summaryText){
+  function switchToSearch(queryText, itemIds, prefetchedItems, categoryGroups, summaryText, skipAutoFetch){
     const usingIds = Array.isArray(itemIds) && itemIds.length > 0;
     setMode('search');
     if(chatPanel){ chatPanel.style.display = 'none'; }
@@ -2076,6 +2429,9 @@ SEARCH_Goods 系統 - 前端應用程式
       updatePaginationControls({has_next:false, page:1, last_page:1});
       return;
     }
+    if(skipAutoFetch){
+      return;
+    }
     if(usingIds){
       doSearchByIds(itemIds, summaryLineFromText);
     }else if(query){
@@ -2088,6 +2444,265 @@ SEARCH_Goods 系統 - 前端應用程式
           activeInput?.focus();
         }
       });
+    }
+  }
+
+  function shouldOpenFilterModal(meta, structuredItems){
+    const count = meta && typeof meta.result_count === 'number'
+      ? meta.result_count
+      : (Array.isArray(structuredItems) ? structuredItems.length : 0);
+    if(Array.isArray(structuredItems) && structuredItems.length){
+      return count > 20;
+    }
+    const candidates = meta && Array.isArray(meta.category_candidates) ? meta.category_candidates : [];
+    const scopeLevel = meta && meta.available_scope && meta.available_scope.level;
+    return candidates.length > 0 && String(scopeLevel || '').toUpperCase() === 'L3';
+  }
+
+  function openFilterModal(meta, context){
+    const modal = document.getElementById('filter-modal');
+    if(!modal){ return false; }
+    pendingFilterContext = context || null;
+    if(pendingFilterContext){
+      pendingFilterContext.meta = meta || null;
+    }
+    renderFilterCategories(meta && meta.category_candidates);
+    applyFilterPriceRange(meta && meta.price_range);
+    renderFilterAttributes(meta && meta.filter_suggestions);
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    return true;
+  }
+
+  function closeFilterModal(){
+    const modal = document.getElementById('filter-modal');
+    if(modal){
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  function renderFilterCategories(candidates){
+    const container = document.getElementById('filter-categories');
+    if(!container){ return; }
+    const list = Array.isArray(candidates) ? candidates : [];
+    if(!list.length){
+      container.innerHTML = '<span class="hint">暫無分類候選</span>';
+      return;
+    }
+    container.innerHTML = list.map(name => {
+      const safe = escapeHtml(String(name || '').trim());
+      if(!safe){ return ''; }
+      return `<label class="filter-chip"><input type="checkbox" value="${safe}" data-filter="category"><span>${safe}</span></label>`;
+    }).join('');
+  }
+
+  function applyFilterPriceRange(range){
+    const minInput = document.getElementById('filter-price-min');
+    const maxInput = document.getElementById('filter-price-max');
+    if(minInput){ minInput.value = range && range.min != null ? String(range.min) : ''; }
+    if(maxInput){ maxInput.value = range && range.max != null ? String(range.max) : ''; }
+  }
+
+  function normalizeFilterSuggestions(suggestions){
+    if(Array.isArray(suggestions)){
+      return { "條件": suggestions };
+    }
+    if(suggestions && typeof suggestions === 'object'){
+      return suggestions;
+    }
+    return {};
+  }
+
+  function renderFilterAttributes(suggestions){
+    const container = document.getElementById('filter-attributes');
+    if(!container){ return; }
+    const groups = normalizeFilterSuggestions(suggestions);
+    const keys = Object.keys(groups);
+    if(!keys.length){
+      container.innerHTML = '<span class="hint">暫無建議條件</span>';
+      return;
+    }
+    container.innerHTML = keys.map(group => {
+      const options = Array.isArray(groups[group]) ? groups[group] : [];
+      if(!options.length){ return ''; }
+      const chips = options.map(option => {
+        const safe = escapeHtml(String(option || '').trim());
+        if(!safe){ return ''; }
+        const safeGroup = escapeHtml(String(group || '').trim());
+        return `<label class="filter-chip"><input type="checkbox" value="${safe}" data-group="${safeGroup}"><span>${safe}</span></label>`;
+      }).join('');
+      return `<div class="filter-section"><h4>${escapeHtml(String(group))}</h4><div class="filter-chips">${chips}</div></div>`;
+    }).join('');
+  }
+
+  let filterSuggestTimer = null;
+  let filterSuggestAbort = null;
+
+  function getSelectedCategories(){
+    return Array.from(document.querySelectorAll('#filter-categories input[type="checkbox"]:checked'))
+      .map(input => input.value)
+      .filter(Boolean);
+  }
+
+  function resolveFilterL1(){
+    const meta = pendingFilterContext && pendingFilterContext.meta;
+    const parents = meta && meta.available_scope && meta.available_scope.parents;
+    if(parents && (parents.L1 || parents.l1)){
+      return parents.L1 || parents.l1;
+    }
+    const selected = meta && meta.category_context && meta.category_context.selected;
+    return selected && (selected.L1 || selected.l1) ? (selected.L1 || selected.l1) : null;
+  }
+
+  async function requestFilterSuggestions(){
+    const categories = getSelectedCategories();
+    if(!categories.length){
+      renderFilterAttributes(null);
+      return;
+    }
+    const l1 = resolveFilterL1();
+    const container = document.getElementById('filter-attributes');
+    if(container){
+      container.innerHTML = '<span class="hint">分析中…</span>';
+    }
+    if(filterSuggestAbort){
+      filterSuggestAbort.abort();
+    }
+    filterSuggestAbort = new AbortController();
+    try{
+      const res = await fetch(buildBackendUrl('filter-suggestions'), {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ categories, l1 }),
+        signal: filterSuggestAbort.signal
+      });
+      const data = await res.json();
+      renderFilterAttributes(data && data.filter_suggestions);
+    }catch(err){
+      if(err && err.name === 'AbortError'){ return; }
+      renderFilterAttributes(null);
+    }
+  }
+
+  function collectFilterSelections(){
+    const categories = Array.from(document.querySelectorAll('#filter-categories input[type="checkbox"]:checked'))
+      .map(input => input.value)
+      .filter(Boolean);
+    const attrSelections = {};
+    const attrInputs = document.querySelectorAll('#filter-attributes input[type="checkbox"]:checked');
+    attrInputs.forEach(input => {
+      const group = input.getAttribute('data-group') || '條件';
+      if(!attrSelections[group]){ attrSelections[group] = []; }
+      attrSelections[group].push(input.value);
+    });
+    const minInput = document.getElementById('filter-price-min');
+    const maxInput = document.getElementById('filter-price-max');
+    const priceMin = minInput && minInput.value ? Number(minInput.value) : null;
+    const priceMax = maxInput && maxInput.value ? Number(maxInput.value) : null;
+    return { categories, attrSelections, priceMin, priceMax };
+  }
+
+  function buildFilterQuery(baseQuery, selections){
+    const parts = [];
+    if(baseQuery){ parts.push(baseQuery); }
+    if(selections.categories.length){
+      parts.push(selections.categories.join(' '));
+    }
+    if(selections.priceMin != null || selections.priceMax != null){
+      const minText = selections.priceMin != null ? selections.priceMin : '';
+      const maxText = selections.priceMax != null ? selections.priceMax : '';
+      if(minText && maxText){
+        parts.push(`價格 ${minText}~${maxText} 元`);
+      }else if(maxText){
+        parts.push(`價格 ${maxText} 元以下`);
+      }else if(minText){
+        parts.push(`價格 ${minText} 元以上`);
+      }
+    }
+    Object.keys(selections.attrSelections).forEach(group => {
+      const values = selections.attrSelections[group] || [];
+      if(values.length){
+        parts.push(`${group} ${values.join(' ')}`);
+      }
+    });
+    return parts.join(' ').trim();
+  }
+
+  function buildFilterSelectionSummary(selections){
+    if(!selections){ return ''; }
+    const lines = [];
+    if(selections.categories && selections.categories.length){
+      lines.push(`分類：${selections.categories.join('、')}`);
+    }
+    if(selections.priceMin != null || selections.priceMax != null){
+      const minText = selections.priceMin != null ? selections.priceMin : '';
+      const maxText = selections.priceMax != null ? selections.priceMax : '';
+      if(minText && maxText){
+        lines.push(`價格：${minText}~${maxText}`);
+      }else if(maxText){
+        lines.push(`價格：${maxText} 以下`);
+      }else if(minText){
+        lines.push(`價格：${minText} 以上`);
+      }
+    }
+    Object.keys(selections.attrSelections || {}).forEach(group => {
+      const values = selections.attrSelections[group] || [];
+      if(values.length){
+        lines.push(`${group}：${values.join('、')}`);
+      }
+    });
+    if(!lines.length){
+      return '';
+    }
+    return `已套用查詢條件：\n${lines.join('\n')}`;
+  }
+
+  function showPendingFilterResults(){
+    const ctx = pendingFilterContext;
+    if(!ctx){ return; }
+    const ids = ctx.structuredIds || [];
+    const items = ctx.structuredItems || [];
+    if(!ids.length && !items.length){
+      pendingFilterContext = null;
+      return;
+    }
+    switchToSearch('', ids, items, ctx.categoryGroups, ctx.structuredSummary);
+    pendingFilterContext = null;
+  }
+
+  function applyFilterAndSearch(){
+    if(!pendingFilterContext){
+      closeFilterModal();
+      return;
+    }
+    const selections = collectFilterSelections();
+    const originalQuery = pendingFilterContext.originalQuery || '';
+    const selectionSummary = buildFilterSelectionSummary(selections);
+    closeFilterModal();
+    pendingFilterContext = null;
+    const filters = {
+      categories: selections.categories || [],
+      attributes: selections.attrSelections || {},
+      price_min: typeof selections.priceMin === 'number' ? selections.priceMin : null,
+      price_max: typeof selections.priceMax === 'number' ? selections.priceMax : null
+    };
+    if(filters.categories.length || Object.keys(filters.attributes).length || filters.price_min != null || filters.price_max != null){
+      setStatus('依條件查詢中…');
+      if(selectionSummary){
+        if(mode === 'chat'){
+          appendChatBubble('assistant', selectionSummary);
+          chatHistory.push({ role: 'assistant', content: selectionSummary });
+          if(chatHistory.length > 40){ chatHistory = chatHistory.slice(-40); }
+          scrollChatToBottom();
+        }else{
+          updateSearchSummary(selectionSummary.split('\n')[0] || selectionSummary);
+        }
+      }
+      switchToSearch(originalQuery, [], [], null, '依條件查詢中…', true);
+      doStructuredSearchWithPagination(filters, 1);
+    }else{
+      showPendingFilterResults();
     }
   }
 
@@ -2433,6 +3048,9 @@ SEARCH_Goods 系統 - 前端應用程式
           }
         }
         
+        addFlowStep('路由到維修', { endpoint: 'repair/chat' });
+        addFlowStep('API 請求 /api/repair/chat', { endpoint: 'repair/chat', payload: body });
+        addFlowStep('API 回應 /api/repair/chat', data);
         return data;
         
       } catch (error) {
@@ -2486,6 +3104,9 @@ SEARCH_Goods 系統 - 前端應用程式
         }
       }
       
+      addFlowStep('路由到商品', { endpoint: 'chat' });
+      addFlowStep('API 請求 /api/chat', { endpoint: 'chat', payload: body });
+      addFlowStep('API 回應 /api/chat', data);
       return data;
     }
   }
@@ -2498,6 +3119,7 @@ SEARCH_Goods 系統 - 前端應用程式
     const rawText = inputEl?.value || "";
     const trimmed = rawText.trim();
     if(!trimmed){ return; }
+    removeInitialPrompt();
     if(quickSuggestTypes.has(trimmed)){
       if(inputEl){ inputEl.value = ''; }
       if(q && q !== inputEl){ q.value = ''; }
@@ -2521,6 +3143,14 @@ SEARCH_Goods 系統 - 前端應用程式
     if(mode !== "chat"){
       switchToChat();
     }
+    removeInitialPrompt();
+    resetFlowTrace('對話流程');
+    addFlowStep('送出訊息', {
+      message,
+      mode,
+      intent_mode: currentIntentMode || 'auto',
+      history_length: Array.isArray(chatHistory) ? chatHistory.length : 0
+    });
     const activeInput = options.inputEl || getActiveInput();
     const userBubbleText = options.voiceMode ? `🎙️ ${message}` : message;
     appendChatBubble('user', userBubbleText);
@@ -2536,6 +3166,7 @@ SEARCH_Goods 系統 - 前端應用程式
     
     // 🔧 智能意圖識別和路由
     const detectedIntent = detectIntent(message);
+    addFlowStep('意圖偵測', { detected_intent: detectedIntent });
     const intentLabel = detectedIntent === 'repair' ? '🔧 維修診斷中' : '🛒 商品搜尋中';
     setStatus(intentLabel + '...');
     
@@ -2595,6 +3226,47 @@ SEARCH_Goods 系統 - 前端應用程式
 
       console.log('🔍 [PRODUCT_CARD] structuredItems 結果:', structuredItems?.length || 0);
 
+      let preStructuredIds = [];
+      if(structuredItems && structuredItems.length){
+        preStructuredIds = structuredItems.map(it => (it && (it.id || it.GoodIden || it["商品編號"] || it["GoodIden"]))?.toString?.().trim?.()).filter(Boolean);
+        const shouldOpen = shouldOpenFilterModal(data.meta || {}, structuredItems);
+        addFlowStep('條件視窗判斷', {
+          result: shouldOpen,
+          result_count: (data.meta && data.meta.result_count) || null,
+          structured_items: structuredItems.length
+        });
+        if(shouldOpen){
+          const opened = openFilterModal(data.meta || {}, {
+            originalQuery: message,
+            structuredItems,
+            structuredIds: preStructuredIds,
+            structuredSummary,
+            categoryGroups: data.category_groups || null
+          });
+          if(opened){
+            return data;
+          }
+        }
+      }
+
+      if((!structuredItems || !structuredItems.length) && shouldOpenFilterModal(data.meta || {}, [])){
+        addFlowStep('條件視窗判斷', {
+          result: true,
+          result_count: (data.meta && data.meta.result_count) || null,
+          structured_items: 0
+        });
+        const opened = openFilterModal(data.meta || {}, {
+          originalQuery: message,
+          structuredItems: [],
+          structuredIds: [],
+          structuredSummary: summaryLineFromReply,
+          categoryGroups: null
+        });
+        if(opened){
+          return data;
+        }
+      }
+
       let structuredStored = false;
       const payloadItems = Array.isArray(data.items) && data.items.length
         ? data.items
@@ -2641,7 +3313,9 @@ SEARCH_Goods 系統 - 前端應用程式
       // 🔧 修復: 移除 isSearchFallback 條件,總是嘗試顯示商品卡片
       if(structuredItems && structuredItems.length){
         console.log('✅ [PRODUCT_CARD] 準備顯示商品卡片:', structuredItems.length);
-        const structuredIds = structuredItems.map(it => (it && (it.id || it.GoodIden || it["商品編號"] || it["GoodIden"]))?.toString?.().trim?.()).filter(Boolean);
+        const structuredIds = (preStructuredIds && preStructuredIds.length)
+          ? preStructuredIds
+          : structuredItems.map(it => (it && (it.id || it.GoodIden || it["商品編號"] || it["GoodIden"]))?.toString?.().trim?.()).filter(Boolean);
         const cacheOptions = {
           ids: structuredIds,
           summary: structuredSummary || `我找到了 ${structuredItems.length} 款商品`,
@@ -2697,6 +3371,47 @@ SEARCH_Goods 系統 - 前端應用程式
       if(shouldCallApi && typeof sendBtn !== "undefined" && sendBtn){ sendBtn.disabled = false; }
       if(shouldCallApi && typeof mSendBtn !== "undefined" && mSendBtn){ mSendBtn.disabled = false; }
     }
+  }
+
+  const filterModal = document.getElementById('filter-modal');
+  const filterCloseBtn = document.getElementById('filter-close');
+  const filterCancelBtn = document.getElementById('filter-cancel');
+  const filterConfirmBtn = document.getElementById('filter-confirm');
+  const filterCategoriesEl = document.getElementById('filter-categories');
+  if(filterCloseBtn){
+    filterCloseBtn.addEventListener('click', () => {
+      closeFilterModal();
+      showPendingFilterResults();
+    });
+  }
+  if(filterCancelBtn){
+    filterCancelBtn.addEventListener('click', () => {
+      closeFilterModal();
+      showPendingFilterResults();
+    });
+  }
+  if(filterConfirmBtn){
+    filterConfirmBtn.addEventListener('click', () => {
+      applyFilterAndSearch();
+    });
+  }
+  if(filterModal){
+    filterModal.addEventListener('click', (event) => {
+      if(event.target === filterModal){
+        closeFilterModal();
+        showPendingFilterResults();
+      }
+    });
+  }
+  if(filterCategoriesEl){
+    filterCategoriesEl.addEventListener('change', () => {
+      if(filterSuggestTimer){
+        clearTimeout(filterSuggestTimer);
+      }
+      filterSuggestTimer = setTimeout(() => {
+        requestFilterSuggestions();
+      }, 400);
+    });
   }
 
   async function playVoiceSummary(text){
@@ -3109,8 +3824,6 @@ SEARCH_Goods 系統 - 前端應用程式
       const catL1 = item["CateName_L1"] || item["大分類名稱"] || "";
       const catL2 = item["CateName_L2"] || item["中分類名稱"] || "";
       const catL3 = item["CateName_L3"] || item["小分類名稱"] || item["分類名稱"] || "";
-      const hierarchyScore = item["hierarchy_score"] || item["matched_levels"] ? (item["hierarchy_score"] || 0.8) : null;
-      const hierarchyConfidence = item["hierarchy_confidence"] || null;
 
       // 保存完整商品資訊供後續使用（LLM 文案生成、圖片顯示等）
       if(desc && desc.trim()){ el.dataset.description = desc; }
@@ -3148,28 +3861,6 @@ SEARCH_Goods 系統 - 前端應用程式
       // 商品名稱 (突出顯示)
       rows.push(`<div class="card-row highlight"><span class="card-label">商品名稱：</span><span class="card-value name">${h(name)}</span></div>`);
       
-      // 🎯 LLM 步驟 6: 添加信心度指標
-      if(hierarchyScore !== null || hierarchyConfidence) {
-        let confidenceHtml = '<div class="card-row"><span class="card-label">信心度：</span>';
-        if(hierarchyConfidence) {
-          const L1Conf = hierarchyConfidence.L1 || 0;
-          const L2Conf = hierarchyConfidence.L2 || 0;
-          const L3Conf = hierarchyConfidence.L3 || 0;
-          const avgConf = Math.round((L1Conf + L2Conf + L3Conf) / 3 * 100);
-          const confColor = avgConf >= 80 ? '#10b981' : avgConf >= 60 ? '#f59e0b' : '#ef4444';
-          confidenceHtml += `<span class="confidence-badge" style="background:${confColor}22; color:${confColor};">`;
-          confidenceHtml += `<span class="confidence-bar"><span class="confidence-bar-fill" style="width:${avgConf}%; background:${confColor};"></span></span>`;
-          confidenceHtml += `${avgConf}%</span>`;
-        } else if(hierarchyScore !== null) {
-          const scorePercent = Math.round(hierarchyScore * 100);
-          const scoreColor = scorePercent >= 80 ? '#10b981' : scorePercent >= 60 ? '#f59e0b' : '#ef4444';
-          confidenceHtml += `<span class="confidence-badge" style="background:${scoreColor}22; color:${scoreColor};">`;
-          confidenceHtml += `<span class="confidence-bar"><span class="confidence-bar-fill" style="width:${scorePercent}%; background:${scoreColor};"></span></span>`;
-          confidenceHtml += `${scorePercent}%</span>`;
-        }
-        confidenceHtml += '</div>';
-        rows.push(confidenceHtml);
-      }
       
       // 價格資訊區塊
       const hasSale = sale && sale.trim();
@@ -3446,7 +4137,7 @@ SEARCH_Goods 系統 - 前端應用程式
       try { window.latestAvailableScope = null; } catch(e){}
       if (typeof setHotScopePath === 'function') { setHotScopePath({ L1: null, L2: null, L3: null }); }
       switchToChat();
-      setStatus("已重新開始。請輸入您的需求。");
+      setStatus("");
       setIntentMode('auto', 'reset');
       const active = getActiveInput();
       active?.focus();
@@ -3511,9 +4202,19 @@ SEARCH_Goods 系統 - 前端應用程式
       pageInfo.textContent = `第 ${currentPage} 頁 / 共 ${lastPage} 頁`;
     }
 
+    let searchAbortController = null;
+    function getSearchSignal(){
+      if(searchAbortController){
+        searchAbortController.abort();
+      }
+      searchAbortController = new AbortController();
+      return searchAbortController.signal;
+    }
+
     async function doSearchWithPagination(query, page=1){
       currentPage = page;
       lastQuery = query;
+      lastStructuredFilters = null;
       const payload = { query, topn: PAGE_SIZE, page, page_size: PAGE_SIZE };
       showSearchSpinner("搜尋中…"); sendBtn && (sendBtn.disabled=true); mSendBtn && (mSendBtn.disabled=true);
       
@@ -3530,6 +4231,8 @@ SEARCH_Goods 系統 - 前端應用程式
           if(aborted){ return; }
           clearResults();
 
+          addFlowStep('搜尋 API 請求 /api/search', { endpoint: 'search', payload });
+          addFlowStep('搜尋 API 回應 /api/search', data);
           if(Array.isArray(data.items)&&data.items.length){
             data.items.forEach(it=>resultsEl.appendChild(card(it)));
             setStatus(data.message||"查詢完成");
@@ -3619,10 +4322,38 @@ SEARCH_Goods 系統 - 前端應用程式
       mSendBtn && (mSendBtn.disabled=false);
     }
 
-    firstBtn.addEventListener('click', ()=>{ if(!lastQuery || currentPage<=1) return; doSearchWithPagination(lastQuery, 1); });
-    prevBtn.addEventListener('click', ()=>{ if(!lastQuery || currentPage<=1) return; doSearchWithPagination(lastQuery, currentPage-1); });
-    nextBtn.addEventListener('click', ()=>{ if(!lastQuery || (!hasNextPage && currentPage >= lastPage)) return; doSearchWithPagination(lastQuery, currentPage+1); });
-    lastBtn.addEventListener('click', ()=>{ if(!lastQuery || currentPage >= lastPage) return; doSearchWithPagination(lastQuery, lastPage); });
+    firstBtn.addEventListener('click', ()=>{
+      if(!lastQuery || currentPage<=1) return;
+      if(lastStructuredFilters){
+        doStructuredSearchWithPagination(lastStructuredFilters, 1);
+      }else{
+        doSearchWithPagination(lastQuery, 1);
+      }
+    });
+    prevBtn.addEventListener('click', ()=>{
+      if(!lastQuery || currentPage<=1) return;
+      if(lastStructuredFilters){
+        doStructuredSearchWithPagination(lastStructuredFilters, currentPage-1);
+      }else{
+        doSearchWithPagination(lastQuery, currentPage-1);
+      }
+    });
+    nextBtn.addEventListener('click', ()=>{
+      if(!lastQuery || (!hasNextPage && currentPage >= lastPage)) return;
+      if(lastStructuredFilters){
+        doStructuredSearchWithPagination(lastStructuredFilters, currentPage+1);
+      }else{
+        doSearchWithPagination(lastQuery, currentPage+1);
+      }
+    });
+    lastBtn.addEventListener('click', ()=>{
+      if(!lastQuery || currentPage >= lastPage) return;
+      if(lastStructuredFilters){
+        doStructuredSearchWithPagination(lastStructuredFilters, lastPage);
+      }else{
+        doSearchWithPagination(lastQuery, lastPage);
+      }
+    });
 
     function triggerSearchFromInputs(value){
       const query = (value || "").trim();
@@ -3694,6 +4425,7 @@ SEARCH_Goods 系統 - 前端應用程式
     const uploadBtn = document.getElementById('uploadBtn');
     const uploadCatBtn = document.getElementById('uploadCatBtn');
     const rebuildPromptToggle = document.getElementById('rebuildPromptToggle');
+    const generateWhitelistToggle = document.getElementById('generateWhitelistToggle');
     const clearCacheBtn = document.getElementById('clearCacheBtn');
     const rebuildPromptBtn = document.getElementById('rebuildPromptBtn');
     const adminMsg = document.getElementById('adminMsg');
@@ -3810,12 +4542,20 @@ SEARCH_Goods 系統 - 前端應用程式
       try{
         const form = new FormData(); form.append('file', file, file.name);
         const rebuild = rebuildPromptToggle?.checked ? 'true' : 'false';
-        const ep = buildAdminEndpoint(`upload-categories?rebuild_prompt=${rebuild}`);
+        const whitelist = generateWhitelistToggle?.checked ? 'true' : 'false';
+        const ep = buildAdminEndpoint(`upload-categories?rebuild_prompt=${rebuild}&generate_filter_whitelist=${whitelist}`);
         const res = await fetch(ep, { method:'POST', headers: { 'x-admin-token': token }, body: form });
         if(!res.ok){ setAdminStatus('分類上傳失敗: '+res.status, 'error'); return; }
         const j = await res.json();
         const successMsg = j.message || j.status || 'ok';
-        setAdminStatus('✅ 分類上傳成功: ' + successMsg, 'success');
+        const whitelistRequested = whitelist === 'true';
+        if(whitelistRequested && j.whitelist_generated === false){
+          setAdminStatus(`✅ 分類上傳成功: ${successMsg}（白名單產生失敗，請查看後端日誌）`, 'success');
+        } else if(whitelistRequested && j.whitelist_generated === true){
+          setAdminStatus(`✅ 分類上傳成功: ${successMsg}（白名單已產生）`, 'success');
+        } else {
+          setAdminStatus('✅ 分類上傳成功: ' + successMsg, 'success');
+        }
         refreshAdminInfo();
       }catch(e){ setAdminStatus('分類上傳錯誤: '+e.message, 'error'); }
       finally{ uploadCatBtn.disabled=false; }
@@ -3991,6 +4731,53 @@ let isYtMuted = true;
         console.log('📤 [YouTube] 發送命令:', command);
       }catch(err){
         console.error('❌ [YouTube] postMessage 失敗:', err);
+      }
+    }
+
+    async function doStructuredSearchWithPagination(filters, page=1){
+      currentPage = page;
+      lastStructuredFilters = filters;
+      lastQuery = "__structured__";
+      const payload = {
+        categories: filters.categories || [],
+        attributes: filters.attributes || {},
+        price_min: typeof filters.price_min === 'number' ? filters.price_min : null,
+        price_max: typeof filters.price_max === 'number' ? filters.price_max : null,
+        page,
+        page_size: PAGE_SIZE
+      };
+      showSearchSpinner("搜尋中…"); sendBtn && (sendBtn.disabled=true); mSendBtn && (mSendBtn.disabled=true);
+      try{
+        const signal = getSearchSignal();
+        const res = await fetch(buildBackendUrl('search/filtered'), {
+          method:"POST",
+          headers:{ "Content-Type":"application/json"},
+          body: JSON.stringify(payload),
+          signal
+        });
+        const data = await res.json();
+        hideSearchSpinner();
+        clearResults();
+        addFlowStep('條件式搜尋 API 請求 /api/search/filtered', { endpoint: 'search/filtered', payload });
+        addFlowStep('條件式搜尋 API 回應 /api/search/filtered', data);
+        if(Array.isArray(data.items)&&data.items.length){
+          data.items.forEach(it=>resultsEl.appendChild(card(it)));
+          setStatus(data.message||"查詢完成");
+          const c = document.getElementById('resultCount'); if(c) c.textContent = `${data.items.length} 筆結果`;
+          updatePaginationControls({has_next: !!data.has_next, page: data.page, last_page: data.last_page});
+        }else{
+          showEmptyState('', data.message);
+          const c = document.getElementById('resultCount'); if(c) c.textContent = `0 筆結果`;
+          setStatus("已回覆查無資料訊息");
+          updatePaginationControls({has_next: false, page: data.page ?? page, last_page: data.last_page ?? currentPage});
+        }
+      }catch(err){
+        hideSearchSpinner();
+        clearResults();
+        setStatus('查詢失敗，請稍後再試。');
+      }finally{
+        if(typeof sendBtn !== "undefined" && sendBtn){ sendBtn.disabled = false; }
+        if(typeof mSendBtn !== "undefined" && mSendBtn){ mSendBtn.disabled = false; }
       }
     }
 

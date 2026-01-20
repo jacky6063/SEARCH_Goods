@@ -185,6 +185,36 @@ def _requires_special_offer(query: str) -> bool:
     return any(re.search(pat, normalized) for pat in patterns)
 
 
+def _build_special_offer_mask(df: pd.DataFrame) -> Optional[pd.Series]:
+    """Build a mask for rows that are considered on sale across known columns."""
+    if df is None or df.empty:
+        return None
+    special_cols = [
+        "SpecialOffer",
+        "特價",
+        "pric_special",
+        "special_offer",
+        "SpecialOfferPrice",
+    ]
+    existing_cols = [col for col in special_cols if col in df.columns]
+    if not existing_cols:
+        return None
+    mask = pd.Series(False, index=df.index)
+    for col in existing_cols:
+        series = df[col]
+        non_empty = series.notna() & (series.astype(str).str.strip() != "")
+        mask |= non_empty
+    if "Price" in df.columns:
+        try:
+            price = pd.to_numeric(df["Price"], errors="coerce")
+            for col in existing_cols:
+                special = pd.to_numeric(df[col], errors="coerce")
+                mask |= (special.notna() & price.notna() & (special < price))
+        except Exception:
+            pass
+    return mask
+
+
 def _required_phrases(query: str) -> List[Tuple[List[str], Optional[List[str]]]]:
     normalized = _normalize_query_text(query or "").lower()
     required: List[Tuple[List[str], Optional[List[str]]]] = []
@@ -548,10 +578,12 @@ def search_products(
     raw_category_terms: List[str] = _ordered_unique([_norm(c) for c in (category_terms or []) if c])
     category_terms_lower: List[str] = raw_category_terms.copy()
     sdf["__score__"] = scores
-    if _requires_special_offer(query) and "SpecialOffer" in sdf.columns:
-        sdf = sdf[sdf["SpecialOffer"].astype(str).str.strip() != ""]
-        if sdf.empty:
-            return [], terms
+    if _requires_special_offer(query):
+        special_mask = _build_special_offer_mask(sdf)
+        if special_mask is not None:
+            sdf = sdf[special_mask]
+            if sdf.empty:
+                return [], terms
     category_terms_from_required: List[str] = []
     general_required_terms: List[str] = []
     if required_terms:

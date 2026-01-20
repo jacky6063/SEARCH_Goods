@@ -235,29 +235,47 @@ def _build_basic_marketing_description_fallback(item: Dict[str, Any]) -> str:
     return marketing
 
 
-def _extract_budget_from_query(user_query: str) -> Optional[int]:
-    """從用戶查詢中提取預算金額"""
+def _extract_budget_from_query(user_query: str) -> Optional[Dict[str, Optional[int]]]:
+    """從用戶查詢中提取預算區間，回傳 {min, max}"""
     import re
     if not user_query:
         return None
-    
-    # 尋找價格範圍模式：3000~4000元、3000-4000元、預算4000元等
-    budget_patterns = [
-        r'(\d+)\s*~\s*(\d+)\s*元',  # 3000~4000元
-        r'(\d+)\s*-\s*(\d+)\s*元',  # 3000-4000元  
-        r'預算\s*(\d+)\s*元',       # 預算4000元
-        r'(\d+)\s*元.*?以下',       # 4000元以下
-        r'(\d+)\s*元.*?內',         # 4000元內
+
+    text = str(user_query)
+    range_patterns = [
+        r'(\d+)\s*[~\-–—]\s*(\d+)\s*元?',  # 3000~4000 / 3000-4000
     ]
-    
-    for pattern in budget_patterns:
-        matches = re.findall(pattern, user_query)
-        if matches:
-            if len(matches[0]) == 2:  # 範圍格式
-                return max(int(matches[0][0]), int(matches[0][1]))
-            else:  # 單一數值
-                return int(matches[0])
-    
+    max_only_patterns = [
+        r'(\d+)\s*元.*?(以下|內)',
+        r'上限\s*(\d+)\s*元',
+        r'不超過\s*(\d+)\s*元',
+    ]
+    exact_patterns = [
+        r'預算\s*(\d+)\s*元',
+        r'(\d+)\s*元',
+    ]
+
+    for pattern in range_patterns:
+        match = re.search(pattern, text)
+        if match:
+            lo = int(match.group(1))
+            hi = int(match.group(2))
+            if lo > hi:
+                lo, hi = hi, lo
+            return {"min": lo, "max": hi}
+
+    for pattern in max_only_patterns:
+        match = re.search(pattern, text)
+        if match:
+            value = int(next(g for g in match.groups() if g and g.isdigit()))
+            return {"min": None, "max": value}
+
+    for pattern in exact_patterns:
+        match = re.search(pattern, text)
+        if match:
+            value = int(match.group(1))
+            return {"min": value, "max": value}
+
     return None
 
 def _build_user_friendly_reply(items: List[Dict[str, Any]], user_query: str, structured: Dict[str, Any]) -> str:
@@ -305,7 +323,17 @@ def _build_user_friendly_reply(items: List[Dict[str, Any]], user_query: str, str
     # 建立預算確認和引導語句
     budget_section = ""
     if budget:
-        budget_section = f"\n考量到您 {budget} 元的預算，我已為您篩選適合的選項。\n"
+        min_val = budget.get("min")
+        max_val = budget.get("max")
+        if min_val is not None and max_val is not None:
+            if min_val == max_val:
+                budget_section = f"\n考量到您 {min_val} 元的預算，我已為您篩選適合的選項。\n"
+            else:
+                budget_section = f"\n考量到您 {min_val}~{max_val} 元的預算，我已為您篩選適合的選項。\n"
+        elif max_val is not None:
+            budget_section = f"\n考量到您 {max_val} 元以下的預算，我已為您篩選適合的選項。\n"
+        elif min_val is not None:
+            budget_section = f"\n考量到您 {min_val} 元以上的預算，我已為您篩選適合的選項。\n"
     
     guidance = "\n需要我顯示詳細商品資訊與圖片嗎？也歡迎告訴我更具體的需求！"
     
@@ -370,10 +398,11 @@ def _compose_structured_reply(items: List[Dict[str, Any]], include_suffix: bool 
             if alias_lc and alias_lc in normalized_query:
                 expected_aliases.append(alias)
 
+    warning = ""
     if expected_aliases:
         alias_lc_set = {alias.lower() for alias in expected_aliases}
         match_found = False
-        
+
         # 🔧 改進：同時檢查 REMARK 欄位中的商品分類標籤
         for item in items:
             text = " ".join(
@@ -390,10 +419,9 @@ def _compose_structured_reply(items: List[Dict[str, Any]], include_suffix: bool 
         if not match_found:
             keyword_text = _sanitize_text("、".join(dict.fromkeys(expected_aliases)))
             warning = (
-                f"我先檢查了庫存，但目前找不到與「{keyword_text}」相關的商品分類。"
-                "可以再提供品牌、款式或其他描述，我再幫你重新查詢。"
+                f"提醒：目前資料中未明確標示「{keyword_text}」分類，"
+                "若結果不符合可再提供品牌、款式或其他描述，我再幫你重新查詢。"
             )
-            return warning, {"summary": "", "items": []}
 
     structured = _build_structured_items(items)
     
@@ -402,7 +430,10 @@ def _compose_structured_reply(items: List[Dict[str, Any]], include_suffix: bool 
     
     # structured_payload 另由呼叫端帶回，不需要在聊天文字中出現 JSON
     suffix = f"\n\n{SUGGEST_PROMPT_SUFFIX}" if include_suffix and SUGGEST_PROMPT_SUFFIX else ""
-    reply_text = f"{user_friendly_reply}{suffix}"
+    if warning:
+        reply_text = f"{warning}\n\n{user_friendly_reply}{suffix}"
+    else:
+        reply_text = f"{user_friendly_reply}{suffix}"
     return reply_text, structured
 
 
@@ -1670,31 +1701,55 @@ def _build_category_navigation_response(user_text: str, selected: Dict[str, Opti
     if not selected.get("L1"):
         return None
 
+    selected_display = dict(selected)
+    if not selected_display.get("L2"):
+        selected_display["L2"] = "全部"
+
     if selected.get("L3"):
         level = "L3"
         next_level = None
-        scope = _get_scope_names("L3", top_k=int(os.getenv("SCOPE_TOPK_L3", "8")), parent_l1=selected["L1"], parent_l2=selected["L2"])
+        scope = _get_scope_names(
+            "L3",
+            top_k=int(os.getenv("SCOPE_TOPK_L3", "8")),
+            parent_l1=selected["L1"],
+            parent_l2=selected["L2"],
+        )
     elif selected.get("L2"):
         level = "L3"
         next_level = "L3"
-        scope = _get_scope_names("L3", top_k=int(os.getenv("SCOPE_TOPK_L3", "8")), parent_l1=selected["L1"], parent_l2=selected["L2"])
+        scope = _get_scope_names(
+            "L3",
+            top_k=int(os.getenv("SCOPE_TOPK_L3", "8")),
+            parent_l1=selected["L1"],
+            parent_l2=selected["L2"],
+        )
     else:
-        level = "L2"
-        next_level = "L2"
-        scope = _get_scope_names("L2", top_k=int(os.getenv("SCOPE_TOPK_L2", "8")), parent_l1=selected["L1"])
+        level = "L3"
+        next_level = "L3"
+        scope = _get_scope_names(
+            "L3",
+            top_k=int(os.getenv("SCOPE_TOPK_L3", "8")),
+            parent_l1=selected["L1"],
+            parent_l2=None,
+        )
 
     names = scope.get("names") or []
     more_count = int(scope.get("more_count") or 0)
-    reply = _compose_nav_text(selected, level if level in ("L2", "L3") else "L1", names, more_count)
+    reply = _compose_nav_text(selected_display, level if level in ("L2", "L3") else "L1", names, more_count)
     meta = {
         "oos_category": False,
         "available_scope": {
             "level": level,
             level.lower(): names,
             "more_count": more_count,
-            "parents": {"L1": selected.get("L1"), "l1": selected.get("L1"), "L2": selected.get("L2"), "l2": selected.get("L2")},
+            "parents": {
+                "L1": selected_display.get("L1"),
+                "l1": selected_display.get("L1"),
+                "L2": selected_display.get("L2"),
+                "l2": selected_display.get("L2"),
+            },
         },
-        "category_context": {"selected": selected, "next_level": next_level},
+        "category_context": {"selected": selected_display, "next_level": next_level},
         "guide": {"hints": ["可提供預算、用途或品牌，我會更精準推薦"]},
         "decision": {"from": "_build_category_navigation_response", "user_text": user_text},
     }

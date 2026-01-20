@@ -41,10 +41,11 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.requests import Request
 from starlette.responses import Response
-from fastapi import UploadFile, File, Header, HTTPException, Form, Query
+from fastapi import UploadFile, File, Header, HTTPException, Form, Query, Body
 import ipaddress
 import tempfile
 import shutil
+import subprocess
 from datetime import datetime
 import subprocess
 from constants import (
@@ -64,6 +65,7 @@ from goods_search_service import (
     suggest_complementary,
     find_product_by_name,
     load_goods_rows,
+    get_category_index,
 )
 from field_utils import FieldAccessor
 from llm_service import (
@@ -791,6 +793,15 @@ class SearchReq(BaseModel):
     disable_promo: Optional[bool] = False      # 🆕 P0.2: 禁用宣傳文生成
 
 
+class SearchFilterReq(BaseModel):
+    categories: List[str] = []
+    attributes: Dict[str, List[str]] = {}
+    price_min: Optional[float] = None
+    price_max: Optional[float] = None
+    page: int = 1
+    page_size: int = 20
+
+
 # lazy load once
 _branding_cache: Dict[str, str] = load_branding_config()
 
@@ -833,6 +844,65 @@ def get_df():
 def _record_text(val: Any) -> str:
     return str(val or "").strip()
 
+def _normalize_category_value(val: Any) -> str:
+    text = _record_text(val).lower()
+    return re.sub(r"\s+", "", text)
+
+def _category_value_matches(value: Any, target: Any) -> bool:
+    v = _normalize_category_value(value)
+    t = _normalize_category_value(target)
+    if not v or not t:
+        return False
+    if v == t:
+        return True
+    return t in v
+
+def _parse_price_value(value: Any) -> Optional[float]:
+    if value is None:
+        return None
+    try:
+        text = str(value).replace(",", "").strip()
+        if not text:
+            return None
+        return float(text)
+    except Exception:
+        return None
+
+def _record_has_any_term(record: Dict[str, Any], terms: List[str]) -> bool:
+    if not terms:
+        return True
+    haystack = " ".join([
+        FieldAccessor.get_name(record) or "",
+        FieldAccessor.get_category(record) or "",
+        str(record.get("DESCRIPTION") or record.get("商品描述") or ""),
+        str(record.get("ShortDesc") or record.get("ShortDesc_20") or ""),
+        str(record.get("REMARK") or record.get("備註") or ""),
+    ]).lower()
+    for term in terms:
+        t = str(term or "").strip().lower()
+        if not t:
+            continue
+        if t in haystack:
+            return True
+    return False
+
+def _filter_by_attributes(records: List[Dict[str, Any]], attributes: Dict[str, List[str]]) -> List[Dict[str, Any]]:
+    if not attributes:
+        return records
+    filtered: List[Dict[str, Any]] = []
+    for rec in records:
+        ok = True
+        for _, values in attributes.items():
+            terms = [v for v in (values or []) if str(v or "").strip()]
+            if not terms:
+                continue
+            if not _record_has_any_term(rec, terms):
+                ok = False
+                break
+        if ok:
+            filtered.append(rec)
+    return filtered
+
 def _annotate_hierarchy(record: Dict[str, Any], hierarchy: Dict[str, str]) -> Dict[str, Any]:
     """Annotate a single record with matched_levels and hierarchy_score based on CateName_L1/2/3 fields."""
     # 🆕 確保 record 是字典，不是 DataFrame 行
@@ -852,15 +922,15 @@ def _annotate_hierarchy(record: Dict[str, Any], hierarchy: Dict[str, str]) -> Di
     matched: List[str] = []
     if l1:
         v = _record_text(record.get("CateName_L1") or record.get("大分類名稱"))
-        if v and (l1 in v):
+        if _category_value_matches(v, l1):
             matched.append("L1")
     if l2:
         v = _record_text(record.get("CateName_L2") or record.get("中分類名稱"))
-        if v and (l2 in v):
+        if _category_value_matches(v, l2):
             matched.append("L2")
     if l3:
         v = _record_text(record.get("CateName_L3") or record.get("小分類名稱"))
-        if v and (l3 in v):
+        if _category_value_matches(v, l3):
             matched.append("L3")
     record["matched_levels"] = matched
     record["hierarchy_score"] = len(matched) * 3
@@ -920,7 +990,7 @@ def _filter_by_hierarchy(records: List[Dict[str, Any]], hierarchy: Optional[Dict
         filtered: List[Dict[str, Any]] = [
             _sanitize_record(_annotate_hierarchy(rec, hierarchy))
             for rec in records 
-            if rec.get("CateName_L3") == l3 or _record_text(rec.get("CateName_L3")) == l3
+            if _category_value_matches(rec.get("CateName_L3"), l3)
         ]
         logger.info(f"    ✅ 超快速路徑結果: {len(filtered)} 筆")
         return filtered or records
@@ -933,7 +1003,7 @@ def _filter_by_hierarchy(records: List[Dict[str, Any]], hierarchy: Optional[Dict
         filtered: List[Dict[str, Any]] = [
             _sanitize_record(_annotate_hierarchy(rec, hierarchy))
             for rec in records 
-            if rec.get("CateName_L3") == l3 or _record_text(rec.get("CateName_L3")) == l3
+            if _category_value_matches(rec.get("CateName_L3"), l3)
         ]
         logger.info(f"    ✅ 快速路徑結果: {len(filtered)} 筆")
         return filtered or records
@@ -946,17 +1016,57 @@ def _filter_by_hierarchy(records: List[Dict[str, Any]], hierarchy: Optional[Dict
         ok = True
         if l1:
             v = _record_text(rec.get("CateName_L1") or rec.get("大分類名稱"))
-            ok = ok and (l1 in v if v else False)
+            ok = ok and _category_value_matches(v, l1)
         if ok and l2:
             v = _record_text(rec.get("CateName_L2") or rec.get("中分類名稱"))
-            ok = ok and (l2 in v if v else False)
+            ok = ok and _category_value_matches(v, l2)
         if ok and l3:
             v = _record_text(rec.get("CateName_L3") or rec.get("小分類名稱"))
-            ok = ok and (l3 in v if v else False)
+            ok = ok and _category_value_matches(v, l3)
         if ok:
             filtered.append(_sanitize_record(_annotate_hierarchy(rec, hierarchy)))
     logger.info(f"    ✅ 完整路徑結果: {len(filtered)} 筆")
     return filtered or records
+
+
+def _build_category_candidates(intent: Optional[Dict[str, Any]], category_hierarchy: Optional[Dict[str, str]]) -> List[str]:
+    candidates: List[str] = []
+    if isinstance(intent, dict):
+        terms = intent.get("category_terms")
+        if isinstance(terms, list):
+            candidates.extend([str(x).strip() for x in terms if str(x).strip()])
+    if isinstance(category_hierarchy, dict):
+        for level in ("L3", "L2", "L1"):
+            value = str(category_hierarchy.get(level) or "").strip()
+            if value:
+                candidates.append(value)
+    seen: set[str] = set()
+    ordered: List[str] = []
+    for item in candidates:
+        if item in seen:
+            continue
+        seen.add(item)
+        ordered.append(item)
+    return ordered
+
+
+def _collect_category_indices(cat_index: Any, categories: List[str]) -> set[int]:
+    indices: set[int] = set()
+    if not categories:
+        return indices
+    l1_index = getattr(cat_index, "l1_index", {}) or {}
+    l2_index = getattr(cat_index, "l2_index", {}) or {}
+    l3_index = getattr(cat_index, "l3_index", {}) or {}
+    for cat in categories:
+        if not cat:
+            continue
+        if cat in l3_index:
+            indices.update(cat_index.search_l3(cat))
+        elif cat in l2_index:
+            indices.update(cat_index.search_l2(cat))
+        elif cat in l1_index:
+            indices.update(cat_index.search_l1(cat))
+    return indices
 
 
 @app.post("/api/search")
@@ -972,6 +1082,7 @@ def api_search(req: SearchReq):
     df = get_df()
     
     if req.query and is_negative_query(req.query):
+        meta = {"result_count": 0}
         return JSONResponse({
             "message": NEGATIVE_QUERY_MESSAGE,
             "items": [],
@@ -981,6 +1092,7 @@ def api_search(req: SearchReq):
             "last_page": 1,
             "intent": {},
             "clarify": True,
+            "meta": meta,
         })
     
     # 🆕 P0.3: 快取檢查（純分類查詢）
@@ -1154,6 +1266,7 @@ def api_search(req: SearchReq):
         logger.info("  (無層級分類，跳過過濾)")
     all_records = filter_low_confidence_products(all_records, min_score=MIN_CONFIDENCE_SCORE)
     if not all_records:
+        meta = {"result_count": 0}
         return JSONResponse({
             "message": LOW_CONFIDENCE_MESSAGE,
             "items": [],
@@ -1163,6 +1276,7 @@ def api_search(req: SearchReq):
             "last_page": page,
             "intent": intent or {},
             "clarify": True,
+            "meta": meta,
         })
     total_available = len(all_records)
     start_idx = (page - 1) * page_size
@@ -1276,9 +1390,22 @@ def api_search(req: SearchReq):
         # 其他類型轉為字串
         return str(obj)
     
+    category_candidates = _build_category_candidates(intent if isinstance(intent, dict) else {}, category_hierarchy)
+    price_range = None
+    try:
+        price_range = _extract_budget_from_query(req.query or "")
+    except Exception:
+        price_range = None
+    meta: Dict[str, Any] = {"result_count": total_available}
+    if category_candidates:
+        meta["category_candidates"] = category_candidates
+    if price_range:
+        meta["price_range"] = price_range
+
     try:
         items = _sanitize_for_json(items)
         intent = _sanitize_for_json(intent or {})
+        meta = _sanitize_for_json(meta)
     except Exception as e:
         logger.warning(f"  ⚠️ JSON 清理失敗: {e}")
     
@@ -1290,7 +1417,8 @@ def api_search(req: SearchReq):
         "page_size": page_size,
         "has_next": has_next,
         "last_page": last_page,
-        "intent": intent or {}
+        "intent": intent or {},
+        "meta": meta,
     }
     
     # 🆕 P0.3: 快取存儲（純分類查詢）
@@ -1314,8 +1442,102 @@ def api_search(req: SearchReq):
             "page_size": page_size,
             "has_next": has_next,
             "last_page": last_page,
-            "intent": {}
+            "intent": {},
+            "meta": {"result_count": total_available},
         })
+
+
+@app.post("/api/search/filtered")
+def api_search_filtered(req: SearchFilterReq):
+    cache_key = json.dumps(
+        {
+            "categories": sorted(req.categories or []),
+            "attributes": {k: sorted(v or []) for k, v in (req.attributes or {}).items()},
+            "price_min": req.price_min,
+            "price_max": req.price_max,
+            "page": req.page,
+            "page_size": req.page_size,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+    now = time.time()
+    cached = FILTERED_SEARCH_CACHE.get(cache_key)
+    if cached and (now - cached[0]) < FILTERED_SEARCH_TTL:
+        return JSONResponse(cached[1])
+
+    df = get_df()
+    if df is None or df.empty:
+        return JSONResponse({
+            "message": "查詢條件不足。",
+            "items": [],
+            "page": 1,
+            "page_size": 0,
+            "has_next": False,
+            "last_page": 1,
+            "intent": {},
+        })
+
+    categories = [str(x).strip() for x in (req.categories or []) if str(x).strip()]
+    if categories:
+        cat_index = get_category_index()
+        candidate_indices = _collect_category_indices(cat_index, categories)
+        if candidate_indices:
+            df_candidates = df.iloc[list(candidate_indices)].copy()
+        else:
+            df_candidates = df.iloc[0:0].copy()
+    else:
+        df_candidates = df.copy()
+
+    records = df_candidates.to_dict(orient="records")
+
+    if req.attributes:
+        records = _filter_by_attributes(records, req.attributes)
+
+    if req.price_min is not None or req.price_max is not None:
+        filtered_by_price: List[Dict[str, Any]] = []
+        for rec in records:
+            special = FieldAccessor.get_special_price(rec)
+            price = FieldAccessor.get_price(rec)
+            effective = _parse_price_value(special) if special else _parse_price_value(price)
+            if effective is None:
+                continue
+            if req.price_min is not None and effective < req.price_min:
+                continue
+            if req.price_max is not None and effective > req.price_max:
+                continue
+            filtered_by_price.append(rec)
+        records = filtered_by_price
+
+    total_available = len(records)
+    page_size = max(1, min(req.page_size or 20, 50))
+    page = max(1, req.page or 1)
+    start_idx = (page - 1) * page_size
+    end_idx = start_idx + page_size
+    page_records = records[start_idx:end_idx]
+
+    items = format_for_chat(page_records)
+    has_next = total_available > end_idx
+    last_page = max(1, (total_available + page_size - 1) // page_size)
+
+    meta: Dict[str, Any] = {"result_count": total_available}
+    if categories:
+        meta["category_candidates"] = categories
+    if req.price_min is not None or req.price_max is not None:
+        meta["price_range"] = {"min": req.price_min, "max": req.price_max}
+
+    payload = {
+        "message": f"為您找到 {total_available} 項商品：",
+        "items": items,
+        "page": page,
+        "page_size": page_size,
+        "has_next": has_next,
+        "last_page": last_page,
+        "intent": {},
+        "meta": meta,
+    }
+    FILTERED_SEARCH_CACHE[cache_key] = (now, payload)
+    return JSONResponse(payload)
 
 
 # -------------------- Chat API --------------------
@@ -1336,6 +1558,12 @@ class ChatResp(BaseModel):
     structured_products: Optional[List[Dict[str, Any]]] = None  # 🆕 新增結構化商品資料欄位
 
 
+class FilterSuggestReq(BaseModel):
+    categories: List[str] = []
+    l1: Optional[str] = None
+    limit: Optional[int] = 60
+
+
 # 舊的 chat 端點已移除，功能已移至 chat_router_goods_action.py 以避免路由衝突
 
 
@@ -1344,6 +1572,66 @@ def suggest_endpoint(req: SuggestReq):
     session_id = str(req.session_id or "default")
     suggestion_type = int(req.type or 1)
     return _render_bundle_response(session_id, suggestion_type)
+
+
+@app.post("/api/filter-suggestions")
+def filter_suggestions_endpoint(req_body: Dict[str, Any] = Body(...)):
+    req = FilterSuggestReq.model_validate(req_body)
+    categories = [str(x).strip() for x in (req.categories or []) if str(x).strip()]
+    l1 = str(req.l1 or "").strip() or None
+    limit = int(req.limit or FILTER_SUGGEST_SAMPLE_LIMIT)
+    cache_key = f"{l1 or 'unknown'}|{'|'.join(sorted(categories))}|{limit}"
+    now = time.time()
+    cached = FILTER_SUGGEST_CACHE.get(cache_key)
+    if cached and (now - cached[0]) < FILTER_SUGGEST_TTL:
+        return JSONResponse(cached[1])
+
+    descriptions = _sample_descriptions_by_categories(categories, limit)
+    if not descriptions:
+        payload = {"filter_suggestions": {}, "meta": {"sample_count": 0}}
+        FILTER_SUGGEST_CACHE[cache_key] = (now, payload)
+        return JSONResponse(payload)
+
+    whitelist_map = _load_filter_whitelist()
+    whitelist = whitelist_map.get(l1) or GLOBAL_FILTER_WHITELIST
+    prompt = _build_filter_prompt(l1, whitelist)
+    prompt_body = "\n".join(f"- {desc[:200]}" for desc in descriptions[:limit])
+
+    try:
+        from llm_service import _call_chat
+
+        raw = _call_chat(prompt_body, system=prompt, max_tokens=400, model=os.getenv("CHAT_OPENAI_MODEL"))
+    except Exception:
+        raw = ""
+
+    suggestions: Dict[str, List[str]] = {}
+    if raw:
+        try:
+            match = re.search(r"\{[\\s\\S]*\}", raw)
+            raw_json = match.group(0) if match else raw
+            parsed = json.loads(raw_json)
+            if isinstance(parsed, dict):
+                suggestions = {str(k): list(v) for k, v in parsed.items() if isinstance(v, list)}
+        except Exception:
+            suggestions = {}
+
+    if whitelist:
+        whitelist_set = set(whitelist)
+        suggestions = {k: v for k, v in suggestions.items() if k in whitelist_set}
+
+    filtered = _filter_suggestions_by_frequency(suggestions, descriptions)
+    if not filtered:
+        filtered = _fallback_suggestions_from_descriptions(descriptions, whitelist)
+    payload = {
+        "filter_suggestions": filtered,
+        "meta": {
+            "sample_count": len(descriptions),
+            "threshold": FILTER_SUGGEST_THRESHOLD,
+            "l1": l1,
+        },
+    }
+    FILTER_SUGGEST_CACHE[cache_key] = (now, payload)
+    return JSONResponse(payload)
 
 
 @app.get("/api/recommendations/{bundle_id}")
@@ -1607,6 +1895,7 @@ def admin_upload_categories(
     request: Request,
     file: UploadFile = File(...),
     rebuild_prompt: bool = Query(False, description="是否上傳後立即重建分類提示詞"),
+    generate_filter_whitelist: bool = Query(False, description="是否上傳後自動產生條件白名單"),
     x_admin_token: Optional[str] = Header(None),
 ):
     """
@@ -1659,11 +1948,26 @@ def admin_upload_categories(
         if rebuild_prompt:
             refresh_category_prompt_after_data_update()
 
+        whitelist_generated = False
+        if generate_filter_whitelist:
+            try:
+                script_path = ROOT / "scripts" / "generate_filter_whitelist.py"
+                subprocess.run(
+                    ["python3", str(script_path)],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                whitelist_generated = True
+            except Exception as exc:
+                logger.warning("filter whitelist generation failed: %s", exc)
+
         return JSONResponse({
             "status": "ok",
             "message": "uploaded and replaced categories csv",
             "path": target_path,
             "prompt_rebuild": rebuild_prompt,
+            "whitelist_generated": whitelist_generated,
         })
     except Exception as exc:
         logger.exception("error processing uploaded categories csv: %s", exc)
@@ -1722,7 +2026,13 @@ app.include_router(search_router_goods_1024001)
 # ---- goods_1024001: 舊的 chat 路由器已移除以避免與 chat_router_goods_action 衝突 ----
 
 # ---- 統一聊天 API JSON 格式 ----
-from chat_router_goods_action import chat_handler, ChatReq, get_chat_result_by_session
+from chat_router_goods_action import (
+    chat_handler,
+    ChatReq,
+    get_chat_result_by_session,
+    _extract_budget_from_query,
+)
+from field_utils import FieldAccessor
 from typing import List
 
 # 統一回應模型定義
@@ -1743,6 +2053,186 @@ class ChatResp(BaseModel):
     voice_summary: Optional[str] = None
     voice_mode_active: Optional[bool] = None
     voice_session_end: Optional[bool] = None
+
+
+FILTER_SUGGEST_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+FILTER_SUGGEST_TTL = 600
+FILTER_SUGGEST_THRESHOLD = 0.1
+FILTER_SUGGEST_MAX_OPTIONS = 8
+FILTER_SUGGEST_SAMPLE_LIMIT = 60
+
+FILTERED_SEARCH_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+FILTERED_SEARCH_TTL = 120
+
+DEFAULT_FILTER_WHITELIST = {
+    "時尚女性": ["顏色", "材質", "尺寸", "功能", "容量", "款式"],
+    "常溫食品": ["口味", "風味", "產地", "規格", "成分", "重量"],
+    "美食": ["口味", "風味", "產地", "規格", "成分", "重量"],
+}
+GLOBAL_FILTER_WHITELIST = [
+    "顏色",
+    "材質",
+    "尺寸",
+    "功能",
+    "容量",
+    "款式",
+    "口味",
+    "風味",
+    "產地",
+    "規格",
+    "成分",
+    "重量",
+]
+
+
+def _load_filter_whitelist() -> Dict[str, List[str]]:
+    path = ROOT / "data" / "filter_whitelist.json"
+    if not path.exists():
+        return DEFAULT_FILTER_WHITELIST
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(raw, dict):
+            return {str(k): list(v) for k, v in raw.items() if isinstance(v, list)}
+    except Exception:
+        return DEFAULT_FILTER_WHITELIST
+    return DEFAULT_FILTER_WHITELIST
+
+
+def _normalize_text_for_filter(text: Any) -> str:
+    return re.sub(r"\s+", "", str(text or "").strip().lower())
+
+
+def _get_category_column(df: pd.DataFrame) -> Optional[str]:
+    for col in ("CateName_L3", "小分類名稱", "CateName_L2", "中分類名稱"):
+        if col in df.columns:
+            return col
+    return None
+
+
+def _extract_item_text(item: Dict[str, Any]) -> str:
+    fields = [
+        FieldAccessor.get_name(item),
+        FieldAccessor.get_category(item),
+        item.get("ShortDesc_20"),
+        item.get("ShortDesc"),
+        item.get("DESCRIPTION"),
+        item.get("Description"),
+        item.get("商品描述"),
+        item.get("REMARK"),
+        item.get("備註"),
+    ]
+    combined = " ".join(str(x or "") for x in fields if x)
+    return combined.strip()
+
+
+def _sample_descriptions_by_categories(categories: List[str], limit: int) -> List[str]:
+    df = catalog_service.get_dataframe()
+    if df is None or df.empty:
+        return []
+    col = _get_category_column(df)
+    if not col:
+        return []
+    normalized = [str(c).strip() for c in categories if str(c).strip()]
+    if normalized:
+        filtered = df[df[col].astype(str).isin(normalized)]
+    else:
+        filtered = df
+    if filtered.empty:
+        return []
+    sample_size = min(limit, len(filtered))
+    try:
+        sampled = filtered.sample(n=sample_size, random_state=1)
+    except Exception:
+        sampled = filtered.head(sample_size)
+    descriptions = []
+    for _, row in sampled.iterrows():
+        item = row.to_dict()
+        text = _extract_item_text(item)
+        if text:
+            descriptions.append(text)
+    return descriptions
+
+
+def _build_filter_prompt(l1: Optional[str], whitelist: List[str]) -> str:
+    base = (
+        "你是電商商品篩選助手。"
+        "請從商品描述中歸納可用的篩選條件與選項。"
+        "只輸出 JSON 物件，鍵是條件名稱，值是選項陣列。"
+        "只允許輸出白名單中的條件欄位。"
+        "選項需是原文常見詞彙，避免自造。"
+    )
+    if l1 in ("時尚女性", "服飾", "鞋包"):
+        extra = "此分類為包款/時尚商品，條件偏向顏色、材質、尺寸、容量、功能、款式。"
+    elif l1 in ("常溫食品", "美食", "食品"):
+        extra = "此分類為食品，條件偏向口味、風味、產地、規格、成分、重量。"
+    else:
+        extra = "依商品描述推導常見條件。"
+    return f"{base}\n白名單：{', '.join(whitelist)}。\n{extra}\n輸出 JSON。"
+
+
+def _filter_suggestions_by_frequency(suggestions: Dict[str, List[str]], descriptions: List[str]) -> Dict[str, List[str]]:
+    if not descriptions:
+        return {}
+    normalized_desc = [_normalize_text_for_filter(d) for d in descriptions]
+    total = len(normalized_desc)
+    filtered: Dict[str, List[str]] = {}
+    for key, options in suggestions.items():
+        clean_key = str(key or "").strip()
+        if not clean_key:
+            continue
+        cleaned_options = []
+        for option in options or []:
+            opt = str(option or "").strip()
+            if not opt:
+                continue
+            token = _normalize_text_for_filter(opt)
+            if not token:
+                continue
+            hit = sum(1 for desc in normalized_desc if token in desc)
+            if hit / total >= FILTER_SUGGEST_THRESHOLD:
+                cleaned_options.append(opt)
+        if cleaned_options:
+            filtered[clean_key] = cleaned_options[:FILTER_SUGGEST_MAX_OPTIONS]
+    return filtered
+
+
+def _fallback_suggestions_from_descriptions(descriptions: List[str], whitelist: List[str]) -> Dict[str, List[str]]:
+    token_map = {
+        "顏色": ["黑", "白", "米白", "米色", "灰", "藍", "紅", "棕", "咖", "綠", "粉", "紫"],
+        "材質": ["真皮", "皮革", "尼龍", "帆布", "牛皮", "羊皮", "PU", "防水"],
+        "尺寸": ["小", "中", "大", "迷你", "加大", "A4"],
+        "功能": ["防水", "輕量", "多夾層", "耐磨", "可調節"],
+        "容量": ["小容量", "大容量", "A4", "可放A4"],
+        "款式": ["手提", "斜背", "肩背", "後背", "側背"],
+        "口味": ["原味", "鹹", "甜", "辣", "無糖", "低糖"],
+        "風味": ["原味", "香草", "巧克力", "抹茶", "咖啡"],
+        "產地": ["台灣", "日本", "韓國", "美國", "歐洲"],
+        "規格": ["大包裝", "小包裝", "單入", "多入", "家庭號"],
+        "成分": ["全麥", "有機", "低糖", "無添加", "高纖"],
+        "重量": ["克", "公斤", "g", "kg"],
+    }
+    if not descriptions:
+        return {}
+    normalized_desc = [_normalize_text_for_filter(d) for d in descriptions]
+    total = len(normalized_desc)
+    suggestions: Dict[str, List[str]] = {}
+    for field in whitelist:
+        tokens = token_map.get(field)
+        if not tokens:
+            continue
+        counts: Dict[str, int] = {}
+        for token in tokens:
+            key = token
+            needle = _normalize_text_for_filter(token)
+            if not needle:
+                continue
+            hit = sum(1 for desc in normalized_desc if needle in desc)
+            if hit / total >= FILTER_SUGGEST_THRESHOLD:
+                counts[key] = hit
+        if counts:
+            sorted_tokens = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+            suggestions[field] = [t for t, _ in sorted_tokens][:FILTER_SUGGEST_MAX_OPTIONS]
+    return suggestions
 
 class ChatSessionResp(BaseModel):
     session_id: str
@@ -1851,6 +2341,8 @@ async def chat_endpoint(req: ChatReq):
         payload["structured_products"] = structured_products
         suggestion_ids = payload.get("suggestion_ids") or []
         meta = payload.get("meta") or {}
+        if not isinstance(meta, dict):
+            meta = {}
         if meta.get("oos_category"):
             structured_payload = {}
             structured_products = []
@@ -1864,6 +2356,30 @@ async def chat_endpoint(req: ChatReq):
                 await _enrich_structured_products(structured_products)
             except Exception as exc:
                 logger.warning("Content engine enrichment skipped due to error: %s", exc)
+
+        if "result_count" not in meta:
+            if isinstance(structured_products, list):
+                meta["result_count"] = len(structured_products)
+            elif isinstance(payload.get("items"), list):
+                meta["result_count"] = len(payload.get("items") or [])
+        if "price_range" not in meta:
+            try:
+                price_range = _extract_budget_from_query(req.message)
+            except Exception:
+                price_range = None
+            if price_range:
+                meta["price_range"] = price_range
+        if "category_candidates" not in meta:
+            scope = meta.get("available_scope")
+            if isinstance(scope, dict):
+                level = str(scope.get("level") or "").upper()
+                if level == "L3" and scope.get("l3"):
+                    meta["category_candidates"] = scope.get("l3")
+                elif level == "L2" and scope.get("l2"):
+                    meta["category_candidates"] = scope.get("l2")
+                elif level == "L1" and scope.get("l1"):
+                    meta["category_candidates"] = scope.get("l1")
+        payload["meta"] = meta
 
         # 顯示模式保底，避免 None 傳回前端/測試
         if not payload.get("display_mode"):
