@@ -539,6 +539,14 @@ L2_HINTS_BY_L1: Dict[str, Dict[str, List[str]]] = {
         "零食/餅乾/點心": ["零食", "點心", "餅乾", "零食點心", "小食", "糖果"],
     },
 }
+L3_FALLBACKS_BY_L1_L2: Dict[str, Dict[str, List[str]]] = {
+    "常溫食品": {
+        "五穀/豆類/米麵/乾貨": ["米類", "豆包", "豆腐", "佐醬湯料", "乾貨", "米麵"],
+    },
+    "時尚女性": {
+        "女用皮包": ["女用背包", "背包", "手提包", "肩背包", "斜背包", "側背包", "手拿包", "小包", "中包"],
+    },
+}
 MARKETING_TAILS = [
     ("麥片", "，晨起元氣好選擇"),
     ("燕麥", "，守護輕盈好體態"),
@@ -1325,6 +1333,11 @@ def _get_scope_names(level: str, top_k: Optional[int] = None, parent_l1: Optiona
         items = data.get("items") or []
         # 🔧 修正：scope/items 是分類對象，用 "name" 字段取分類名稱（不是商品！）
         names = [it.get("name") or it.get("大分類名稱") for it in items if it.get("name")]
+        if not names:
+            if level == "L2" and parent_l1:
+                names = list((L2_HINTS_BY_L1.get(parent_l1) or {}).keys())
+            elif level == "L3" and parent_l1 and parent_l2:
+                names = (L3_FALLBACKS_BY_L1_L2.get(parent_l1) or {}).get(parent_l2, [])
         return {
             "names": names,
             "more_count": int(data.get("more_count") or 0),
@@ -1332,7 +1345,12 @@ def _get_scope_names(level: str, top_k: Optional[int] = None, parent_l1: Optiona
             "level": data.get("level") or level,
         }
     except Exception:
-        return {"names": [], "more_count": 0, "total": 0, "level": level}
+        names: List[str] = []
+        if level == "L2" and parent_l1:
+            names = list((L2_HINTS_BY_L1.get(parent_l1) or {}).keys())
+        elif level == "L3" and parent_l1 and parent_l2:
+            names = (L3_FALLBACKS_BY_L1_L2.get(parent_l1) or {}).get(parent_l2, [])
+        return {"names": names, "more_count": 0, "total": len(names), "level": level}
 
 
 def _pick_first_in_text(text: str, candidates: List[str]) -> Optional[str]:
@@ -1630,10 +1648,17 @@ def _extract_selected_levels_from_text(text: str) -> Dict[str, Optional[str]]:
         
         # 🔧 優先使用斜線分隔的關鍵字精確匹配（支援：豆包/豆腐/米類/佐醬湯料）
         slash_terms = [t.strip() for t in re.split(r'[/、,，]', raw) if t.strip()]
-        for term in slash_terms:
-            l3_guess = _best_match(l3_names, term)
-            if l3_guess:
-                selected["L3"] = l3_guess
+        if slash_terms:
+            best_guess = None
+            best_score = 0.0
+            for term in slash_terms:
+                for candidate in l3_names:
+                    score = _compute_match_score(term, candidate)
+                    if score > best_score:
+                        best_score = score
+                        best_guess = candidate
+            if best_guess and best_score >= 0.6:
+                selected["L3"] = best_guess
                 return
         
         # 再嘗試語序模式：小分類X
