@@ -68,7 +68,7 @@ SEARCH_Goods 系統 - 前端應用程式
     .brand-area img{max-height:72px;width:auto;object-fit:contain;display:none;}
     .brand-placeholder{font-size:12px;color:var(--accent);text-align:left;padding:0 6px;}
     .top-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-    .workspace{margin-top:24px;display:grid;grid-template-columns:380px 1fr;gap:28px;align-items:stretch;flex:1;min-height:0;}
+    .workspace{margin-top:4px;display:grid;grid-template-columns:380px 1fr;gap:28px;align-items:stretch;flex:1;min-height:0;position:relative;z-index:1;}
     .sidebar{display:flex;flex-direction:column;gap:20px;height:100%;min-height:0;}
     .panel-card{
       border-radius:24px;
@@ -134,7 +134,7 @@ SEARCH_Goods 系統 - 前端應用程式
     .media-panel.vertical-video iframe,
     .media-panel.vertical-video .youtube-thumbnail,
     .media-panel.vertical-video .placeholder{width:min(100%,320px);aspect-ratio:var(--video-aspect,9/16);align-self:center;}
-    .results-column{display:flex;flex-direction:column;gap:20px;height:100%;min-height:0;flex:1;margin-top:20px;}
+    .results-column{display:flex;flex-direction:column;gap:20px;height:100%;min-height:0;flex:1;margin-top:0;}
     .results-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:stretch;height:100%;}
     .results-layout.flow-hidden{grid-template-columns:minmax(0,1fr);}
     .results-layout.flow-hidden .flow-panel{display:none;}
@@ -167,7 +167,7 @@ SEARCH_Goods 系統 - 前端應用程式
     }
     .results-header{display:flex;align-items:center;justify-content:flex-end;gap:12px;min-height:0;}
     #resultCount{font-size:14px;color:#000;background:#eef2ff;padding:0;border-radius:999px;}
-    #hotCategories{display:flex;flex-wrap:wrap;gap:10px;margin:-117px 0 12px;}
+    #hotCategories{display:flex;flex-wrap:wrap;gap:10px;margin:-68px 0 18px;margin-left:calc(380px + 28px);position:relative;z-index:2000;}
     #hotCategories button{
       border:1px solid rgba(37,99,235,0.25);
       border-radius:999px;
@@ -187,7 +187,7 @@ SEARCH_Goods 系統 - 前端應用程式
     .result-summary{display:none;}
     .chat-box{
       flex:1;
-      min-height:320px;
+      min-height:500px;
       overflow:auto;
       padding:30px 34px;
       border-radius:32px;
@@ -199,12 +199,14 @@ SEARCH_Goods 系統 - 前端應用程式
       max-width:none;
       margin:0;
       width:100%;
+      position:relative;
+      z-index:1;
       display:flex;
       flex-direction:column;
     }
     .chat-box:hover{box-shadow:0 34px 70px rgba(15,23,42,0.18);}
     .chat-input-area{display:flex;gap:12px;align-items:flex-start;background:var(--glass);border:1px solid var(--glass-border);border-radius:24px;padding:16px 18px;box-shadow:var(--shadow);}
-    .chat-input-area .input-textarea{min-height:120px;resize:vertical;}
+    .chat-input-area .input-textarea{min-height:60px;resize:vertical;}
     .chat-input-actions{display:flex;flex-direction:column;gap:10px;min-width:140px;}
     .chat-input-actions .btn{width:100%;}
     .bubble{
@@ -343,6 +345,7 @@ SEARCH_Goods 系統 - 前端應用程式
       .workspace{grid-template-columns:1fr;gap:20px;}
       .results{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}
       .flow-panel{display:none;}
+      #hotCategories{margin-left:0;}
     }
     @media (max-width:720px){
       .container{padding:12px 12px calc(120px + var(--safe-bottom));}
@@ -430,7 +433,7 @@ SEARCH_Goods 系統 - 前端應用程式
     .floating-panel .section-title{font-size:14px;font-weight:600;color:var(--text);margin:0 0 8px;}
     .floating-panel .section-subtitle{font-size:12px;color:var(--sub);margin:0 0 12px;}
     #chat-panel,#search-panel{flex:1;display:flex;flex-direction:column;min-height:0;}
-    #chat-panel{gap:12px;}
+    #chat-panel{gap:12px;margin-top:0;}
     #chat-panel .chat-box{flex:1;}
     #search-panel{gap:12px;}
     #search-panel #results{flex:1;}
@@ -722,6 +725,7 @@ SEARCH_Goods 系統 - 前端應用程式
       </div>
     </header>
 
+    <div id="hotCategories"></div>
     <div class="workspace">
       <aside class="sidebar">
         <section class="panel-card media-panel" id="mediaPanel">
@@ -757,7 +761,6 @@ SEARCH_Goods 系統 - 前端應用程式
               <span id="resultCount"></span>
             </div>
             <div id="searchSummary"></div>
-            <div id="hotCategories"></div>
             <div id="chat-panel" style="display:none;">
             <div id="chat-messages" class="chat-box" aria-live="polite"></div>
             <div class="suggest-actions">
@@ -766,7 +769,7 @@ SEARCH_Goods 系統 - 前端應用程式
               <button data-sg="3">3 智慧搭配</button>
             </div>
             <div class="chat-input-area" aria-label="自然語言查詢輸入區">
-              <textarea id="q" class="input input-textarea" placeholder="請輸入您的需求…" aria-label="查詢輸入" rows="4"></textarea>
+              <textarea id="q" class="input input-textarea" placeholder="請輸入您的需求…" aria-label="查詢輸入" rows="3"></textarea>
               <div class="chat-input-actions">
                 <button id="voiceBtn" class="btn ghost" aria-label="語音輸入 (Ctrl/Cmd+Shift+S)">🎙️ 語音輸入</button>
                 <button id="resetBtn" class="btn ghost" aria-label="重新對話 (Ctrl/Cmd+K)">重新對話</button>
