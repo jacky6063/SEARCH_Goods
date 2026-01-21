@@ -1737,6 +1737,7 @@ ALLOW_DEV_ADMIN = os.getenv("ALLOW_DEV_ADMIN", "false").lower() in ("1", "true",
 
 # 允許內網/本機無 token 管理（可透過環境變數關閉）
 ALLOW_LOCAL_ADMIN = os.getenv("ALLOW_LOCAL_ADMIN", "true").lower() in ("1", "true", "yes")
+ADMIN_UI_PASSWORD = os.getenv("ADMIN_UI_PASSWORD")
 
 
 def _is_private_client(request: Request) -> bool:
@@ -1793,6 +1794,18 @@ def admin_info(request: Request):
         "categories": cat_diag,
     }
     return JSONResponse(info)
+
+class AdminUiPasswordPayload(BaseModel):
+    password: str = ""
+
+@app.post("/api/admin/verify-ui-password")
+def verify_ui_password(payload: AdminUiPasswordPayload):
+    """Admin panel UI password check (no token exposure)."""
+    if not ADMIN_UI_PASSWORD:
+        raise HTTPException(status_code=403, detail="admin ui password not configured")
+    if payload.password != ADMIN_UI_PASSWORD:
+        raise HTTPException(status_code=401, detail="unauthorized")
+    return JSONResponse({"ok": True})
 
 @app.post("/api/admin/clear-cache")
 def admin_clear_cache(request: Request, x_admin_token: Optional[str] = Header(None)):

@@ -4442,6 +4442,7 @@ SEARCH_Goods 系統 - 前端應用程式
     const adminApiInput = document.getElementById('adminApiEndpoint');
     const adminSetApiBtn = document.getElementById('adminSetApi');
     const adminTestApiBtn = document.getElementById('adminTestApi');
+    let adminPanelUnlocked = false;
 
     function showAdminMsg(m){
       if(!adminMsg){ return; }
@@ -4481,10 +4482,38 @@ SEARCH_Goods 系統 - 前端應用程式
       loadVersionInfo();
     }
 
-    adminToggle?.addEventListener('click', ()=>{
+    async function verifyAdminPanelAccess(){
+      if(adminPanelUnlocked){ return true; }
+      const password = window.prompt('請輸入密碼');
+      if(password === null){ return false; }
+      try{
+        const res = await fetch(buildAdminEndpoint('verify-ui-password'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        if(res.ok){
+          adminPanelUnlocked = true;
+          return true;
+        }
+        if(res.status === 403){
+          alert('後端尚未設定管理面板密碼（ADMIN_UI_PASSWORD）');
+          return false;
+        }
+      }catch(err){
+        alert('無法驗證密碼，請確認後端服務是否正常');
+        return false;
+      }
+      alert('密碼錯誤');
+      return false;
+    }
+
+    adminToggle?.addEventListener('click', async ()=>{
       if(!adminPanel){ return; }
       const currentlyHidden = adminPanel.style.display === 'none' || getComputedStyle(adminPanel).display === 'none';
       if(currentlyHidden){
+        const allowed = await verifyAdminPanelAccess();
+        if(!allowed){ return; }
         adminPanel.style.display = 'block';
         refreshAdminInfo();
         refreshParamInputs();
