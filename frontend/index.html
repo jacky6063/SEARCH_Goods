@@ -1784,26 +1784,24 @@ SEARCH_Goods 系統 - 前端應用程式
   function setFlowPanelVisible(visible){
     if(!resultsLayout){ return; }
     resultsLayout.classList.toggle('flow-hidden', !visible);
-    try{
-      localStorage.setItem(FLOW_PANEL_VISIBLE_KEY, visible ? '1' : '0');
-    }catch(err){
-      console.warn('flow panel preference save failed', err);
-    }
   }
 
   if(flowPanelToggle){
     flowPanelToggle.addEventListener('change', () => {
       setFlowPanelVisible(!!flowPanelToggle.checked);
+      try{
+        localStorage.setItem(FLOW_PANEL_VISIBLE_KEY, '0');
+      }catch(err){
+        // ignore localStorage write errors
+      }
     });
-    let storedVisible = '1';
     try{
-      storedVisible = localStorage.getItem(FLOW_PANEL_VISIBLE_KEY) || '1';
+      localStorage.setItem(FLOW_PANEL_VISIBLE_KEY, '0');
     }catch(err){
-      storedVisible = '1';
+      // ignore localStorage write errors
     }
-    const visible = storedVisible !== '0';
-    flowPanelToggle.checked = visible;
-    setFlowPanelVisible(visible);
+    flowPanelToggle.checked = false;
+    setFlowPanelVisible(false);
   }
   // 骨架卡：降級為可選（保留函式但不再自動呼叫）
   function setLoading(on){ /* deprecated: use showSearchSpinner/hideSearchSpinner */ }
@@ -4515,6 +4513,15 @@ SEARCH_Goods 系統 - 前端應用程式
         const allowed = await verifyAdminPanelAccess();
         if(!allowed){ return; }
         adminPanel.style.display = 'block';
+        try{
+          localStorage.setItem(FLOW_PANEL_VISIBLE_KEY, '0');
+          if(flowPanelToggle){
+            flowPanelToggle.checked = false;
+            setFlowPanelVisible(false);
+          }
+        }catch(err){
+          // ignore localStorage write errors
+        }
         refreshAdminInfo();
         refreshParamInputs();
         showParamMsg('');
